@@ -1,0 +1,194 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: 1.27.x
+          cache: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: sdk/typescript/package-lock.json
+      - run: go test -race -count=1 ./...
+      - run: go vet ./...
+      - run: npm ci
+        working-directory: sdk/typescript
+      - run: npm run typecheck
+        working-directory: sdk/typescript
+      - run: npm run build
+        working-directory: sdk/typescript
+      - run: npm run test:errors
+        working-directory: sdk/typescript
+      - run: go build -o /tmp/autumn-bus ./cmd/autumn-bus
+      - run: npm run test:integration
+        working-directory: sdk/typescript
+        env:
+          AUTUMN_BUS_BINARY: /tmp/autumn-bus
+
+  build:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+    env:
+      CGO_ENABLED: "0"
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      AUTUMN_BUS_VERSION: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: 1.27.x
+          cache: true
+      - name: Build release archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          AUTUMN_BUS_VERSION="${AUTUMN_BUS_VERSION#v}"
+          AUTUMN_BUS_DIRECTORY="autumn-bus_${AUTUMN_BUS_VERSION}_${GOOS}_${GOARCH}"
+          mkdir -p "dist/${AUTUMN_BUS_DIRECTORY}"
+          AUTUMN_BUS_SUFFIX=""
+          if [[ "${GOOS}" == "windows" ]]; then AUTUMN_BUS_SUFFIX=".exe"; fi
+          go build -trimpath -ldflags "-s -w -X github.com/Adi103-ETAI/autumn-bus/bus.Version=${AUTUMN_BUS_VERSION}" -o "dist/${AUTUMN_BUS_DIRECTORY}/autumn-bus${AUTUMN_BUS_SUFFIX}" ./cmd/autumn-bus
+          go build -trimpath -ldflags "-s -w -X github.com/Adi103-ETAI/autumn-bus/bus.Version=${AUTUMN_BUS_VERSION}" -o "dist/${AUTUMN_BUS_DIRECTORY}/autumn-bus-conformance${AUTUMN_BUS_SUFFIX}" ./cmd/autumn-bus-conformance
+          cp LICENSE README.md "dist/${AUTUMN_BUS_DIRECTORY}/"
+          cp -R docs spec "dist/${AUTUMN_BUS_DIRECTORY}/"
+          if [[ "${GOOS}" == "windows" ]]; then
+            (cd dist && zip -qr "${AUTUMN_BUS_DIRECTORY}.zip" "${AUTUMN_BUS_DIRECTORY}")
+          else
+            tar -C dist -czf "dist/${AUTUMN_BUS_DIRECTORY}.tar.gz" "${AUTUMN_BUS_DIRECTORY}"
+          fi
+      - name: Attest Unix archive
+        if: matrix.goos != 'windows'
+        uses: actions/attest-build-provenance@v4.2.2
+        with:
+          subject-path: dist/*.tar.gz
+      - name: Attest Windows archive
+        if: matrix.goos == 'windows'
+        uses: actions/attest-build-provenance@v4.2.2
+        with:
+          subject-path: dist/*.zip
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0.24.2
+        with:
+          path: dist
+          format: spdx-json
+          output-file: dist/autumn-bus_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - uses: actions/upload-artifact@v7
+        with:
+          name: autumn-bus-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.spdx.json
+          if-no-files-found: error
+
+  smoke:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            goos: linux
+            goarch: amd64
+          - runner: macos-latest
+            goos: darwin
+            goarch: arm64
+          - runner: windows-latest
+            goos: windows
+            goarch: amd64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: autumn-bus-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist
+      - name: Smoke-test Unix archive
+        if: matrix.goos != 'windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          AUTUMN_BUS_ARCHIVE="$(find dist -maxdepth 1 -name '*.tar.gz' -print -quit)"
+          test -n "${AUTUMN_BUS_ARCHIVE}"
+          tar -xzf "${AUTUMN_BUS_ARCHIVE}" -C dist
+          AUTUMN_BUS_BINARY="$(find dist -type f -name autumn-bus -print -quit)"
+          test -n "${AUTUMN_BUS_BINARY}"
+          "${AUTUMN_BUS_BINARY}" version
+          "${AUTUMN_BUS_BINARY}" demo
+          jq empty dist/*.spdx.json
+      - name: Smoke-test Windows archive
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        run: |
+          $archive = Get-ChildItem dist -Filter *.zip | Select-Object -First 1
+          if (-not $archive) { throw "release archive not found" }
+          Expand-Archive $archive.FullName -DestinationPath dist/unpacked
+          $binary = Get-ChildItem dist/unpacked -Recurse -Filter autumn-bus.exe | Select-Object -First 1
+          if (-not $binary) { throw "autumn-bus.exe not found" }
+          & $binary.FullName version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $binary.FullName demo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Content (Get-ChildItem dist -Filter *.spdx.json | Select-Object -First 1).FullName | ConvertFrom-Json | Out-Null
+
+  publish:
+    needs: [build, smoke]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          pattern: autumn-bus-*
+          merge-multiple: true
+      - name: Create checksums
+        working-directory: dist
+        run: |
+          sha256sum * > checksums.txt
+          sha256sum -c checksums.txt
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTUMN_BUS_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          AUTUMN_BUS_RELEASE_ARGS=("${AUTUMN_BUS_TAG}" dist/* --verify-tag --generate-notes)
+          if [[ "${AUTUMN_BUS_TAG}" == *-* ]]; then AUTUMN_BUS_RELEASE_ARGS+=(--prerelease); fi
+          gh release create "${AUTUMN_BUS_RELEASE_ARGS[@]}"
