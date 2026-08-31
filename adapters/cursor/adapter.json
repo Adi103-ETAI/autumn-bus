@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "cursor-mcp",
+  "adapterVersion": "0.1.0",
+  "harnessFamily": "Cursor",
+  "status": "experimental",
+  "protocolVersions": ["0.1"],
+  "transport": "mcp",
+  "delivery": "pull",
+  "lifecycleEvidence": "process",
+  "capabilities": ["discovery", "messaging", "requests", "tasks", "escalation", "bounded-context"],
+  "testedVersions": [],
+  "platforms": ["macos", "linux", "windows"],
+  "maintainer": "Autumn",
+  "repository": "https://github.com/Adi103-ETAI/autumn-bus",
+  "limitations": [
+    "Not yet conformance-verified",
+    "Pull-only delivery",
+    "Process reachability does not prove model readiness"
+  ]
+}
