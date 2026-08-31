@@ -1,0 +1,10 @@
+/_audit/
+node_modules/
+dist/
+bin/
+coverage/
+*.log
+*.test
+/autumn-bus
+/autumn-bus.exe
+.DS_Store

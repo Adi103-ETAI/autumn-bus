@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.adi103-etai.autumn-bus",
+  "name": "Autumn Bus",
+  "version": "0.1.0",
+  "author": "Autumn",
+  "license": "Apache-2.0",
+  "description": "Run Autumn Bus as the local coordination layer for AI agents on Omarchy.",
+  "kinds": ["service"],
+  "entryPoints": {
+    "service": "integrations/omarchy/Service.qml"
+  }
+}
