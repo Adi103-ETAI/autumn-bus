@@ -1,0 +1,60 @@
+# Autumn Bus TypeScript Client
+
+Typed clients and protocol definitions for connecting Node.js applications and harness adapters to Autumn Bus.
+
+The Bus daemon is distributed separately as a native executable.
+
+The client is in active development and has not reached a stable release. Before 1.0, its API, schemas, and protocol behavior may change between releases.
+
+## Install
+
+Install the current prerelease from the `next` tag:
+
+```sh
+npm install @autumn-dev/autumn-bus@next
+```
+
+## Example
+
+Start the daemon, create a scope with the Autumn Bus CLI, and set the returned token as `AUTUMN_BUS_SCOPE_TOKEN`.
+
+```ts
+import { AutumnBusClient, AutumnBusScopeClient } from '@autumn-dev/autumn-bus'
+
+const address = 'http://127.0.0.1:4765'
+const scope = new AutumnBusScopeClient(address, process.env.AUTUMN_BUS_SCOPE_TOKEN!)
+
+const plannerRegistration = await scope.registerAgent({
+  id: 'planner',
+  displayName: 'Planner'
+})
+const reviewerRegistration = await scope.registerAgent({
+  id: 'reviewer',
+  displayName: 'Reviewer',
+  connectTo: ['planner']
+})
+
+const planner = new AutumnBusClient(address, plannerRegistration.agentToken)
+const reviewer = new AutumnBusClient(address, reviewerRegistration.agentToken)
+
+const receipt = await planner.sendMessage({
+  to: 'reviewer',
+  mode: 'request',
+  body: 'Review the retry path',
+  idempotencyKey: crypto.randomUUID()
+})
+
+const messages = await reviewer.pullInbox()
+await reviewer.acknowledgeMessages(messages.map((message) => message.id))
+console.log(receipt.messageId, messages)
+```
+
+Scope credentials create agents and handle human escalations. Agent credentials discover peers, exchange messages, coordinate tasks, and ask for human input.
+
+Operations time out after 30 seconds by default. Pass `{ timeoutMs, signal }` as the final method argument to set a shorter deadline or cancel a request.
+
+Generate a new idempotency key for each logical send. Keys remain bound to their original message. Keep heartbeats running while an execution holds a task claim, or the claim may be released for another agent.
+
+`AutumnBusAgentSession` manages registration, conservative lifecycle state, heartbeat, execution replacement, and shutdown cleanup for adapters that use the TypeScript client.
+
+`pollInbox` provides abortable polling with bounded backoff. `withClaimedTask` releases a claim when work or completion fails. Use both with a live agent session so the execution lease remains current while work is claimed.
