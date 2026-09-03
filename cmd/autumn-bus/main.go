@@ -21,6 +21,7 @@ const usage = `Autumn Bus
 
 Usage:
 <<<<<<< HEAD:cmd/autumn-bus/main.go
+<<<<<<< HEAD:cmd/autumn-bus/main.go
   autumn-bus start [--port <port>]
   autumn-bus stop
   autumn-bus status
@@ -44,6 +45,21 @@ Usage:
   autumn-bus demo
   autumn-bus version
 >>>>>>> 3d06c98 (Add stdio MCP bridge (#68)):cmd/autumn-bus/main.go
+=======
+  autumn-bus start [--port <port>]
+  autumn-bus stop
+  autumn-bus status
+  autumn-bus doctor [--json]
+  autumn-bus scope create [scope-id]
+  autumn-bus message receipt <message-id> [--json] [--address <addr>]
+  autumn-bus agent list [--json] [--address <addr>]
+  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
+	  autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
+	  autumn-bus task list [--ready] [--json] [--address <addr>]
+  autumn-bus mcp stdio
+  autumn-bus demo
+  autumn-bus version
+>>>>>>> 30d01c0 (Add persistent project task boards (#74)):cmd/autumn-bus/main.go
 `
 
 type stringList []string
@@ -244,9 +260,15 @@ func createScope(id string) error {
 	return nil
 }
 
+<<<<<<< HEAD:cmd/autumn-bus/main.go
 // resolveBusAddress returns the daemon address to talk to for a CLI subcommand
 // that uses an agent credential. Precedence: explicit flag, then the
 // AUTUMN_BUS_ADDRESS environment variable, then the daemon run file.
+=======
+// resolveBusAddress returns the daemon address to talk to for a CLI subcommand.
+// Precedence: explicit flag, then the
+// AUTUMN_BUS_ADDRESS environment variable, then the daemon run file.
+>>>>>>> 30d01c0 (Add persistent project task boards (#74)):cmd/autumn-bus/main.go
 func resolveBusAddress(explicit string) (string, error) {
 	if explicit != "" {
 		return explicit, nil
@@ -438,6 +460,115 @@ func yesNo(value bool) string {
 	return "no"
 }
 
+func taskScopeClient(address string) (bus.Client, error) {
+	token := os.Getenv("AUTUMN_BUS_SCOPE_TOKEN")
+	if token == "" {
+		return bus.Client{}, errors.New("AUTUMN_BUS_SCOPE_TOKEN is required")
+	}
+	resolved, err := resolveBusAddress(address)
+	if err != nil {
+		return bus.Client{}, err
+	}
+	return bus.Client{Address: resolved, Token: token}, nil
+}
+
+func addTask(args []string) error {
+	flags := flag.NewFlagSet("task add", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	title := flags.String("title", "", "short task title")
+	description := flags.String("description", "", "task description")
+	address := flags.String("address", "", "Autumn Bus address")
+	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+	var dependencies stringList
+	flags.Var(&dependencies, "depends-on", "dependency task id, repeatable")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("task add does not accept positional arguments")
+	}
+	if strings.TrimSpace(*title) == "" {
+		return errors.New("task add requires --title")
+	}
+	client, err := taskScopeClient(*address)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	task, err := client.AddTask(ctx, bus.AddTaskInput{Title: *title, Description: *description, Dependencies: dependencies})
+	if err != nil {
+		return fmt.Errorf("could not add task: %w", err)
+	}
+	if *jsonOutput {
+		encoded, err := json.MarshalIndent(task, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(encoded))
+		return nil
+	}
+	fmt.Printf("Added %s %q\n", task.ID, task.Title)
+	return nil
+}
+
+func listTasks(args []string) error {
+	flags := flag.NewFlagSet("task list", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	readyOnly := flags.Bool("ready", false, "show only dependency-ready tasks")
+	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+	address := flags.String("address", "", "Autumn Bus address")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("task list does not accept positional arguments")
+	}
+	client, err := taskScopeClient(*address)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	tasks, err := client.ListTasks(ctx, *readyOnly)
+	if err != nil {
+		return fmt.Errorf("could not list tasks: %w", err)
+	}
+	if *jsonOutput {
+		encoded, err := json.MarshalIndent(tasks, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(encoded))
+		return nil
+	}
+	return printTasksHuman(tasks)
+}
+
+func printTasksHuman(tasks []bus.Task) error {
+	if len(tasks) == 0 {
+		fmt.Println("No tasks found.")
+		return nil
+	}
+	for _, task := range tasks {
+		state := task.Status
+		if task.Ready {
+			state = "ready"
+		}
+		fmt.Printf("%s [%s] %q\n", task.ID, state, task.Title)
+		if task.Description != "" {
+			fmt.Printf("  description: %q\n", task.Description)
+		}
+		if len(task.Dependencies) > 0 {
+			fmt.Printf("  depends on: %s\n", strings.Join(task.Dependencies, ", "))
+		}
+		if task.ClaimedBy != "" {
+			fmt.Printf("  claimed by: %s\n", task.ClaimedBy)
+		}
+	}
+	return nil
+}
+
 func setEnvironment(base []string, values ...string) []string {
 	replacements := map[string]bool{}
 	for i := 0; i < len(values); i += 2 {
@@ -610,6 +741,13 @@ func run() error {
 		}
 		if len(args) >= 2 && args[1] == "list" {
 			return listAgents(args[2:])
+		}
+	case "task":
+		if len(args) >= 2 && args[1] == "add" {
+			return addTask(args[2:])
+		}
+		if len(args) >= 2 && args[1] == "list" {
+			return listTasks(args[2:])
 		}
 	case "mcp":
 		if len(args) == 2 && args[1] == "stdio" {
