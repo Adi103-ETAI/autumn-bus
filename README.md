@@ -1,5 +1,6 @@
 <div align="center">
 
+<<<<<<< HEAD
 <pre aria-label="AUTUMN">
     _       _   _ _____ _   _ __  __ _   _
    / \     | | | |_   _| | | |  \/  | \ | |
@@ -7,6 +8,9 @@
  / ___ \   | |_| | | | | |_| | |  | | |\  |
 /_/   \_\   \___/  |_|  \___/|_|  |_|_| \_|
 </pre>
+=======
+<img src="assets/autumn-bus-wordmark.svg" alt="Autumn Bus terminal wordmark" width="900">
+>>>>>>> c096373 (Add Autumn Bus terminal wordmark (#73))
 
 # Autumn Bus
 
