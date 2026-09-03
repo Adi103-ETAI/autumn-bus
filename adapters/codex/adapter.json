@@ -9,17 +9,10 @@
   "delivery": "pull",
   "lifecycleEvidence": "process",
   "capabilities": ["discovery", "messaging", "requests", "tasks", "escalation", "bounded-context"],
-<<<<<<< HEAD
-  "testedVersions": [],
-  "platforms": ["macos", "linux", "windows"],
-  "maintainer": "Autumn",
-  "repository": "https://github.com/Adi103-ETAI/autumn-bus",
-=======
   "testedVersions": ["0.152.1"],
   "platforms": ["macos"],
   "maintainer": "Autumn",
   "repository": "https://github.com/Adi103-ETAI/autumn-bus",
->>>>>>> 1f81ec4 (Verify Codex adapter on macOS (#72))
   "limitations": [
     "Pull-only delivery",
     "Process reachability does not prove model readiness",

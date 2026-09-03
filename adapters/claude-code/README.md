@@ -2,11 +2,7 @@
 
 Status: early integration, not yet conformance-verified.
 
-<<<<<<< HEAD
-Start Autumn Bus on the address used by `mcp.json.example`, then create a scope.
-=======
 Start Autumn Bus, then create a scope. The MCP configuration launches the stdio bridge inside the managed agent execution.
->>>>>>> 3d06c98 (Add stdio MCP bridge (#68))
 
 Run Claude Code through the managed agent command:
 

@@ -56,11 +56,6 @@ func (runtime *isolatedRuntime) close() error {
 }
 
 func run() error {
-<<<<<<< HEAD:cmd/autumn-bus-conformance/main.go
-	flags := flag.NewFlagSet("autumn-bus-conformance", flag.ContinueOnError)
-	address := flags.String("address", os.Getenv("AUTUMN_BUS_ADDRESS"), "Autumn Bus address")
-	adminTokenEnv := flags.String("admin-token-env", "AUTUMN_BUS_ADMIN_TOKEN", "environment variable containing the admin token")
-=======
 	flags := flag.NewFlagSet("autumn-bus-conformance", flag.ContinueOnError)
 	profile := flags.String("profile", conformance.ProfileLocalRuntime, "conformance profile: local-runtime or mcp-adapter")
 	address := flags.String("address", os.Getenv("AUTUMN_BUS_ADDRESS"), "Autumn Bus address")
@@ -69,7 +64,6 @@ func run() error {
 	adapterCommand := flags.String("adapter-command", "", "executable for the mcp-adapter profile")
 	var adapterArgs stringList
 	flags.Var(&adapterArgs, "adapter-arg", "adapter argument, repeatable")
->>>>>>> 3e6c974 (Add MCP adapter conformance profile (#70)):cmd/autumn-bus-conformance/main.go
 	timeout := flags.Duration("timeout", 2*time.Minute, "conformance timeout")
 	format := flags.String("format", "json", "output format: json or text")
 	if err := flags.Parse(os.Args[1:]); err != nil {

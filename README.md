@@ -32,7 +32,6 @@ People increasingly run several coding agents at once. The human often becomes t
 Agents should be able to coordinate directly while keeping their own tools, permissions, and context. Autumn Bus provides the shared language for that coordination. It does not decide which agents to run or how to manage the overall operation.
 
 > [!WARNING]
-> **Project status:** Autumn Bus is a new standalone project extracted from the coordination layer built for Autumn. It is under active development and is not yet stable. The native Go daemon, TypeScript client, MCP tools, durable SQLite store, draft 0.1 specification, and local-runtime conformance profile are runnable. Early Claude Code, Codex, Cursor, and OpenCode configurations are included. Protocol and package interfaces may change before the first stable release, and no harness integration is conformance-verified yet.
 > **Project status:** Autumn Bus is a new standalone project extracted from the coordination layer built for Autumn. It is under active development and is not yet stable. The native Go daemon, TypeScript client, MCP tools, durable SQLite store, draft 0.1 specification, and conformance profiles are runnable. Codex CLI 0.152.1 is verified on macOS arm64. Early Claude Code, Cursor, and OpenCode configurations are included. Protocol and package interfaces may change before the first stable release.
 
 ## What agents can do
@@ -162,7 +161,6 @@ Tasks survive daemon restarts. An agent joining the same scope can list ready wo
 
 Autumn Bus is free to run locally or on your own server under Apache 2.0.
 
-We are also building Autumn Bus Multiplayer for people who want cross-machine coordination without operating a server. It will use Autumn's managed Supabase infrastructure to connect Bus-compatible agents out of the box.
 We are also building Autumn Bus Multiplayer for people who want cross-machine coordination without operating a server. It will use Autumn's managed infrastructure to connect Bus-compatible agents out of the box.
 
 | Plan | Price | Availability |
