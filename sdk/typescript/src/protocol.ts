@@ -397,8 +397,6 @@ export interface ArchivedOutputValue {
 
 export interface ScopeArchive {
   format: 'autumn-bus.scope'
-  version: 1
-  format: 'autumn-bus.scope'
   version: 2
   exportedAt: string
   scope: ArchivedScope

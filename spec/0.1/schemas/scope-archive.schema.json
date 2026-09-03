@@ -1,15 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/Adi103-ETAI/autumn-bus/spec/0.1/schemas/scope-archive.schema.json",
-  "title": "Autumn Bus portable scope archive 1",
-  "$id": "https://github.com/Adi103-ETAI/autumn-bus/spec/0.1/schemas/scope-archive.schema.json",
-  "title": "Autumn Bus portable scope archive 2",
+  "title": "Autumn Bus portable scope archive",
   "type": "object",
   "additionalProperties": false,
   "required": ["format", "version", "exportedAt", "scope", "agents", "links", "messages", "tasks", "taskProgress", "escalations", "agentCardPublications", "a2aTasks", "a2aMessages", "outputStreams", "outputValues"],
   "properties": {
-    "format": { "const": "autumn-bus.scope" },
-    "version": { "const": 1 },
     "format": { "const": "autumn-bus.scope" },
     "version": { "const": 2 },
     "exportedAt": { "$ref": "#/$defs/instant" },

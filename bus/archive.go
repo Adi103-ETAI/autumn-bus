@@ -15,8 +15,6 @@ import (
 
 const (
 	ScopeArchiveFormat  = "autumn-bus.scope"
-	ScopeArchiveVersion = 1
-	ScopeArchiveFormat  = "autumn-bus.scope"
 	ScopeArchiveVersion = 2
 )
 

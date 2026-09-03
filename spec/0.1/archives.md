@@ -33,11 +33,9 @@ Import is atomic. Retrying the exact same archive returns the existing scope wit
 
 The reference runtime retains the metadata-only import marker so retries remain idempotent after normal event retention.
 
-The initial archive identifier is:
+The archive identifier is:
 
 ```text
-format: autumn-bus.scope
-version: 1
 format: autumn-bus.scope
 version: 2
 ```
