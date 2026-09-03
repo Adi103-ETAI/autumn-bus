@@ -6,6 +6,10 @@ bearer_token_env_var = "AUTUMN_BUS_AGENT_TOKEN"
 [mcp_servers.autumn_bus]
 command = "autumn-bus"
 args = ["mcp", "stdio"]
+<<<<<<< HEAD
 >>>>>>> 3d06c98 (Add stdio MCP bridge (#68))
+=======
+env_vars = ["AUTUMN_BUS_ADDRESS", "AUTUMN_BUS_AGENT_TOKEN"]
+>>>>>>> a8c2793 (Fix Codex MCP credential forwarding (#71))
 required = true
 default_tools_approval_mode = "prompt"

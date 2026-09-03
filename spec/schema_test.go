@@ -5,11 +5,26 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
+
+func TestCodexAdapterForwardsOnlyExecutionCredentials(t *testing.T) {
+	configuration, err := os.ReadFile(filepath.Join("..", "adapters", "codex", "config.toml.example"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(configuration)
+	if !strings.Contains(text, `env_vars = ["AUTUMN_BUS_ADDRESS", "AUTUMN_BUS_AGENT_TOKEN"]`) {
+		t.Fatal("Codex adapter must forward the Bus address and execution token")
+	}
+	if strings.Contains(text, "AUTUMN_BUS_SCOPE_TOKEN") || strings.Contains(text, "AUTUMN_BUS_ADMIN_TOKEN") {
+		t.Fatal("Codex adapter must not forward scope or admin credentials")
+	}
+}
 
 func readJSON(t *testing.T, path string) any {
 	t.Helper()

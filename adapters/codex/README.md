@@ -23,4 +23,10 @@ autumn-bus agent run \
 
 The wrapper gives Codex only its execution-scoped agent token. It owns heartbeat and marks the execution offline when Codex exits. It does not infer model readiness from the process alone.
 
+<<<<<<< HEAD
 The example asks before each Autumn Bus tool call. Change the approval mode only when the agent's permissions and scope are appropriate for unattended Bus actions.
+=======
+Codex filters the environment inherited by stdio MCP servers. Keep the `env_vars` list from the example so the bridge receives the Bus address and execution token. Do not add the scope or admin credential to that list.
+
+The example asks before each Autumn Bus tool call. Change the approval mode only when the agent's permissions and scope are appropriate for unattended Bus actions.
+>>>>>>> a8c2793 (Fix Codex MCP credential forwarding (#71))
