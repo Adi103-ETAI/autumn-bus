@@ -621,8 +621,6 @@ func yesNo(value bool) string {
 	return "no"
 }
 
-func taskScopeClient(address string) (bus.Client, error) {
-	token := os.Getenv("AUTUMN_BUS_SCOPE_TOKEN")
 func scopeClient(address string) (bus.Client, error) {
 	token := os.Getenv("AUTUMN_BUS_SCOPE_TOKEN")
 	if token == "" {

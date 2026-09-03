@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
-	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 const bearerSchemeName a2a.SecuritySchemeName = "bearer"

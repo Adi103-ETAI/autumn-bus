@@ -5,8 +5,6 @@ import {
   BusError,
   AutumnBusAgentSession,
   AutumnBusClient,
-  AutumnBusAgentSession,
-  AutumnBusClient,
   AutumnBusScopeClient,
   newIdempotencyKey,
   pollInbox,
