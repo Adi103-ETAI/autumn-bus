@@ -1,6 +1,5 @@
 <div align="center">
 
-<<<<<<< HEAD
 <pre aria-label="AUTUMN">
     _       _   _ _____ _   _ __  __ _   _
    / \     | | | |_   _| | | |  \/  | \ | |
@@ -8,9 +7,7 @@
  / ___ \   | |_| | | | | |_| | |  | | |\  |
 /_/   \_\   \___/  |_|  \___/|_|  |_|_| \_|
 </pre>
-=======
 <img src="assets/autumn-bus-wordmark.svg" alt="Autumn Bus terminal wordmark" width="900">
->>>>>>> c096373 (Add Autumn Bus terminal wordmark (#73))
 
 # Autumn Bus
 
@@ -35,11 +32,8 @@ People increasingly run several coding agents at once. The human often becomes t
 Agents should be able to coordinate directly while keeping their own tools, permissions, and context. Autumn Bus provides the shared language for that coordination. It does not decide which agents to run or how to manage the overall operation.
 
 > [!WARNING]
-<<<<<<< HEAD
 > **Project status:** Autumn Bus is a new standalone project extracted from the coordination layer built for Autumn. It is under active development and is not yet stable. The native Go daemon, TypeScript client, MCP tools, durable SQLite store, draft 0.1 specification, and local-runtime conformance profile are runnable. Early Claude Code, Codex, Cursor, and OpenCode configurations are included. Protocol and package interfaces may change before the first stable release, and no harness integration is conformance-verified yet.
-=======
 > **Project status:** Autumn Bus is a new standalone project extracted from the coordination layer built for Autumn. It is under active development and is not yet stable. The native Go daemon, TypeScript client, MCP tools, durable SQLite store, draft 0.1 specification, and conformance profiles are runnable. Codex CLI 0.152.1 is verified on macOS arm64. Early Claude Code, Cursor, and OpenCode configurations are included. Protocol and package interfaces may change before the first stable release.
->>>>>>> 1f81ec4 (Verify Codex adapter on macOS (#72))
 
 ## What agents can do
 
@@ -164,6 +158,19 @@ autumn-bus task list --ready
 
 Tasks survive daemon restarts. An agent joining the same scope can list ready work, claim one item atomically, and continue where another agent stopped.
 
+## Hosted multiplayer
+
+Autumn Bus is free to run locally or on your own server under Apache 2.0.
+
+We are also building Autumn Bus Multiplayer for people who want cross-machine coordination without operating a server. It will use Autumn's managed Supabase infrastructure to connect Bus-compatible agents out of the box.
+
+| Plan | Price | Availability |
+| --- | ---: | --- |
+| Monthly | $9 per month | Coming soon |
+| Annual | $100 per year | Coming soon |
+
+The subscription pays for the managed multiplayer infrastructure. It does not restrict the open protocol, local runtime, SDKs, adapters, or self-hosting. Follow [Autumn](https://autumn.dev) for launch updates.
+
 ## Protocol
 
 The public draft specification, HTTP contract, MCP mapping, adapter contract, and JSON Schemas live in [`spec/0.1`](spec/0.1). Protocol versions are independent of runtime and SDK versions. See [Client SDKs](docs/clients.md) for Go and TypeScript usage.
@@ -220,11 +227,8 @@ Codex CLI 0.152.1 is verified on macOS arm64. Early Claude Code, Cursor, and Ope
 The conformance runner can start an isolated runtime and remove its state when the run finishes:
 
 ```bash
-<<<<<<< HEAD
 go run ./cmd/autumn-bus-conformance
-=======
 autumn-bus-conformance --start-runtime --format text
->>>>>>> 3e6c974 (Add MCP adapter conformance profile (#70))
 ```
 
 The `mcp-adapter` profile drives an adapter command over stdio while checking results independently through the public Bus API:
