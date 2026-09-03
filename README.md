@@ -31,7 +31,7 @@ People increasingly run several coding agents at once. The human often becomes t
 Agents should be able to coordinate directly while keeping their own tools, permissions, and context. Autumn Bus provides the shared language for that coordination. It does not decide which agents to run or how to manage the overall operation.
 
 > [!WARNING]
-> **Project status:** Autumn Bus is a new standalone project extracted from the coordination layer built for Autumn. It is under active development and is not yet stable. The native Go daemon, TypeScript client, MCP tools, durable SQLite store, draft 0.1 specification, and local-runtime conformance profile are runnable. Early Claude Code, Codex, Cursor, and OpenCode configurations are included. Protocol and package interfaces may change before the first stable release, and no harness integration is conformance-verified yet.
+> **Project status:** Autumn Bus is a new standalone project extracted from the coordination layer built for Autumn. It is under active development and is not yet stable. The native Go daemon, TypeScript client, MCP tools, durable SQLite store, draft 0.1 specification, and conformance profiles are runnable. Codex CLI 0.152.1 is verified on macOS arm64. Early Claude Code, Cursor, and OpenCode configurations are included. Protocol and package interfaces may change before the first stable release.
 
 ## What agents can do
 
@@ -143,7 +143,31 @@ In another terminal, create a collaboration scope:
 go run ./cmd/autumn-bus scope create my-project
 ```
 
-The command returns a scope token. A harness uses that token once to register an execution and receives a separate, execution-bound agent token. The TypeScript client lives in `sdk/typescript`. MCP clients connect to the daemon's `/mcp` endpoint with the agent token as a Bearer credential.
+The command returns a scope token. A harness uses that token once to register an execution and receives a separate, execution-bound agent token. The TypeScript client lives in `sdk/typescript`. MCP clients can connect to the daemon's `/mcp` endpoint or spawn `autumn-bus mcp stdio` inside a managed execution.
+
+Use the scope as a persistent project todo board:
+
+```bash
+export AUTUMN_BUS_SCOPE_TOKEN=<scope-token>
+autumn-bus task add --title "Implement checkout retries"
+autumn-bus task add --title "Review checkout retries" --depends-on <task-id>
+autumn-bus task list --ready
+```
+
+Tasks survive daemon restarts. An agent joining the same scope can list ready work, claim one item atomically, and continue where another agent stopped.
+
+## Hosted multiplayer
+
+Autumn Bus is free to run locally or on your own server under Apache 2.0.
+
+We are also building Autumn Bus Multiplayer for people who want cross-machine coordination without operating a server. It will use Autumn's managed infrastructure to connect Bus-compatible agents out of the box.
+
+| Plan | Price | Availability |
+| --- | ---: | --- |
+| Monthly | $9 per month | Coming soon |
+| Annual | $100 per year | Coming soon |
+
+The subscription pays for the managed multiplayer infrastructure. It does not restrict the open protocol, local runtime, SDKs, adapters, or self-hosting. Follow [Autumn](https://autumn.dev) for launch updates.
 
 ## Protocol
 
@@ -156,9 +180,10 @@ The public draft specification, HTTP contract, MCP mapping, adapter contract, an
 | Presence | Existence, readiness, reachability, and lifecycle remain separate facts |
 | Messaging | Durable notifications, requests, responses, inboxes, and receipts |
 | Delegation | One agent can request bounded work from another agent |
-| Shared tasks | Agents can create, claim, release, complete, and depend on tasks |
+| Shared tasks | People and agents can add work; agents can claim, report progress, release, complete, and depend on tasks |
 | Context | Agents exchange explicit, bounded context instead of a global transcript |
 | Human escalation | Agents can request input or permission without inventing authority |
+| Storage controls | Scope owners can inspect growth and prune old terminal records without dropping active obligations |
 
 ### Delivery and replies
 
@@ -195,26 +220,28 @@ If a harness cannot safely wake itself or prove that it is idle, it can implemen
 
 ## Compatibility
 
-Early Claude Code, Codex, Cursor, and OpenCode configurations live in `adapters/`. They are not yet conformance-verified and are not compatibility claims. The Omarchy service manifest is included as early integration work, but it has not been submitted to or validated by the Omarchy marketplace. The [compatibility registry](compatibility/README.md) starts empty and will list only adapters with current passing evidence.
+Codex CLI 0.152.1 is verified on macOS arm64. Early Claude Code, Cursor, and OpenCode configurations live in `adapters/`, but are not compatibility claims. The Omarchy service manifest is included as early integration work, but it has not been submitted to or validated by the Omarchy marketplace. The [compatibility registry](compatibility/README.md) lists only adapters with current passing evidence.
 
-The local-runtime conformance runner uses only the public HTTP and MCP interfaces. Against a test daemon, run:
+The conformance runner can start an isolated runtime and remove its state when the run finishes:
 
 ```bash
 go run ./cmd/autumn-bus-conformance
+autumn-bus-conformance --start-runtime --format text
 ```
 
-Use `--format text` for concise terminal output. JSON is the default and failed runs exit nonzero with the failed check recorded.
+The `mcp-adapter` profile drives an adapter command over stdio while checking results independently through the public Bus API:
 
-It covers authority, registration, discovery, durable delivery, acknowledgements, idempotency, replies, expiry, task dependencies, release and recovery, escalation, isolation, the MCP tool surface, and lifecycle cleanup. Future adapter profiles will also cover:
+```bash
+autumn-bus-conformance \
+  --profile mcp-adapter \
+  --start-runtime \
+  --adapter-command autumn-bus \
+  --adapter-arg mcp \
+  --adapter-arg stdio \
+  --format text
+```
 
-- identity, registration, and execution replacement;
-- discovery, capabilities, presence, and reachability;
-- durable messaging, receipts, retries, expiry, and reply linking;
-- task claiming, completion, and dependencies;
-- bounded context exchange;
-- human escalation and permission boundaries;
-- lifecycle reporting and cleanup;
-- every optional wake or completion behavior an adapter declares.
+JSON is the default. Failed runs exit nonzero with the failed check recorded. An adapter command passing this profile does not by itself verify a harness. Harness compatibility also requires a released harness to pass the [verification runbook](compatibility/RUNBOOK.md). See [conformance profiles](docs/conformance.md) for details.
 
 ## Security and trust
 

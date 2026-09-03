@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -25,10 +26,23 @@ type testAgents struct {
 	reviewerToken string
 }
 
+func sqliteStore(t testing.TB, runtime *Runtime) *Store {
+	t.Helper()
+	store, ok := runtime.store.(*Store)
+	if !ok {
+		t.Fatalf("test requires SQLite storage, got %s", runtime.store.Backend())
+	}
+	return store
+}
+
 func setupAgents(t *testing.T, source string) testAgents {
+	return setupAgentsWithOptions(t, source, RuntimeOptions{})
+}
+
+func setupAgentsWithOptions(t *testing.T, source string, options RuntimeOptions) testAgents {
 	t.Helper()
 	ctx := context.Background()
-	runtimeValue, err := Open(source)
+	runtimeValue, err := OpenWithOptions(source, options)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,6 +72,19 @@ func requireCode(t *testing.T, err error, code ErrorCode) {
 	}
 }
 
+func TestA2APrincipalLimitsLoadFromEnvironment(t *testing.T) {
+	t.Setenv("AUTUMN_BUS_A2A_PRINCIPAL_MESSAGE_LIMIT", "12")
+	t.Setenv("AUTUMN_BUS_A2A_PRINCIPAL_BYTE_LIMIT", "4096")
+	options, err := runtimeOptionsFromEnvironment()
+	if err != nil || options.A2APrincipalMessageLimit != 12 || options.A2APrincipalByteLimit != 4096 {
+		t.Fatalf("unexpected runtime options: %#v, %v", options, err)
+	}
+	t.Setenv("AUTUMN_BUS_A2A_PRINCIPAL_MESSAGE_LIMIT", "invalid")
+	if _, err := runtimeOptionsFromEnvironment(); err == nil {
+		t.Fatal("invalid A2A limit was accepted")
+	}
+}
+
 func TestDurableRequestRedeliveryAcknowledgementAndReply(t *testing.T) {
 	agents := setupAgents(t, ":memory:")
 	defer agents.runtime.Close()
@@ -66,7 +93,7 @@ func TestDurableRequestRedeliveryAcknowledgementAndReply(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reservation, err := agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10)
+	reservation, err := agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10, 0)
 	if err != nil || reservation == nil || len(reservation.Messages) != 1 {
 		t.Fatalf("unexpected reservation: %#v, %v", reservation, err)
 	}
@@ -74,7 +101,7 @@ func TestDurableRequestRedeliveryAcknowledgementAndReply(t *testing.T) {
 	if err != nil || first[0].State != DeliveryDelivered {
 		t.Fatalf("unexpected delivery: %#v, %v", first, err)
 	}
-	redelivery, err := agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10)
+	redelivery, err := agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10, 0)
 	if err != nil || redelivery == nil || redelivery.Messages[0].ID != receipt.MessageID {
 		t.Fatalf("unexpected redelivery: %#v, %v", redelivery, err)
 	}
@@ -117,7 +144,7 @@ func TestMessageIdempotencyRejectsPayloadChanges(t *testing.T) {
 	input.Body = "Review something else"
 	_, err = agents.runtime.SendMessage(ctx, agents.plannerToken, input)
 	requireCode(t, err, CodeConflict)
-	reservation, err := agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10)
+	reservation, err := agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10, 0)
 	if err != nil || reservation == nil || len(reservation.Messages) != 1 {
 		t.Fatalf("idempotent retry created duplicate work: %#v, %v", reservation, err)
 	}
@@ -146,7 +173,7 @@ func TestResponsesRequireDeliveryButMayFinishAfterExpiry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reservation, err := agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10)
+	reservation, err := agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10, 0)
 	if err != nil || reservation == nil {
 		t.Fatalf("unexpected reservation: %#v, %v", reservation, err)
 	}
@@ -176,7 +203,7 @@ func TestExpiredReservationCannotDeliverOrResurrectMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reservation, err := agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10)
+	reservation, err := agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10, 0)
 	if err != nil || reservation == nil {
 		t.Fatalf("unexpected reservation: %#v, %v", reservation, err)
 	}
@@ -194,7 +221,7 @@ func TestExpiredReservationCannotDeliverOrResurrectMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reservation, err = agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10)
+	reservation, err = agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10, 0)
 	if err != nil || reservation == nil {
 		t.Fatalf("unexpected second reservation: %#v, %v", reservation, err)
 	}
@@ -213,7 +240,7 @@ func TestExpiredReservationCannotDeliverOrResurrectMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reservation, err = agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10)
+	reservation, err = agents.runtime.ReserveInbox(ctx, agents.reviewerToken, 10, 0)
 	if err != nil || reservation == nil {
 		t.Fatalf("unexpected third reservation: %#v, %v", reservation, err)
 	}
@@ -235,11 +262,11 @@ func TestTaskClaimsRespectDependenciesAndOwnership(t *testing.T) {
 	agents := setupAgents(t, ":memory:")
 	defer agents.runtime.Close()
 	ctx := context.Background()
-	first, err := agents.runtime.AddTask(ctx, agents.plannerToken, AddTaskInput{Description: "Implement"})
+	first, err := agents.runtime.AddTask(ctx, agents.plannerToken, AddTaskInput{Title: "Implement"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := agents.runtime.AddTask(ctx, agents.plannerToken, AddTaskInput{Description: "Review", Dependencies: []string{first.ID}})
+	second, err := agents.runtime.AddTask(ctx, agents.plannerToken, AddTaskInput{Title: "Review", Dependencies: []string{first.ID}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,11 +286,54 @@ func TestTaskClaimsRespectDependenciesAndOwnership(t *testing.T) {
 	}
 }
 
+func TestScopeTaskBoardListsOnlyReadyWork(t *testing.T) {
+	agents := setupAgents(t, ":memory:")
+	defer agents.runtime.Close()
+	ctx := context.Background()
+	first, err := agents.runtime.AddTask(ctx, agents.scope.ScopeToken, AddTaskInput{
+		Title: "Implement checkout retries", Description: "Keep idempotency keys across retries.",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.CreatedBy != nil || !first.Ready {
+		t.Fatalf("unexpected scope-created task: %#v", first)
+	}
+	second, err := agents.runtime.AddTask(ctx, agents.plannerToken, AddTaskInput{
+		Title: "Review checkout retries", Dependencies: []string{first.ID},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.CreatedBy == nil || *second.CreatedBy != "planner" || second.Ready {
+		t.Fatalf("unexpected agent-created task: %#v", second)
+	}
+	ready, err := agents.runtime.ListTasks(ctx, agents.scope.ScopeToken, true)
+	if err != nil || len(ready) != 1 || ready[0].ID != first.ID {
+		t.Fatalf("unexpected ready tasks: %#v, %v", ready, err)
+	}
+	if _, err := agents.runtime.ClaimTask(ctx, agents.scope.ScopeToken, first.ID); err == nil {
+		t.Fatal("scope authority claimed a task")
+	} else {
+		requireCode(t, err, CodeUnauthenticated)
+	}
+	if _, err := agents.runtime.ClaimTask(ctx, agents.reviewerToken, first.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := agents.runtime.CompleteTask(ctx, agents.reviewerToken, first.ID, "done"); err != nil {
+		t.Fatal(err)
+	}
+	ready, err = agents.runtime.ListTasks(ctx, agents.plannerToken, true)
+	if err != nil || len(ready) != 1 || ready[0].ID != second.ID {
+		t.Fatalf("dependent task did not become ready: %#v, %v", ready, err)
+	}
+}
+
 func TestTaskReleaseAndExecutionReplacementRecoverClaims(t *testing.T) {
 	agents := setupAgents(t, ":memory:")
 	defer agents.runtime.Close()
 	ctx := context.Background()
-	task, err := agents.runtime.AddTask(ctx, agents.plannerToken, AddTaskInput{Description: "Review"})
+	task, err := agents.runtime.AddTask(ctx, agents.plannerToken, AddTaskInput{Title: "Review"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -311,6 +381,59 @@ func TestOfflineHeartbeatCannotClaimReadiness(t *testing.T) {
 		Lifecycle: LifecycleOffline, Ready: true,
 	})
 	requireCode(t, err, CodeInvalidArgument)
+}
+
+func TestHealthSeparatesLivenessFromStorageReadiness(t *testing.T) {
+	runtimeValue, err := Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(runtimeValue, ServerOptions{StartedAt: "2026-09-03T00:00:00Z"})
+
+	request := httptest.NewRequest(http.MethodGet, "/health/ready", nil)
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("ready health returned HTTP %d", response.Code)
+	}
+	var ready Health
+	if err := json.Unmarshal(response.Body.Bytes(), &ready); err != nil {
+		t.Fatal(err)
+	}
+	if ready.Status != "ready" || ready.Storage.Backend != StorageBackendSQLite || ready.Storage.Status != StorageAvailable {
+		t.Fatalf("unexpected ready health: %#v", ready)
+	}
+
+	if err := runtimeValue.Close(); err != nil {
+		t.Fatal(err)
+	}
+	request = httptest.NewRequest(http.MethodGet, "/health", nil)
+	response = httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+	if response.Code != http.StatusServiceUnavailable {
+		t.Fatalf("unready health returned HTTP %d", response.Code)
+	}
+	var unready Health
+	if err := json.Unmarshal(response.Body.Bytes(), &unready); err != nil {
+		t.Fatal(err)
+	}
+	if unready.Status != "not_ready" || unready.Storage.Status != StorageUnavailable {
+		t.Fatalf("unexpected unready health: %#v", unready)
+	}
+
+	request = httptest.NewRequest(http.MethodGet, "/health/live", nil)
+	response = httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("liveness returned HTTP %d", response.Code)
+	}
+	var live Liveness
+	if err := json.Unmarshal(response.Body.Bytes(), &live); err != nil {
+		t.Fatal(err)
+	}
+	if live.Status != "alive" || live.StartedAt == "" {
+		t.Fatalf("unexpected liveness: %#v", live)
+	}
 }
 
 func TestShutdownRequiresAdminAuthority(t *testing.T) {
@@ -401,7 +524,7 @@ func TestSQLitePreservesAcceptedWorkAcrossRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer restarted.Close()
-	reservation, err := restarted.ReserveInbox(ctx, agents.reviewerToken, 10)
+	reservation, err := restarted.ReserveInbox(ctx, agents.reviewerToken, 10, 0)
 	if err != nil || reservation == nil || reservation.Messages[0].ID != receipt.MessageID {
 		t.Fatalf("message did not survive restart: %#v, %v", reservation, err)
 	}
@@ -421,7 +544,7 @@ func TestOlderSchemaFailsBeforeServingWork(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, err = Open(path)
-	if err == nil || !strings.Contains(err.Error(), "database schema 1 does not match 2") {
+	if err == nil || !strings.Contains(err.Error(), "database schema 1 does not match 9") {
 		t.Fatalf("older schema did not fail clearly: %v", err)
 	}
 }
@@ -614,6 +737,12 @@ func TestHTTPAndMCPUseTheSameAgentAuthority(t *testing.T) {
 	plannerClient := Client{Address: address, Token: agents.plannerToken}
 	reviewerClient := Client{Address: address, Token: agents.reviewerToken}
 	ownerClient := Client{Address: address, Token: agents.scope.ScopeToken}
+	outputStream, err := ownerClient.CreateOutputStream(ctx, CreateOutputStreamInput{
+		Name: "mcp-output", PublisherAgentIDs: []string{agents.planner.AgentID},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	escalation, err := plannerClient.AskHuman(ctx, AskHumanInput{Question: "Proceed?"})
 	if err != nil {
 		t.Fatal(err)
@@ -631,16 +760,23 @@ func TestHTTPAndMCPUseTheSameAgentAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reservation, err := reviewerClient.ReserveInbox(ctx, 10)
+	reservation, err := reviewerClient.ReserveInbox(ctx, 10, 0)
 	if err != nil || reservation == nil {
 		t.Fatalf("unexpected HTTP reservation: %#v, %v", reservation, err)
 	}
 	if err := reviewerClient.ReleaseInbox(ctx, reservation.ID); err != nil {
 		t.Fatal(err)
 	}
-	reservation, err = reviewerClient.ReserveInbox(ctx, 10)
+	reservation, err = reviewerClient.ReserveInbox(ctx, 10, 0)
 	if err != nil || reservation == nil || reservation.Messages[0].ID != receipt.MessageID {
 		t.Fatalf("released inbox was not available again: %#v, %v", reservation, err)
+	}
+	delivered, err := reviewerClient.CommitInbox(ctx, reservation.ID)
+	if err != nil || len(delivered) != 1 {
+		t.Fatalf("unexpected committed inbox: %#v, %v", delivered, err)
+	}
+	if _, err := reviewerClient.AcknowledgeMessages(ctx, []string{receipt.MessageID}); err != nil {
+		t.Fatal(err)
 	}
 	httpClient := &http.Client{Transport: bearerTransport{token: agents.plannerToken, base: http.DefaultTransport}, Timeout: 10 * time.Second}
 	mcpClient := mcp.NewClient(&mcp.Implementation{Name: "test", Version: "1"}, nil)
@@ -650,7 +786,7 @@ func TestHTTPAndMCPUseTheSameAgentAuthority(t *testing.T) {
 	}
 	defer session.Close()
 	tools, err := session.ListTools(ctx, nil)
-	if err != nil || len(tools.Tools) != 11 {
+	if err != nil || len(tools.Tools) != 14 {
 		t.Fatalf("unexpected tools: %d, %v", len(tools.Tools), err)
 	}
 	result, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "list_peers", Arguments: map[string]any{}})
@@ -674,6 +810,49 @@ func TestHTTPAndMCPUseTheSameAgentAuthority(t *testing.T) {
 	}
 	if _, ok := structured["tasks"].([]any); !ok {
 		t.Fatalf("MCP list_tasks must return a tasks array: %#v", result.StructuredContent)
+	}
+	result, err = session.CallTool(ctx, &mcp.CallToolParams{Name: "publish_output", Arguments: map[string]any{
+		"streamId": outputStream.ID, "contentType": "application/json", "value": map[string]any{"status": "ready"},
+	}})
+	if err != nil || result.IsError {
+		t.Fatalf("MCP publish_output failed: %#v, %v", result, err)
+	}
+	latest, err := ownerClient.LatestOutput(ctx, outputStream.ID)
+	if err != nil || latest == nil || latest.Sequence != 1 {
+		t.Fatalf("MCP output was not stored: %#v, %v", latest, err)
+	}
+	type callResult struct {
+		result *mcp.CallToolResult
+		err    error
+	}
+	waiting := make(chan callResult, 1)
+	go func() {
+		result, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "check_inbox", Arguments: map[string]any{"waitMs": 2000}})
+		waiting <- callResult{result: result, err: err}
+	}()
+	time.Sleep(50 * time.Millisecond)
+	wakeReceipt, err := reviewerClient.SendMessage(ctx, SendMessageInput{To: "planner", Body: "Wake MCP"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case call := <-waiting:
+		if call.err != nil || call.result.IsError {
+			t.Fatalf("MCP check_inbox failed: %#v, %v", call.result, call.err)
+		}
+		structured, ok := call.result.StructuredContent.(map[string]any)
+		if !ok {
+			t.Fatalf("MCP check_inbox structured content must be an object: %#v", call.result.StructuredContent)
+		}
+		messages, ok := structured["messages"].([]any)
+		if !ok || len(messages) != 1 {
+			t.Fatalf("MCP check_inbox must return one message: %#v", call.result.StructuredContent)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+	if _, err := plannerClient.AcknowledgeMessages(ctx, []string{wakeReceipt.MessageID}); err != nil {
+		t.Fatal(err)
 	}
 }
 

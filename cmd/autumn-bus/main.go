@@ -6,9 +6,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -24,7 +27,65 @@ Usage:
   autumn-bus status
   autumn-bus doctor [--json]
   autumn-bus scope create [scope-id]
+  autumn-bus message receipt <message-id> [--json] [--address <addr>]
+  autumn-bus agent list [--json] [--address <addr>]
   autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
+  autumn-bus demo
+  autumn-bus version
+  autumn-bus start [--port <port>]
+  autumn-bus stop
+  autumn-bus status
+  autumn-bus doctor [--json]
+  autumn-bus scope create [scope-id]
+  autumn-bus message receipt <message-id> [--json] [--address <addr>]
+  autumn-bus agent list [--json] [--address <addr>]
+  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
+  autumn-bus mcp stdio
+  autumn-bus demo
+  autumn-bus version
+  autumn-bus start [--port <port>]
+  autumn-bus stop
+  autumn-bus status
+  autumn-bus doctor [--json]
+  autumn-bus scope create [scope-id]
+  autumn-bus message receipt <message-id> [--json] [--address <addr>]
+  autumn-bus agent list [--json] [--address <addr>]
+  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
+	  autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
+	  autumn-bus task list [--ready] [--json] [--address <addr>]
+  autumn-bus mcp stdio
+  autumn-bus demo
+  autumn-bus version
+  autumn-bus start [--port <port>]
+  autumn-bus stop
+  autumn-bus status
+  autumn-bus doctor [--json]
+  autumn-bus scope create [scope-id]
+  autumn-bus scope storage [--json] [--address <addr>]
+  autumn-bus scope prune --before <timestamp> [--yes] [--json] [--address <addr>]
+  autumn-bus message receipt <message-id> [--json] [--address <addr>]
+  autumn-bus agent list [--json] [--address <addr>]
+  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
+  autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
+  autumn-bus task list [--ready] [--json] [--address <addr>]
+  autumn-bus mcp stdio
+  autumn-bus demo
+  autumn-bus version
+  autumn-bus start [--port <port>]
+  autumn-bus stop
+  autumn-bus status
+  autumn-bus doctor [--json]
+  autumn-bus scope create [scope-id]
+  autumn-bus scope export --id <scope-id> --output <path> [--address <addr>]
+  autumn-bus scope import --input <path> [--address <addr>]
+  autumn-bus scope storage [--json] [--address <addr>]
+  autumn-bus scope prune --before <timestamp> [--yes] [--json] [--address <addr>]
+  autumn-bus message receipt <message-id> [--json] [--address <addr>]
+  autumn-bus agent list [--json] [--address <addr>]
+  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
+  autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
+  autumn-bus task list [--ready] [--json] [--address <addr>]
+  autumn-bus mcp stdio
   autumn-bus demo
   autumn-bus version
 `
@@ -106,6 +167,8 @@ type diagnosticReport struct {
 	RuntimeDirectory string `json:"runtimeDirectory"`
 	DatabaseExists   bool   `json:"databaseExists"`
 	RunFileExists    bool   `json:"runFileExists"`
+	StorageBackend   string `json:"storageBackend,omitempty"`
+	StorageStatus    string `json:"storageStatus,omitempty"`
 	Problem          string `json:"problem,omitempty"`
 }
 
@@ -143,8 +206,14 @@ func doctor(args []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			health, healthErr := (bus.Client{Address: run.Address}).Health(ctx)
 			cancel()
+			report.StorageBackend = string(health.Storage.Backend)
+			report.StorageStatus = health.Storage.Status
 			if healthErr != nil {
-				report.Problem = healthErr.Error()
+				if health.Storage.Status == bus.StorageUnavailable {
+					report.Problem = "Storage backend is unavailable"
+				} else {
+					report.Problem = healthErr.Error()
+				}
 			} else if health.ProtocolVersion != run.ProtocolVersion {
 				report.Problem = "run file and daemon protocol versions differ"
 			} else {
@@ -174,6 +243,9 @@ func doctor(args []string) error {
 		if report.Address != "" {
 			fmt.Printf("Endpoint: %s, pid %d\n", report.Address, report.PID)
 		}
+		if report.StorageBackend != "" {
+			fmt.Printf("Storage: %s (%s)\n", report.StorageBackend, report.StorageStatus)
+		}
 		if report.Problem != "" {
 			fmt.Printf("Problem: %s\n", report.Problem)
 		}
@@ -201,6 +273,7 @@ func status() error {
 	}
 	fmt.Printf("Autumn Bus is %s at %s\n", health.Status, run.Address)
 	fmt.Printf("Runtime %s, protocol %s, pid %d\n", health.RuntimeVersion, health.ProtocolVersion, run.PID)
+	fmt.Printf("Storage %s (%s)\n", health.Storage.Backend, health.Storage.Status)
 	return nil
 }
 
@@ -224,6 +297,538 @@ func createScope(id string) error {
 		return err
 	}
 	fmt.Println(string(encoded))
+	return nil
+}
+
+// resolveBusAddress returns the daemon address to talk to for a CLI subcommand
+// that uses an agent credential. Precedence: explicit flag, then the
+// AUTUMN_BUS_ADDRESS environment variable, then the daemon run file.
+func adminClient(explicitAddress string) (bus.Client, error) {
+	if token := os.Getenv("AUTUMN_BUS_ADMIN_TOKEN"); token != "" {
+		address, err := resolveBusAddress(explicitAddress)
+		if err != nil {
+			return bus.Client{}, err
+		}
+		return bus.Client{Address: address, Token: token, HTTP: &http.Client{Timeout: 2 * time.Minute}}, nil
+	}
+	paths, err := bus.DefaultDaemonPaths()
+	if err != nil {
+		return bus.Client{}, err
+	}
+	run, err := bus.ReadRunFile(paths.RunFile)
+	if err != nil {
+		return bus.Client{}, err
+	}
+	if explicitAddress != "" && explicitAddress != run.Address {
+		return bus.Client{}, errors.New("AUTUMN_BUS_ADMIN_TOKEN is required for a remote daemon")
+	}
+	return bus.Client{Address: run.Address, Token: run.AdminToken, HTTP: &http.Client{Timeout: 2 * time.Minute}}, nil
+}
+
+func exportScope(args []string) error {
+	flags := flag.NewFlagSet("scope export", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	scopeID := flags.String("id", "", "scope id to export")
+	output := flags.String("output", "", "archive output path")
+	address := flags.String("address", "", "Autumn Bus address")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 || *scopeID == "" || *output == "" {
+		return errors.New("scope export requires --id and --output")
+	}
+	client, err := adminClient(*address)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	archive, err := client.ExportScope(ctx, *scopeID)
+	if err != nil {
+		return fmt.Errorf("could not export scope: %w", err)
+	}
+	data, err := json.MarshalIndent(archive, "", "  ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
+	file, err := os.OpenFile(*output, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if err != nil {
+		return fmt.Errorf("could not create archive: %w", err)
+	}
+	complete := false
+	defer func() {
+		if !complete {
+			_ = os.Remove(*output)
+		}
+	}()
+	if _, err := file.Write(data); err != nil {
+		file.Close()
+		return fmt.Errorf("could not write archive: %w", err)
+	}
+	if err := file.Close(); err != nil {
+		return err
+	}
+	complete = true
+	fmt.Printf("Exported scope %s to %s\n", archive.Scope.ID, *output)
+	return nil
+}
+
+func importScope(args []string) error {
+	flags := flag.NewFlagSet("scope import", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	input := flags.String("input", "", "archive input path")
+	address := flags.String("address", "", "Autumn Bus address")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 || *input == "" {
+		return errors.New("scope import requires --input")
+	}
+	file, err := os.Open(*input)
+	if err != nil {
+		return fmt.Errorf("could not open archive: %w", err)
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("could not inspect archive: %w", err)
+	}
+	if info.Size() > 64*1024*1024 {
+		return errors.New("archive exceeds 64 MiB")
+	}
+	var archive bus.ScopeArchive
+	decoder := json.NewDecoder(io.LimitReader(file, 64*1024*1024))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&archive); err != nil {
+		return fmt.Errorf("could not read archive: %w", err)
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		return errors.New("archive must contain one JSON value")
+	}
+	client, err := adminClient(*address)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	result, err := client.ImportScope(ctx, archive)
+	if err != nil {
+		return fmt.Errorf("could not import scope: %w", err)
+	}
+	encoded, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(encoded))
+	if !result.Imported {
+		fmt.Fprintln(os.Stderr, "Archive was already imported. The original scope token is not returned again.")
+	}
+	return nil
+}
+
+// resolveBusAddress returns the daemon address to talk to for a CLI subcommand.
+// Precedence: explicit flag, then the
+// AUTUMN_BUS_ADDRESS environment variable, then the daemon run file.
+func resolveBusAddress(explicit string) (string, error) {
+	if explicit != "" {
+		return explicit, nil
+	}
+	if env := os.Getenv("AUTUMN_BUS_ADDRESS"); env != "" {
+		return env, nil
+	}
+	paths, err := bus.DefaultDaemonPaths()
+	if err != nil {
+		return "", err
+	}
+	run, err := bus.ReadRunFile(paths.RunFile)
+	if err != nil {
+		return "", err
+	}
+	return run.Address, nil
+}
+
+// inspectReceipt implements `autumn-bus message receipt <message-id>`.
+//
+// It reads the agent credential from AUTUMN_BUS_AGENT_TOKEN and fetches the
+// delivery receipt through the public client API. The receipt deliberately
+// exposes only delivery state and timestamps; message bodies and shared
+// context are never included.
+func inspectReceipt(args []string) error {
+	flags := flag.NewFlagSet("message receipt", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+	address := flags.String("address", "", "Autumn Bus address")
+	if err := flags.Parse(receiptFlagArgs(args)); err != nil {
+		return err
+	}
+	positional := flags.Args()
+	if len(positional) != 1 {
+		return errors.New("message receipt requires a single <message-id> argument")
+	}
+	messageID := strings.TrimSpace(positional[0])
+	if messageID == "" {
+		return errors.New("message id must not be empty")
+	}
+	token := os.Getenv("AUTUMN_BUS_AGENT_TOKEN")
+	if token == "" {
+		return errors.New("AUTUMN_BUS_AGENT_TOKEN is required")
+	}
+	resolved, err := resolveBusAddress(*address)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	receipt, err := (bus.Client{Address: resolved, Token: token}).Receipt(ctx, messageID)
+	if err != nil {
+		return fmt.Errorf("could not inspect message receipt: %w", err)
+	}
+	if *jsonOutput {
+		encoded, err := json.MarshalIndent(receipt, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(encoded))
+		return nil
+	}
+	return printReceiptHuman(receipt)
+}
+
+// receiptFlagArgs moves supported flags before the message id so the command
+// accepts flags on either side of its single positional argument. The standard
+// flag package otherwise stops parsing at the first positional argument.
+func receiptFlagArgs(args []string) []string {
+	flags := make([]string, 0, len(args))
+	positional := make([]string, 0, 1)
+	for index := 0; index < len(args); index++ {
+		argument := args[index]
+		if argument == "--" {
+			positional = append(positional, args[index+1:]...)
+			break
+		}
+		if !strings.HasPrefix(argument, "-") || argument == "-" {
+			positional = append(positional, argument)
+			continue
+		}
+		flags = append(flags, argument)
+		if (argument == "-address" || argument == "--address") && index+1 < len(args) {
+			index++
+			flags = append(flags, args[index])
+		}
+	}
+	return append(flags, positional...)
+}
+
+// printReceiptHuman renders a DeliveryReceipt as a stable, multi-line summary.
+// Only state, timestamps, and the linked response message ID are shown; the
+// receipt struct contains no body or shared-context fields, so this view
+// cannot leak message contents.
+func printReceiptHuman(receipt bus.DeliveryReceipt) error {
+	fmt.Printf("Message %s\n", receipt.MessageID)
+	fmt.Printf("State: %s\n", receipt.State)
+	for _, ts := range []struct {
+		label string
+		value string
+	}{
+		{"AcceptedAt", receipt.AcceptedAt},
+		{"DeliveredAt", receipt.DeliveredAt},
+		{"AcknowledgedAt", receipt.AcknowledgedAt},
+		{"RepliedAt", receipt.RepliedAt},
+	} {
+		if ts.value != "" {
+			fmt.Printf("%s: %s\n", ts.label, ts.value)
+		}
+	}
+	if receipt.ResponseMessageID != "" {
+		fmt.Printf("ResponseMessageID: %s\n", receipt.ResponseMessageID)
+	}
+	return nil
+}
+
+// listAgents implements `autumn-bus agent list [--json] [--address <addr>]`.
+// It reads the scope credential from AUTUMN_BUS_SCOPE_TOKEN and returns only
+// the agent metadata visible to that scope.
+func listAgents(args []string) error {
+	flags := flag.NewFlagSet("agent list", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+	address := flags.String("address", "", "Autumn Bus address")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("agent list does not accept positional arguments")
+	}
+	token := os.Getenv("AUTUMN_BUS_SCOPE_TOKEN")
+	if token == "" {
+		return errors.New("AUTUMN_BUS_SCOPE_TOKEN is required")
+	}
+	resolved, err := resolveBusAddress(*address)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	agents, err := (bus.Client{Address: resolved, Token: token}).ListAgents(ctx)
+	if err != nil {
+		return fmt.Errorf("could not list agents: %w", err)
+	}
+	sort.Slice(agents, func(i, j int) bool { return agents[i].ID < agents[j].ID })
+	if *jsonOutput {
+		encoded, err := json.MarshalIndent(agents, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(encoded))
+		return nil
+	}
+	return printAgentsHuman(agents)
+}
+
+// printAgentsHuman renders a stable summary. Display names are quoted because
+// they are user-controlled text and may contain terminal control characters.
+func printAgentsHuman(agents []bus.Agent) error {
+	if len(agents) == 0 {
+		fmt.Println("No agents in scope.")
+		return nil
+	}
+	for _, agent := range agents {
+		fmt.Printf("%s (%q)\n", agent.ID, agent.DisplayName)
+		fmt.Printf("  lifecycle:  %s\n", agent.Lifecycle)
+		fmt.Printf("  ready:      %s\n", yesNo(agent.Ready))
+		fmt.Printf("  reachable:  %s\n", yesNo(agent.Reachable))
+		if len(agent.Capabilities) == 0 {
+			fmt.Println("  capabilities: (none)")
+		} else {
+			names := make([]string, 0, len(agent.Capabilities))
+			for _, capability := range agent.Capabilities {
+				names = append(names, capability.Name)
+			}
+			fmt.Printf("  capabilities: %s\n", strings.Join(names, ", "))
+		}
+		if agent.UpdatedAt != "" {
+			fmt.Printf("  updatedAt:  %s\n", agent.UpdatedAt)
+		}
+	}
+	return nil
+}
+
+func yesNo(value bool) string {
+	if value {
+		return "yes"
+	}
+	return "no"
+}
+
+func scopeClient(address string) (bus.Client, error) {
+	token := os.Getenv("AUTUMN_BUS_SCOPE_TOKEN")
+	if token == "" {
+		return bus.Client{}, errors.New("AUTUMN_BUS_SCOPE_TOKEN is required")
+	}
+	resolved, err := resolveBusAddress(address)
+	if err != nil {
+		return bus.Client{}, err
+	}
+	return bus.Client{Address: resolved, Token: token}, nil
+}
+
+func addTask(args []string) error {
+	flags := flag.NewFlagSet("task add", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	title := flags.String("title", "", "short task title")
+	description := flags.String("description", "", "task description")
+	address := flags.String("address", "", "Autumn Bus address")
+	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+	var dependencies stringList
+	flags.Var(&dependencies, "depends-on", "dependency task id, repeatable")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("task add does not accept positional arguments")
+	}
+	if strings.TrimSpace(*title) == "" {
+		return errors.New("task add requires --title")
+	}
+	client, err := scopeClient(*address)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	task, err := client.AddTask(ctx, bus.AddTaskInput{Title: *title, Description: *description, Dependencies: dependencies})
+	if err != nil {
+		return fmt.Errorf("could not add task: %w", err)
+	}
+	if *jsonOutput {
+		encoded, err := json.MarshalIndent(task, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(encoded))
+		return nil
+	}
+	fmt.Printf("Added %s %q\n", task.ID, task.Title)
+	return nil
+}
+
+func listTasks(args []string) error {
+	flags := flag.NewFlagSet("task list", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	readyOnly := flags.Bool("ready", false, "show only dependency-ready tasks")
+	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+	address := flags.String("address", "", "Autumn Bus address")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("task list does not accept positional arguments")
+	}
+	client, err := scopeClient(*address)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	tasks, err := client.ListTasks(ctx, *readyOnly)
+	if err != nil {
+		return fmt.Errorf("could not list tasks: %w", err)
+	}
+	if *jsonOutput {
+		encoded, err := json.MarshalIndent(tasks, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(encoded))
+		return nil
+	}
+	return printTasksHuman(tasks)
+}
+
+func printTasksHuman(tasks []bus.Task) error {
+	if len(tasks) == 0 {
+		fmt.Println("No tasks found.")
+		return nil
+	}
+	for _, task := range tasks {
+		state := task.Status
+		if task.Ready {
+			state = "ready"
+		}
+		fmt.Printf("%s [%s] %q\n", task.ID, state, task.Title)
+		if task.Description != "" {
+			fmt.Printf("  description: %q\n", task.Description)
+		}
+		if len(task.Dependencies) > 0 {
+			fmt.Printf("  depends on: %s\n", strings.Join(task.Dependencies, ", "))
+		}
+		if task.ClaimedBy != "" {
+			fmt.Printf("  claimed by: %s\n", task.ClaimedBy)
+		}
+		for _, progress := range task.RecentProgress {
+			fmt.Printf("  progress #%d [%s] by %s: %q\n", progress.Sequence, progress.Kind, progress.AgentID, progress.Text)
+		}
+	}
+	return nil
+}
+
+func scopeStorage(args []string) error {
+	flags := flag.NewFlagSet("scope storage", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+	address := flags.String("address", "", "Autumn Bus address")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("scope storage does not accept positional arguments")
+	}
+	client, err := scopeClient(*address)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	summary, err := client.StorageSummary(ctx)
+	if err != nil {
+		return fmt.Errorf("could not inspect scope storage: %w", err)
+	}
+	if *jsonOutput {
+		encoded, err := json.MarshalIndent(summary, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(encoded))
+		return nil
+	}
+	return printStorageSummaryHuman(summary)
+}
+
+func printStorageSummaryHuman(summary bus.StorageSummary) error {
+	fmt.Printf("Storage for scope %s\n", summary.ScopeID)
+	if len(summary.Records) == 0 {
+		fmt.Println("No messages, tasks, or escalations.")
+	} else {
+		for _, record := range summary.Records {
+			fmt.Printf("%s/%s: %d records, %d estimated bytes", record.RecordType, record.State, record.Count, record.EstimatedBytes)
+			if record.OldestAt != "" {
+				fmt.Printf(", oldest %s", record.OldestAt)
+			}
+			fmt.Println()
+		}
+	}
+	fmt.Printf("Total estimated bytes: %d\n", summary.TotalEstimatedBytes)
+	return nil
+}
+
+func scopePrune(args []string) error {
+	flags := flag.NewFlagSet("scope prune", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	before := flags.String("before", "", "remove terminal records older than this RFC 3339 timestamp")
+	execute := flags.Bool("yes", false, "execute the retention operation")
+	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+	address := flags.String("address", "", "Autumn Bus address")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("scope prune does not accept positional arguments")
+	}
+	if *before == "" {
+		return errors.New("scope prune requires --before")
+	}
+	client, err := scopeClient(*address)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	result, err := client.PruneScope(ctx, bus.PruneScopeInput{Before: *before, Execute: *execute})
+	if err != nil {
+		return fmt.Errorf("could not prune scope: %w", err)
+	}
+	if *jsonOutput {
+		encoded, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(encoded))
+		return nil
+	}
+	return printPruneResultHuman(result)
+}
+
+func printPruneResultHuman(result bus.PruneScopeResult) error {
+	action := "Would remove"
+	if !result.DryRun {
+		action = "Removed"
+	}
+	fmt.Printf("%s %d messages, %d tasks, %d task progress entries, and %d escalations older than %s.\n",
+		action, result.Records.Messages, result.Records.Tasks, result.Records.TaskProgress, result.Records.Escalations, result.Before)
+	if result.DryRun {
+		fmt.Println("Dry run only. Pass --yes to remove these records.")
+	}
 	return nil
 }
 
@@ -389,9 +994,41 @@ func run() error {
 			}
 			return createScope(id)
 		}
+		if len(args) >= 2 && args[1] == "storage" {
+			return scopeStorage(args[2:])
+		}
+		if len(args) >= 2 && args[1] == "export" {
+			return exportScope(args[2:])
+		}
+		if len(args) >= 2 && args[1] == "import" {
+			return importScope(args[2:])
+		}
+		if len(args) >= 2 && args[1] == "prune" {
+			return scopePrune(args[2:])
+		}
+	case "message":
+		if len(args) >= 2 && args[1] == "receipt" {
+			return inspectReceipt(args[2:])
+		}
 	case "agent":
 		if len(args) >= 2 && args[1] == "run" {
 			return runAgent(args[2:])
+		}
+		if len(args) >= 2 && args[1] == "list" {
+			return listAgents(args[2:])
+		}
+	case "task":
+		if len(args) >= 2 && args[1] == "add" {
+			return addTask(args[2:])
+		}
+		if len(args) >= 2 && args[1] == "list" {
+			return listTasks(args[2:])
+		}
+	case "mcp":
+		if len(args) == 2 && args[1] == "stdio" {
+			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer cancel()
+			return runMCPStdio(ctx)
 		}
 	case "demo":
 		return bus.RunDemo(context.Background())

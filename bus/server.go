@@ -15,18 +15,25 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-const maxBodyBytes = 1024 * 1024
+const (
+	maxBodyBytes        = 1024 * 1024
+	maxArchiveBodyBytes = 64 * 1024 * 1024
+)
 
 type ServerOptions struct {
-	Host       string
-	Port       int
-	AdminToken string
-	StartedAt  string
+	Host           string
+	Port           int
+	AdminToken     string
+	StartedAt      string
+	PublicBaseURL  string
+	AllowedOrigins []string
 }
 
 type Server struct {
 	runtime      *Runtime
 	options      ServerOptions
+	waitContext  context.Context
+	cancelWaits  context.CancelFunc
 	httpServer   *http.Server
 	listener     net.Listener
 	mcpHandler   http.Handler
@@ -47,8 +54,10 @@ func NewServer(runtime *Runtime, options ServerOptions) *Server {
 	if options.StartedAt == "" {
 		options.StartedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	}
+	waitContext, cancelWaits := context.WithCancel(context.Background())
 	server := &Server{
 		runtime: runtime, options: options,
+		waitContext: waitContext, cancelWaits: cancelWaits,
 		serveDone: make(chan error, 1), shutdown: make(chan struct{}),
 	}
 	server.mcpHandler = mcp.NewStreamableHTTPHandler(func(request *http.Request) *mcp.Server {
@@ -105,6 +114,7 @@ func (s *Server) requestShutdown() {
 func (s *Server) Stop(ctx context.Context) error {
 	var stopErr error
 	s.closeOnce.Do(func() {
+		s.cancelWaits()
 		if s.listener != nil {
 			stopErr = s.httpServer.Shutdown(ctx)
 		}
@@ -114,6 +124,19 @@ func (s *Server) Stop(ctx context.Context) error {
 		s.address = ""
 	})
 	return stopErr
+}
+
+func (s *Server) inboxWaitContext(parent context.Context) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(parent)
+	stop := context.AfterFunc(s.waitContext, cancel)
+	return ctx, func() {
+		stop()
+		cancel()
+	}
+}
+
+func (s *Server) inboxWaitStopped(parent context.Context, err error) bool {
+	return errors.Is(err, context.Canceled) && parent.Err() == nil && s.waitContext.Err() != nil
 }
 
 func bearer(request *http.Request) (string, error) {
@@ -134,13 +157,21 @@ func (s *Server) requireAdmin(request *http.Request) error {
 }
 
 func decodeBody(response http.ResponseWriter, request *http.Request, target any) error {
-	request.Body = http.MaxBytesReader(response, request.Body, maxBodyBytes)
+	return decodeBoundedBody(response, request, target, maxBodyBytes, "1 MiB")
+}
+
+func decodeArchiveBody(response http.ResponseWriter, request *http.Request, target any) error {
+	return decodeBoundedBody(response, request, target, maxArchiveBodyBytes, "64 MiB")
+}
+
+func decodeBoundedBody(response http.ResponseWriter, request *http.Request, target any, limit int64, limitName string) error {
+	request.Body = http.MaxBytesReader(response, request.Body, limit)
 	decoder := json.NewDecoder(request.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(target); err != nil {
 		var maxErr *http.MaxBytesError
 		if errors.As(err, &maxErr) {
-			return Errorf(CodeInvalidArgument, "Request body exceeds 1 MiB")
+			return Errorf(CodeInvalidArgument, "Request body exceeds "+limitName)
 		}
 		if errors.Is(err, io.EOF) {
 			return nil
@@ -196,22 +227,32 @@ func (s *Server) newMCPServer(token string) *mcp.Server {
 	}
 	mcp.AddTool(server, &mcp.Tool{Name: "message_peer", Description: "Send a durable notification, request, or response to a linked peer."},
 		func(ctx context.Context, _ *mcp.CallToolRequest, input messagePeerInput) (*mcp.CallToolResult, any, error) {
-			peer, err := s.resolvePeer(ctx, token, input.Peer)
-			if err != nil {
-				return nil, nil, err
+			to := input.Peer
+			if input.Mode != MessageResponse {
+				peer, err := s.resolvePeer(ctx, token, input.Peer)
+				if err != nil {
+					return nil, nil, err
+				}
+				to = peer.ID
 			}
 			result, err := s.runtime.SendMessage(ctx, token, SendMessageInput{
-				To: peer.ID, Body: input.Message, Mode: input.Mode, ResponseTo: input.ResponseTo,
+				To: to, Body: input.Message, Mode: input.Mode, ResponseTo: input.ResponseTo,
 				IdempotencyKey: input.IdempotencyKey, ExpiresInMS: input.ExpiresInMS, Context: input.Context,
 			})
 			return nil, result, err
 		})
 	type inboxInput struct {
-		Limit int `json:"limit,omitempty"`
+		Limit  int   `json:"limit,omitempty"`
+		WaitMS int64 `json:"waitMs,omitempty" jsonschema:"wait for messages for up to 25000 milliseconds"`
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "check_inbox", Description: "Receive durable messages waiting for this agent."},
+	mcp.AddTool(server, &mcp.Tool{Name: "check_inbox", Description: "Receive durable messages waiting for this agent. Pass waitMs up to 25000 to wait for new messages instead of polling."},
 		func(ctx context.Context, _ *mcp.CallToolRequest, input inboxInput) (*mcp.CallToolResult, any, error) {
-			reservation, err := s.runtime.ReserveInbox(ctx, token, input.Limit)
+			waitContext, cancel := s.inboxWaitContext(ctx)
+			defer cancel()
+			reservation, err := s.runtime.ReserveInbox(waitContext, token, input.Limit, input.WaitMS)
+			if s.inboxWaitStopped(ctx, err) {
+				return nil, map[string]any{"messages": []Message{}}, nil
+			}
 			if err != nil || reservation == nil {
 				if reservation == nil && err == nil {
 					return nil, map[string]any{"messages": []Message{}}, nil
@@ -256,10 +297,41 @@ func (s *Server) newMCPServer(token string) *mcp.Server {
 			result, err := s.runtime.CompleteTask(ctx, token, input.TaskID, input.Note)
 			return nil, result, err
 		})
+	type taskProgressInput struct {
+		TaskID string `json:"taskId"`
+		Kind   string `json:"kind"`
+		Text   string `json:"text"`
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "add_task_progress", Description: "Append progress, a note, or a blocker to a claimed task."},
+		func(ctx context.Context, _ *mcp.CallToolRequest, input taskProgressInput) (*mcp.CallToolResult, any, error) {
+			result, err := s.runtime.AddTaskProgress(ctx, token, input.TaskID, AddTaskProgressInput{Kind: input.Kind, Text: input.Text})
+			return nil, result, err
+		})
+	mcp.AddTool(server, &mcp.Tool{Name: "list_task_progress", Description: "List the durable progress history for a task."},
+		func(ctx context.Context, _ *mcp.CallToolRequest, input taskIDInput) (*mcp.CallToolResult, any, error) {
+			result, err := s.runtime.ListTaskProgress(ctx, token, input.TaskID)
+			return nil, map[string]any{"progress": result}, err
+		})
+	type listTasksInput struct {
+		Ready bool `json:"ready,omitempty"`
+	}
 	mcp.AddTool(server, &mcp.Tool{Name: "list_tasks", Description: "List shared tasks and dependency state."},
-		func(ctx context.Context, _ *mcp.CallToolRequest, _ emptyInput) (*mcp.CallToolResult, any, error) {
-			result, err := s.runtime.ListTasks(ctx, token)
+		func(ctx context.Context, _ *mcp.CallToolRequest, input listTasksInput) (*mcp.CallToolResult, any, error) {
+			result, err := s.runtime.ListTasks(ctx, token, input.Ready)
 			return nil, map[string]any{"tasks": result}, err
+		})
+	type publishOutputToolInput struct {
+		StreamID    string            `json:"streamId"`
+		ContentType OutputContentType `json:"contentType"`
+		Value       any               `json:"value"`
+		Reference   *OutputReference  `json:"reference,omitempty"`
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "publish_output", Description: "Publish text or JSON to an authorized output stream."},
+		func(ctx context.Context, _ *mcp.CallToolRequest, input publishOutputToolInput) (*mcp.CallToolResult, any, error) {
+			result, err := s.runtime.PublishOutput(ctx, token, input.StreamID, PublishOutputInput{
+				ContentType: input.ContentType, Value: input.Value, Reference: input.Reference,
+			})
+			return nil, result, err
 		})
 	mcp.AddTool(server, &mcp.Tool{Name: "ask_user", Description: "Request human input or permission."},
 		func(ctx context.Context, _ *mcp.CallToolRequest, input AskHumanInput) (*mcp.CallToolResult, any, error) {

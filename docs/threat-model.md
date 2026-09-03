@@ -25,6 +25,9 @@ Adapters and harnesses remain responsible for their own model access, files, too
 | Replaced or stale process | Agent authority is bound to the current execution and renewable lease |
 | Peer-name spoofing | Programmatic routing uses byte-exact agent IDs before unique exact display names |
 | Duplicate work from retries | Idempotency keys are permanent per sender and bound to the original content |
+| External output reader gains Bus authority | Output credentials are bound to one stream and explicit read or publish permissions |
+| Browser reads output from an untrusted site | Output CORS headers require an exact configured origin |
+| Output publisher exhausts local storage | Streams enforce bounded retention, payload limits, and per-principal rate limits |
 | Concurrent inbox consumers | Short reservations serialize delivery attempts and support redelivery |
 | Message or task flood | Per-scope and per-agent limits return explicit backpressure |
 | Agent resolves its own escalation | Only scope authority can resolve human escalation |
@@ -37,6 +40,8 @@ Adapters and harnesses remain responsible for their own model access, files, too
 The runtime and data directories request owner-only permissions where the operating system supports them. A malicious process already running as the same operating-system user may still be able to access local files, inspect memory, or control sibling processes. Autumn Bus is not a sandbox against the local user account.
 
 Do not place scope or admin credentials in model context. Give a harness only its execution-bound agent token when possible.
+
+Portable archives exclude reusable credentials and execution authority. They still contain collaboration content such as messages, context, tasks, escalation answers, and output values. Store and transfer them as sensitive project data.
 
 ## Untrusted content
 

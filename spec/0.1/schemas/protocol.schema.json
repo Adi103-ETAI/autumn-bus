@@ -19,6 +19,10 @@
       "type": "string",
       "enum": ["notify", "request", "response"]
     },
+    "messageParticipantKind": {
+      "type": "string",
+      "enum": ["agent", "a2aPrincipal"]
+    },
     "deliveryState": {
       "type": "string",
       "enum": ["queued", "reserved", "delivered", "acknowledged", "expired"]
@@ -54,12 +58,32 @@
     "health": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "protocolVersion", "runtimeVersion", "status", "startedAt"],
+      "required": ["name", "protocolVersion", "runtimeVersion", "status", "startedAt", "storage"],
       "properties": {
         "name": { "const": "autumn-bus" },
         "protocolVersion": { "const": "0.1" },
         "runtimeVersion": { "type": "string", "minLength": 1 },
-        "status": { "const": "ready" },
+        "status": { "enum": ["ready", "not_ready"] },
+        "startedAt": { "$ref": "#/$defs/instant" },
+        "storage": { "$ref": "#/$defs/storageHealth" }
+      }
+    },
+    "storageHealth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["backend", "status"],
+      "properties": {
+        "backend": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["available", "unavailable"] }
+      }
+    },
+    "liveness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status", "startedAt"],
+      "properties": {
+        "name": { "const": "autumn-bus" },
+        "status": { "const": "alive" },
         "startedAt": { "$ref": "#/$defs/instant" }
       }
     },
@@ -185,12 +209,14 @@
     "message": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "scopeId", "from", "to", "mode", "body", "context", "state", "createdAt"],
+      "required": ["id", "scopeId", "from", "fromKind", "to", "toKind", "mode", "body", "context", "state", "createdAt"],
       "properties": {
         "id": { "$ref": "#/$defs/identifier" },
         "scopeId": { "$ref": "#/$defs/identifier" },
         "from": { "$ref": "#/$defs/identifier" },
+        "fromKind": { "$ref": "#/$defs/messageParticipantKind" },
         "to": { "$ref": "#/$defs/identifier" },
+        "toKind": { "$ref": "#/$defs/messageParticipantKind" },
         "mode": { "$ref": "#/$defs/messageMode" },
         "body": { "type": "string", "minLength": 1, "maxLength": 65536 },
         "context": {
@@ -222,6 +248,14 @@
         "responseMessageId": { "$ref": "#/$defs/identifier" }
       }
     },
+    "reserveInboxInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "limit": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "waitMs": { "type": "integer", "minimum": 0, "maximum": 25000 }
+      }
+    },
     "inboxReservation": {
       "type": "object",
       "additionalProperties": false,
@@ -235,9 +269,10 @@
     "addTaskInput": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["description"],
+      "required": ["title"],
       "properties": {
-        "description": { "type": "string", "minLength": 1, "maxLength": 16384 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 16384 },
         "dependencies": {
           "type": "array",
           "maxItems": 128,
@@ -245,21 +280,60 @@
         }
       }
     },
+    "taskProgressKind": {
+      "type": "string",
+      "enum": ["progress", "note", "blocker"]
+    },
+    "addTaskProgressInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "text"],
+      "properties": {
+        "kind": { "$ref": "#/$defs/taskProgressKind" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 4000 }
+      }
+    },
+    "taskProgress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taskId", "sequence", "agentId", "executionId", "kind", "text", "createdAt"],
+      "properties": {
+        "taskId": { "$ref": "#/$defs/identifier" },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "agentId": { "$ref": "#/$defs/identifier" },
+        "executionId": { "$ref": "#/$defs/identifier" },
+        "kind": { "$ref": "#/$defs/taskProgressKind" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "createdAt": { "$ref": "#/$defs/instant" }
+      }
+    },
     "task": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "scopeId", "description", "createdBy", "status", "dependencies", "createdAt", "updatedAt"],
+      "required": ["id", "scopeId", "title", "description", "createdBy", "status", "dependencies", "ready", "recentProgress", "createdAt", "updatedAt"],
       "properties": {
         "id": { "$ref": "#/$defs/identifier" },
         "scopeId": { "$ref": "#/$defs/identifier" },
-        "description": { "type": "string", "minLength": 1, "maxLength": 16384 },
-        "createdBy": { "$ref": "#/$defs/identifier" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 16384 },
+        "createdBy": {
+          "anyOf": [
+            { "$ref": "#/$defs/identifier" },
+            { "type": "null" }
+          ]
+        },
         "claimedBy": { "$ref": "#/$defs/identifier" },
         "status": { "type": "string", "enum": ["open", "claimed", "done"] },
         "dependencies": {
           "type": "array",
           "maxItems": 128,
           "items": { "$ref": "#/$defs/identifier" }
+        },
+        "ready": { "type": "boolean" },
+        "recentProgress": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/taskProgress" }
         },
         "note": { "type": "string", "maxLength": 16384 },
         "createdAt": { "$ref": "#/$defs/instant" },
@@ -272,6 +346,341 @@
           "else": { "required": ["claimedBy"] }
         }
       ]
+    },
+    "busEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scopeId", "type", "subjectId", "revision", "attributes", "createdAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "scopeId": { "$ref": "#/$defs/identifier" },
+        "type": { "type": "string", "minLength": 1 },
+        "subjectId": { "type": "string", "minLength": 1 },
+        "revision": { "type": "integer", "minimum": 1 },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "createdAt": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "eventBatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scopeId", "events", "nextRevision", "currentRevision", "minimumCursor", "resyncRequired"],
+      "properties": {
+        "scopeId": { "$ref": "#/$defs/identifier" },
+        "events": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/busEvent" }
+        },
+        "nextRevision": { "type": "integer", "minimum": 0 },
+        "currentRevision": { "type": "integer", "minimum": 0 },
+        "minimumCursor": { "type": "integer", "minimum": 0 },
+        "resyncRequired": { "type": "boolean" }
+      }
+    },
+    "publishAgentCardInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agentId"],
+      "properties": {
+        "agentId": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "agentCardPublication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scopeId", "agentId", "enabled", "cardUrl", "interfaceUrl", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "scopeId": { "$ref": "#/$defs/identifier" },
+        "agentId": { "$ref": "#/$defs/identifier" },
+        "enabled": { "type": "boolean" },
+        "cardUrl": { "type": "string", "format": "uri" },
+        "interfaceUrl": { "type": "string", "format": "uri" },
+        "createdAt": { "$ref": "#/$defs/instant" },
+        "updatedAt": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "createA2APrincipalInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["publicationId", "label"],
+      "properties": {
+        "publicationId": { "$ref": "#/$defs/identifier" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "a2aPrincipal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scopeId", "publicationId", "label", "enabled", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "scopeId": { "$ref": "#/$defs/identifier" },
+        "publicationId": { "$ref": "#/$defs/identifier" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "enabled": { "type": "boolean" },
+        "createdAt": { "$ref": "#/$defs/instant" },
+        "updatedAt": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "issuedA2APrincipal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principal", "credential"],
+      "properties": {
+        "principal": { "$ref": "#/$defs/a2aPrincipal" },
+        "credential": { "type": "string", "minLength": 1 }
+      }
+    },
+    "a2aPrincipalUsage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principalId", "publicationId", "unfinishedMessages", "unfinishedBytes", "messageLimit", "byteLimit"],
+      "properties": {
+        "principalId": { "$ref": "#/$defs/identifier" },
+        "publicationId": { "$ref": "#/$defs/identifier" },
+        "unfinishedMessages": { "type": "integer", "minimum": 0 },
+        "unfinishedBytes": { "type": "integer", "minimum": 0 },
+        "messageLimit": { "type": "integer", "minimum": 1, "maximum": 9999 },
+        "byteLimit": { "type": "integer", "minimum": 1, "maximum": 655294464 }
+      }
+    },
+    "a2aTaskState": {
+      "type": "string",
+      "enum": ["submitted", "working", "input-required", "completed", "failed", "canceled", "rejected"]
+    },
+    "a2aMessageCorrelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clientMessageId", "busRequestMessageId", "createdAt", "updatedAt"],
+      "properties": {
+        "clientMessageId": { "$ref": "#/$defs/identifier" },
+        "busRequestMessageId": { "$ref": "#/$defs/identifier" },
+        "busResponseMessageId": { "$ref": "#/$defs/identifier" },
+        "createdAt": { "$ref": "#/$defs/instant" },
+        "updatedAt": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "a2aTaskCorrelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "contextId", "principalId", "publicationId", "targetAgentId", "state", "messages", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "contextId": { "$ref": "#/$defs/identifier" },
+        "principalId": { "$ref": "#/$defs/identifier" },
+        "publicationId": { "$ref": "#/$defs/identifier" },
+        "targetAgentId": { "$ref": "#/$defs/identifier" },
+        "state": { "$ref": "#/$defs/a2aTaskState" },
+        "messages": { "type": "array", "items": { "$ref": "#/$defs/a2aMessageCorrelation" } },
+        "createdAt": { "$ref": "#/$defs/instant" },
+        "updatedAt": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "outputContentType": {
+      "type": "string",
+      "enum": ["text/plain", "application/json"]
+    },
+    "outputPermission": {
+      "type": "string",
+      "enum": ["read", "publish"]
+    },
+    "outputReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uri"],
+      "properties": {
+        "uri": { "type": "string", "format": "uri", "minLength": 1, "maxLength": 4096 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 512 }
+      }
+    },
+    "outputStream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scopeId", "name", "retentionLimit", "currentSequence", "minimumCursor", "publisherAgentIds", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "scopeId": { "$ref": "#/$defs/identifier" },
+        "name": { "$ref": "#/$defs/identifier" },
+        "retentionLimit": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "currentSequence": { "type": "integer", "minimum": 0 },
+        "minimumCursor": { "type": "integer", "minimum": 0 },
+        "publisherAgentIds": {
+          "type": "array",
+          "maxItems": 128,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "createdAt": { "$ref": "#/$defs/instant" },
+        "updatedAt": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "createOutputStreamInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "$ref": "#/$defs/identifier" },
+        "retentionLimit": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "publisherAgentIds": {
+          "type": "array",
+          "maxItems": 128,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        }
+      }
+    },
+    "publishOutputInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contentType", "value"],
+      "properties": {
+        "contentType": { "$ref": "#/$defs/outputContentType" },
+        "value": { "not": { "type": "null" } },
+        "reference": { "$ref": "#/$defs/outputReference" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "contentType": { "const": "text/plain" } } },
+          "then": { "properties": { "value": { "type": "string", "maxLength": 65536 } } }
+        }
+      ]
+    },
+    "outputValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["streamId", "sequence", "producerType", "producerId", "contentType", "value", "createdAt"],
+      "properties": {
+        "streamId": { "$ref": "#/$defs/identifier" },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "producerType": { "type": "string", "enum": ["agent", "principal"] },
+        "producerId": { "$ref": "#/$defs/identifier" },
+        "contentType": { "$ref": "#/$defs/outputContentType" },
+        "value": { "not": { "type": "null" } },
+        "reference": { "$ref": "#/$defs/outputReference" },
+        "createdAt": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "outputHistory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["streamId", "values", "nextSequence", "currentSequence", "minimumCursor", "resyncRequired"],
+      "properties": {
+        "streamId": { "$ref": "#/$defs/identifier" },
+        "values": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/outputValue" } },
+        "nextSequence": { "type": "integer", "minimum": 0 },
+        "currentSequence": { "type": "integer", "minimum": 0 },
+        "minimumCursor": { "type": "integer", "minimum": 0 },
+        "resyncRequired": { "type": "boolean" }
+      }
+    },
+    "outputPrincipal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scopeId", "streamId", "label", "permissions", "enabled", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "scopeId": { "$ref": "#/$defs/identifier" },
+        "streamId": { "$ref": "#/$defs/identifier" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "permissions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/outputPermission" }
+        },
+        "enabled": { "type": "boolean" },
+        "createdAt": { "$ref": "#/$defs/instant" },
+        "updatedAt": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "createOutputPrincipalInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["streamId", "label", "permissions"],
+      "properties": {
+        "streamId": { "$ref": "#/$defs/identifier" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "permissions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/outputPermission" }
+        }
+      }
+    },
+    "issuedOutputPrincipal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principal", "credential"],
+      "properties": {
+        "principal": { "$ref": "#/$defs/outputPrincipal" },
+        "credential": { "type": "string", "minLength": 1 }
+      }
+    },
+    "storageRecordSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recordType", "state", "count", "estimatedBytes"],
+      "properties": {
+        "recordType": { "type": "string", "enum": ["message", "task", "taskProgress", "escalation", "event", "a2aPublication", "a2aTask", "a2aMessage", "credential", "outputStream", "outputValue"] },
+        "state": { "type": "string", "minLength": 1 },
+        "count": { "type": "integer", "minimum": 0 },
+        "estimatedBytes": { "type": "integer", "minimum": 0 },
+        "oldestAt": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "storageSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scopeId", "generatedAt", "totalEstimatedBytes", "records"],
+      "properties": {
+        "scopeId": { "$ref": "#/$defs/identifier" },
+        "generatedAt": { "$ref": "#/$defs/instant" },
+        "totalEstimatedBytes": { "type": "integer", "minimum": 0 },
+        "records": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/storageRecordSummary" }
+        }
+      }
+    },
+    "pruneScopeInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["before"],
+      "properties": {
+        "before": { "$ref": "#/$defs/instant" },
+        "execute": { "type": "boolean" }
+      }
+    },
+    "retentionCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["messages", "tasks", "taskProgress", "escalations", "events"],
+      "properties": {
+        "messages": { "type": "integer", "minimum": 0 },
+        "tasks": { "type": "integer", "minimum": 0 },
+        "taskProgress": { "type": "integer", "minimum": 0 },
+        "escalations": { "type": "integer", "minimum": 0 },
+        "events": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "pruneScopeResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scopeId", "before", "dryRun", "records"],
+      "properties": {
+        "scopeId": { "$ref": "#/$defs/identifier" },
+        "before": { "$ref": "#/$defs/instant" },
+        "dryRun": { "type": "boolean" },
+        "records": { "$ref": "#/$defs/retentionCounts" }
+      }
     },
     "askHumanInput": {
       "type": "object",

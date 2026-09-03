@@ -57,14 +57,14 @@ func RunDemo(ctx context.Context) error {
 		return err
 	}
 	fmt.Printf("request accepted: %s\n", receipt.MessageID)
-	task, err := planner.AddTask(ctx, AddTaskInput{Description: "Review checkout retry path"})
+	task, err := planner.AddTask(ctx, AddTaskInput{Title: "Review checkout retry path"})
 	if err != nil {
 		return err
 	}
 	if _, err := reviewer.ClaimTask(ctx, task.ID); err != nil {
 		return err
 	}
-	messages, err := reviewer.PullInbox(ctx, 10)
+	messages, err := reviewer.PullInbox(ctx, 10, 0)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func RunDemo(ctx context.Context) error {
 	if _, err := reviewer.CompleteTask(ctx, task.ID, "done"); err != nil {
 		return err
 	}
-	replies, err := planner.PullInbox(ctx, 10)
+	replies, err := planner.PullInbox(ctx, 10, 0)
 	if err != nil {
 		return err
 	}

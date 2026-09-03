@@ -2,7 +2,7 @@
 
 Status: early integration, not yet conformance-verified.
 
-Start Autumn Bus on the address used by `opencode.json.example`, then create a scope. Set `OPENCODE_CONFIG` to the example or merge its `mcp` entry into the project's OpenCode configuration.
+Start Autumn Bus, then create a scope. Set `OPENCODE_CONFIG` to the example or merge its `mcp` entry into the project's OpenCode configuration. It launches the stdio bridge inside the managed agent execution.
 
 Run OpenCode through the managed agent command:
 
