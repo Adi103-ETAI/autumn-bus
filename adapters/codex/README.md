@@ -1,6 +1,6 @@
 # Codex adapter
 
-Status: early integration, not yet conformance-verified.
+Status: verified with Codex CLI 0.152.1 on macOS arm64. Other versions and platforms remain unverified.
 
 <<<<<<< HEAD
 Start Autumn Bus on the address used by `config.toml.example`, then create a scope. Add the example MCP server entry to a trusted project's `.codex/config.toml`.
