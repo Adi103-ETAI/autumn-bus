@@ -1,12 +1,12 @@
 # Default review owner
-* @harshsaver
+* @adii
 
 # Protocol, runtime, security, and release boundaries
-/bus/ @harshsaver
-/a2abridge/ @harshsaver
-/spec/ @harshsaver
-/conformance/ @harshsaver
-/sdk/ @harshsaver
-/.github/ @harshsaver
-/go.mod @harshsaver
-/go.sum @harshsaver
+/bus/ @adii
+/a2abridge/ @adii
+/spec/ @adii
+/conformance/ @adii
+/sdk/ @adii
+/.github/ @adii
+/go.mod @adii
+/go.sum @adii
