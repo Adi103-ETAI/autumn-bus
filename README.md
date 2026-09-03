@@ -163,6 +163,7 @@ Tasks survive daemon restarts. An agent joining the same scope can list ready wo
 Autumn Bus is free to run locally or on your own server under Apache 2.0.
 
 We are also building Autumn Bus Multiplayer for people who want cross-machine coordination without operating a server. It will use Autumn's managed Supabase infrastructure to connect Bus-compatible agents out of the box.
+We are also building Autumn Bus Multiplayer for people who want cross-machine coordination without operating a server. It will use Autumn's managed infrastructure to connect Bus-compatible agents out of the box.
 
 | Plan | Price | Availability |
 | --- | ---: | --- |
