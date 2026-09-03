@@ -58,6 +58,9 @@ try {
   const health = await admin.health()
   assert.equal(health.protocolVersion, '0.1')
   assert.equal(typeof health.runtimeVersion, 'string')
+  assert.deepEqual(health.storage, { backend: 'sqlite', status: 'available' })
+  const liveness = await admin.liveness()
+  assert.equal(liveness.status, 'alive')
   const scope = await admin.createScope({ id: 'typescript-integration' })
   const owner = new AutumnBusScopeClient(run.address, scope.scopeToken)
   plannerSession = await AutumnBusAgentSession.start({

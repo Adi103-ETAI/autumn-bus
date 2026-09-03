@@ -167,6 +167,8 @@ type diagnosticReport struct {
 	RuntimeDirectory string `json:"runtimeDirectory"`
 	DatabaseExists   bool   `json:"databaseExists"`
 	RunFileExists    bool   `json:"runFileExists"`
+	StorageBackend   string `json:"storageBackend,omitempty"`
+	StorageStatus    string `json:"storageStatus,omitempty"`
 	Problem          string `json:"problem,omitempty"`
 }
 
@@ -204,8 +206,14 @@ func doctor(args []string) error {
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			health, healthErr := (bus.Client{Address: run.Address}).Health(ctx)
 			cancel()
+			report.StorageBackend = string(health.Storage.Backend)
+			report.StorageStatus = health.Storage.Status
 			if healthErr != nil {
-				report.Problem = healthErr.Error()
+				if health.Storage.Status == bus.StorageUnavailable {
+					report.Problem = "Storage backend is unavailable"
+				} else {
+					report.Problem = healthErr.Error()
+				}
 			} else if health.ProtocolVersion != run.ProtocolVersion {
 				report.Problem = "run file and daemon protocol versions differ"
 			} else {
@@ -235,6 +243,9 @@ func doctor(args []string) error {
 		if report.Address != "" {
 			fmt.Printf("Endpoint: %s, pid %d\n", report.Address, report.PID)
 		}
+		if report.StorageBackend != "" {
+			fmt.Printf("Storage: %s (%s)\n", report.StorageBackend, report.StorageStatus)
+		}
 		if report.Problem != "" {
 			fmt.Printf("Problem: %s\n", report.Problem)
 		}
@@ -262,6 +273,7 @@ func status() error {
 	}
 	fmt.Printf("Autumn Bus is %s at %s\n", health.Status, run.Address)
 	fmt.Printf("Runtime %s, protocol %s, pid %d\n", health.RuntimeVersion, health.ProtocolVersion, run.PID)
+	fmt.Printf("Storage %s (%s)\n", health.Storage.Backend, health.Storage.Status)
 	return nil
 }
 

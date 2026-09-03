@@ -537,6 +537,16 @@ export interface BusHealth {
   name: 'autumn-bus'
   protocolVersion: string
   runtimeVersion: string
-  status: 'ready'
+  status: 'ready' | 'not_ready'
+  startedAt: string
+  storage: {
+    backend: string
+    status: 'available' | 'unavailable'
+  }
+}
+
+export interface BusLiveness {
+  name: 'autumn-bus'
+  status: 'alive'
   startedAt: string
 }
