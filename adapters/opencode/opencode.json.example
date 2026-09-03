@@ -1,6 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
+<<<<<<< HEAD
     "autumn_bus": {
       "type": "remote",
       "url": "http://127.0.0.1:4765/mcp",
@@ -9,6 +10,12 @@
       "headers": {
         "Authorization": "Bearer {env:AUTUMN_BUS_AGENT_TOKEN}"
       }
+=======
+    "autumn_bus": {
+      "type": "local",
+      "command": ["autumn-bus", "mcp", "stdio"],
+      "enabled": true
+>>>>>>> 3d06c98 (Add stdio MCP bridge (#68))
     }
   }
 }

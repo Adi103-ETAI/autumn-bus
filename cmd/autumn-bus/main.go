@@ -20,6 +20,7 @@ import (
 const usage = `Autumn Bus
 
 Usage:
+<<<<<<< HEAD:cmd/autumn-bus/main.go
   autumn-bus start [--port <port>]
   autumn-bus stop
   autumn-bus status
@@ -30,6 +31,19 @@ Usage:
   autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
   autumn-bus demo
   autumn-bus version
+=======
+  autumn-bus start [--port <port>]
+  autumn-bus stop
+  autumn-bus status
+  autumn-bus doctor [--json]
+  autumn-bus scope create [scope-id]
+  autumn-bus message receipt <message-id> [--json] [--address <addr>]
+  autumn-bus agent list [--json] [--address <addr>]
+  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
+  autumn-bus mcp stdio
+  autumn-bus demo
+  autumn-bus version
+>>>>>>> 3d06c98 (Add stdio MCP bridge (#68)):cmd/autumn-bus/main.go
 `
 
 type stringList []string
@@ -596,6 +610,12 @@ func run() error {
 		}
 		if len(args) >= 2 && args[1] == "list" {
 			return listAgents(args[2:])
+		}
+	case "mcp":
+		if len(args) == 2 && args[1] == "stdio" {
+			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer cancel()
+			return runMCPStdio(ctx)
 		}
 	case "demo":
 		return bus.RunDemo(context.Background())
