@@ -17,7 +17,6 @@ import (
 
 	"github.com/Adi103-ETAI/autumn-bus/bus"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 func TestMCPStdioHelper(t *testing.T) {
