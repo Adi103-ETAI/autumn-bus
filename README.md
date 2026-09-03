@@ -7,7 +7,6 @@
  / ___ \   | |_| | | | | |_| | |  | | |\  |
 /_/   \_\   \___/  |_|  \___/|_|  |_|_| \_|
 </pre>
-<img src="assets/autumn-bus-wordmark.svg" alt="Autumn Bus terminal wordmark" width="900">
 
 # Autumn Bus
 
