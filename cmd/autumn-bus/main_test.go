@@ -15,12 +15,9 @@ import (
 	"testing"
 	"time"
 
-<<<<<<< HEAD:cmd/autumn-bus/main_test.go
 	"github.com/Adi103-ETAI/autumn-bus/bus"
-=======
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/Adi103-ETAI/autumn-bus/bus"
->>>>>>> 3d06c98 (Add stdio MCP bridge (#68)):cmd/autumn-bus/main_test.go
 )
 
 func TestMCPStdioHelper(t *testing.T) {
@@ -79,7 +76,7 @@ func TestMCPStdioBridgeForwardsDaemonTools(t *testing.T) {
 	defer session.Close()
 
 	tools, err := session.ListTools(ctx, nil)
-	if err != nil || len(tools.Tools) != 13 {
+	if err != nil || len(tools.Tools) != 14 {
 		t.Fatalf("unexpected forwarded tools: %d, %v; stderr: %s", len(tools.Tools), err, stderr.String())
 	}
 	directClient := mcp.NewClient(&mcp.Implementation{Name: "direct-test", Version: "1"}, nil)
