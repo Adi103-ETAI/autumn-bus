@@ -1,6 +1,7 @@
 {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   "name": "@autumn-dev/autumn-bus",
   "version": "0.1.0-next.2",
   "description": "TypeScript client for Autumn Bus.",
@@ -14,6 +15,11 @@
 	  "version": "0.1.0-next.4",
   "description": "TypeScript client for Autumn Bus.",
 >>>>>>> 30d01c0 (Add persistent project task boards (#74))
+=======
+  "name": "@Adi103-ETAI/autumn-bus",
+  "version": "0.1.0-next.5",
+  "description": "TypeScript client for Autumn Bus.",
+>>>>>>> a05fdc0 (Add safe storage retention controls (#75))
   "type": "module",
   "sideEffects": false,
   "license": "Apache-2.0",
