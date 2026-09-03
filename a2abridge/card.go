@@ -107,7 +107,6 @@ func NewAgentCard(agent AgentProfile, options CardOptions) (*a2a.AgentCard, erro
 		SecuritySchemes: a2a.NamedSecuritySchemes{
 			bearerSchemeName: a2a.HTTPAuthSecurityScheme{
 				Scheme:      "Bearer",
-				Description: "Autumn Bus agent credential.",
 				Description: "Autumn Bus A2A credential.",
 			},
 		},

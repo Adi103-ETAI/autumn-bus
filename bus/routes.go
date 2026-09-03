@@ -246,10 +246,6 @@ func handleRoute(handler routeHandler) http.Handler {
 	})
 }
 
-func (s *Server) health(response http.ResponseWriter, _ *http.Request) error {
-	writeJSON(response, http.StatusOK, Health{
-		Name: "autumn-bus", ProtocolVersion: ProtocolVersion, RuntimeVersion: Version,
-		Status: "ready", StartedAt: s.options.StartedAt,
 func (s *Server) health(response http.ResponseWriter, request *http.Request) error {
 	storage := s.runtime.StorageHealth(request.Context())
 	status := "ready"
