@@ -49,8 +49,8 @@ export function publishDistribution(packages, runNpm = npm, { version = manifest
       } catch (error) {
         // First publish of platform packages has no Trusted Publisher yet (404). Fall back to token auth without provenance.
         const isPlatform = pkg.name !== manifest.name
-        const msg = String(error?.message ?? '') + String(error?.stdout ?? '')
-        if (isPlatform && msg.includes('404')) {
+        const msg = String(error?.message ?? '') + String(error?.stdout ?? '') + String(error?.stderr ?? '')
+        if (isPlatform && (msg.includes('404') || msg.includes('EOTP') || msg.includes('one-time password'))) {
           console.log(`Provenance publish failed for new platform ${pkg.name}, retrying without provenance via token`)
           runNpm(['publish', pkg.file, '--ignore-scripts', '--access', 'public', '--tag', channel, ...registry], { stdio: 'inherit' })
         } else {
