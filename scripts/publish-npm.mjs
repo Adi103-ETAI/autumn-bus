@@ -44,7 +44,19 @@ export function publishDistribution(packages, runNpm = npm, { version = manifest
     if (existing.has(pkg.name)) {
       console.log(`Already published identical artifact: ${pkg.name}@${version}`)
     } else {
-      runNpm(['publish', pkg.file, '--ignore-scripts', '--provenance', '--access', 'public', '--tag', channel, ...registry], { stdio: 'inherit' })
+      try {
+        runNpm(['publish', pkg.file, '--ignore-scripts', '--provenance', '--access', 'public', '--tag', channel, ...registry], { stdio: 'inherit' })
+      } catch (error) {
+        // First publish of platform packages has no Trusted Publisher yet (404). Fall back to token auth without provenance.
+        const isPlatform = pkg.name !== manifest.name
+        const msg = String(error?.message ?? '') + String(error?.stdout ?? '')
+        if (isPlatform && msg.includes('404')) {
+          console.log(`Provenance publish failed for new platform ${pkg.name}, retrying without provenance via token`)
+          runNpm(['publish', pkg.file, '--ignore-scripts', '--access', 'public', '--tag', channel, ...registry], { stdio: 'inherit' })
+        } else {
+          throw error
+        }
+      }
       assert.equal(JSON.parse(runNpm(['view', `${pkg.name}@${version}`, 'dist.integrity', '--json', ...registry])), pkg.integrity)
     }
   }
