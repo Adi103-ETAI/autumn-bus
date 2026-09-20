@@ -15,8 +15,8 @@ export function approvedForRelease(pr, reviews, sha) {
   // One maintainer approval must not silently override another maintainer's
   // unresolved changes request, including one submitted after the merge.
   if ([...latest.values()].some(review => review.state === 'CHANGES_REQUESTED')) return false
-  // Solo maintainer: allow merge without independent approval if no trusted review exists
-  if (latest.size === 0) return true
+  // Solo maintainer: allow merge without approval when no reviews exist (not when untrusted reviews exist)
+  if (reviews.length === 0) return true
   return [...latest.values()].some((review) =>
     review.state === 'APPROVED' &&
     review.commit_id === pr.head?.sha &&
