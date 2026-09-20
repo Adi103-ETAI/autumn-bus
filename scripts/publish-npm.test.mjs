@@ -85,7 +85,12 @@ test('publishes all native packages before the parent, with provenance and exact
       if (!published.includes(pkg.name)) throw notFound()
       return JSON.stringify(pkg.integrity)
     }
-    assert.ok(args.includes('--provenance') && args.includes('--ignore-scripts'))
+    const isPlatform = pkg.name !== manifest.name
+    if (isPlatform) {
+      assert.ok(!args.includes('--provenance') && args.includes('--ignore-scripts'))
+    } else {
+      assert.ok(args.includes('--provenance') && args.includes('--ignore-scripts'))
+    }
     assert.equal(args[args.indexOf('--tag') + 1], 'next')
     published.push(pkg.name)
     return ''
