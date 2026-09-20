@@ -4,18 +4,33 @@
   "adapterVersion": "0.1.0",
   "harnessFamily": "OpenCode",
   "status": "experimental",
-  "protocolVersions": ["0.1"],
+  "protocolVersions": [
+    "0.1"
+  ],
   "transport": "mcp",
   "delivery": "pull",
   "lifecycleEvidence": "process",
-  "capabilities": ["discovery", "messaging", "requests", "tasks", "escalation", "bounded-context"],
-  "testedVersions": [],
-  "platforms": ["macos", "linux", "windows"],
+  "capabilities": [
+    "discovery",
+    "messaging",
+    "requests",
+    "tasks",
+    "escalation",
+    "bounded-context"
+  ],
+  "testedVersions": [
+    "1.18.25"
+  ],
+  "platforms": [
+    "macos"
+  ],
   "maintainer": "Autumn",
   "repository": "https://github.com/Adi103-ETAI/autumn-bus",
   "limitations": [
     "Not yet conformance-verified",
     "Pull-only delivery",
-    "Process reachability does not prove model readiness"
-  ]
+    "Process reachability does not prove model readiness",
+    "Reported acknowledge_messages argument serialization failure; root cause unverified (see compatibility/observations/opencode-1.18.25-macos-arm64.md)"
+  ],
+  "conformanceCommand": "autumn-bus-conformance --profile mcp-adapter --start-runtime --adapter-command autumn-bus --adapter-arg mcp --adapter-arg stdio"
 }
