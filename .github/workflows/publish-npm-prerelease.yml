@@ -119,6 +119,8 @@ jobs:
       - name: Publish or promote native packages first, then CLI and SDK
         run: npm run publish:distribution
         working-directory: sdk/typescript
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   promote:
     if: github.ref == 'refs/heads/main' && inputs.channel == 'latest'
