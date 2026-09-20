@@ -21,7 +21,7 @@ Admins can use `listScopes()`, `rotateScopeToken(scopeId)`, and `deleteScope(sco
 Install the current prerelease from the `next` tag:
 
 ```sh
-npm install @Adi103-ETAI/autumn-bus@next
+npm install @autumn-dev/autumn-bus@next
 ```
 
 The native CLI commands below require `0.1.0-next.14` to have been published. A development checkout with that version does not establish registry availability. Earlier `next` versions are SDK-only, and unqualified `npx` selects `latest`, not `next`.
@@ -29,8 +29,8 @@ The native CLI commands below require `0.1.0-next.14` to have been published. A 
 Once the CLI-enabled release is published, run it without installing Go:
 
 ```sh
-npx @Adi103-ETAI/autumn-bus@0.1.0-next.14 demo
-npx @Adi103-ETAI/autumn-bus@0.1.0-next.14 start
+npx @autumn-dev/autumn-bus@0.1.0-next.14 demo
+npx @autumn-dev/autumn-bus@0.1.0-next.14 start
 ```
 
 macOS, Linux, and Windows binaries are provided for x64 and arm64. Linux binaries are built without CGO. Keep optional dependencies enabled; `--ignore-scripts` is supported. If you installed with `--omit=optional`, reinstall with `--include=optional` to use the CLI. SDK-only consumers can omit the binary packages and keep using a separately installed daemon. Do not copy `node_modules` between platforms.
@@ -42,7 +42,7 @@ The CLI refuses mismatched binary versions and never falls back to another execu
 Start the daemon, create a scope with the Autumn Bus CLI, and set the returned token as `AUTUMN_BUS_SCOPE_TOKEN`.
 
 ```ts
-import { AutumnBusClient, AutumnBusOutputClient, AutumnBusScopeClient } from '@Adi103-ETAI/autumn-bus'
+import { AutumnBusClient, AutumnBusOutputClient, AutumnBusScopeClient } from '@autumn-dev/autumn-bus'
 
 const address = 'http://127.0.0.1:4765'
 const scope = new AutumnBusScopeClient(address, process.env.AUTUMN_BUS_SCOPE_TOKEN!)

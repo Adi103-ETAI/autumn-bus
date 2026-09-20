@@ -106,11 +106,11 @@ Go `SetState` and TypeScript `setState` serialize writes and update their rememb
 Install the current prerelease:
 
 ```bash
-npm install @Adi103-ETAI/autumn-bus@next
+npm install @autumn-dev/autumn-bus@next
 ```
 
 ```ts
-import { AutumnBusAgentSession, AutumnBusOutputClient, AutumnBusScopeClient } from '@Adi103-ETAI/autumn-bus'
+import { AutumnBusAgentSession, AutumnBusOutputClient, AutumnBusScopeClient } from '@autumn-dev/autumn-bus'
 
 const session = await AutumnBusAgentSession.start({
   address,
@@ -178,7 +178,7 @@ Prefer bounded inbox waiting for efficient pull delivery. `pollInbox` provides a
 Go returns `*bus.BusError`. TypeScript throws `BusError`. Branch on the protocol error code instead of matching the human-readable message.
 
 ```ts
-import { BusError } from '@Adi103-ETAI/autumn-bus'
+import { BusError } from '@autumn-dev/autumn-bus'
 
 try {
   await session.client.claimTask(taskId)

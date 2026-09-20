@@ -95,22 +95,22 @@ autumn-bus demo
 
 ### Upcoming npm CLI
 
-This branch prepares `0.1.0-next.14`, the first npm package with a native Go CLI as well as the TypeScript client. Preparing the code does not publish the package. Until that version appears in the [npm version history](https://www.npmjs.com/package/@Adi103-ETAI/autumn-bus?activeTab=versions), use the archives above or build from source below.
+This branch prepares `0.1.0-next.14`, the first npm package with a native Go CLI as well as the TypeScript client. Preparing the code does not publish the package. Until that version appears in the [npm version history](https://www.npmjs.com/package/@autumn-dev/autumn-bus?activeTab=versions), use the archives above or build from source below.
 
 After publication, no Go installation is needed:
 
 ```bash
-npx @Adi103-ETAI/autumn-bus@0.1.0-next.14 demo
+npx @autumn-dev/autumn-bus@0.1.0-next.14 demo
 ```
 
 Or install the CLI once:
 
 ```bash
-npm install -g @Adi103-ETAI/autumn-bus@0.1.0-next.14
+npm install -g @autumn-dev/autumn-bus@0.1.0-next.14
 autumn-bus start
 ```
 
-The CLI runs the same Go daemon on macOS, Linux, and Windows, on x64 and arm64. Older npm versions contain only the TypeScript client. An unqualified `npx @Adi103-ETAI/autumn-bus` follows npm's `latest` tag, not `next`; use the explicit published prerelease while evaluating the CLI.
+The CLI runs the same Go daemon on macOS, Linux, and Windows, on x64 and arm64. Older npm versions contain only the TypeScript client. An unqualified `npx @autumn-dev/autumn-bus` follows npm's `latest` tag, not `next`; use the explicit published prerelease while evaluating the CLI.
 
 ### Build from source
 
@@ -146,7 +146,7 @@ No Autumn Desktop installation is required. The daemon remains a native Go appli
 For a JavaScript or TypeScript application:
 
 ```bash
-npm install @Adi103-ETAI/autumn-bus@next
+npm install @autumn-dev/autumn-bus@next
 ```
 
 For a Go application:
