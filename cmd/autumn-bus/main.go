@@ -27,55 +27,10 @@ Usage:
   autumn-bus status
   autumn-bus doctor [--json]
   autumn-bus scope create [scope-id]
-  autumn-bus message receipt <message-id> [--json] [--address <addr>]
-  autumn-bus agent list [--json] [--address <addr>]
-  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
-  autumn-bus demo
-  autumn-bus version
-  autumn-bus start [--port <port>]
-  autumn-bus stop
-  autumn-bus status
-  autumn-bus doctor [--json]
-  autumn-bus scope create [scope-id]
-  autumn-bus message receipt <message-id> [--json] [--address <addr>]
-  autumn-bus agent list [--json] [--address <addr>]
-  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
-  autumn-bus mcp stdio
-  autumn-bus demo
-  autumn-bus version
-  autumn-bus start [--port <port>]
-  autumn-bus stop
-  autumn-bus status
-  autumn-bus doctor [--json]
-  autumn-bus scope create [scope-id]
-  autumn-bus message receipt <message-id> [--json] [--address <addr>]
-  autumn-bus agent list [--json] [--address <addr>]
-  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
-	  autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
-	  autumn-bus task list [--ready] [--json] [--address <addr>]
-  autumn-bus mcp stdio
-  autumn-bus demo
-  autumn-bus version
-  autumn-bus start [--port <port>]
-  autumn-bus stop
-  autumn-bus status
-  autumn-bus doctor [--json]
-  autumn-bus scope create [scope-id]
-  autumn-bus scope storage [--json] [--address <addr>]
-  autumn-bus scope prune --before <timestamp> [--yes] [--json] [--address <addr>]
-  autumn-bus message receipt <message-id> [--json] [--address <addr>]
-  autumn-bus agent list [--json] [--address <addr>]
-  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
-  autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
-  autumn-bus task list [--ready] [--json] [--address <addr>]
-  autumn-bus mcp stdio
-  autumn-bus demo
-  autumn-bus version
-  autumn-bus start [--port <port>]
-  autumn-bus stop
-  autumn-bus status
-  autumn-bus doctor [--json]
-  autumn-bus scope create [scope-id]
+  autumn-bus scope list [--address <addr>]
+  autumn-bus scope rotate-token --id <scope-id> [--address <addr>]
+  autumn-bus scope delete --id <scope-id> --confirm <scope-id> [--address <addr>]
+  autumn-bus backup --output <new-path> [--address <addr>]
   autumn-bus scope export --id <scope-id> --output <path> [--address <addr>]
   autumn-bus scope import --input <path> [--address <addr>]
   autumn-bus scope storage [--json] [--address <addr>]
@@ -84,7 +39,7 @@ Usage:
   autumn-bus agent list [--json] [--address <addr>]
   autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
   autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
-  autumn-bus task list [--ready] [--json] [--address <addr>]
+  autumn-bus task list [--ready] [--json] [--limit <1-500>] [--after <cursor>] [--address <addr>]
   autumn-bus mcp stdio
   autumn-bus demo
   autumn-bus version
@@ -300,9 +255,6 @@ func createScope(id string) error {
 	return nil
 }
 
-// resolveBusAddress returns the daemon address to talk to for a CLI subcommand
-// that uses an agent credential. Precedence: explicit flag, then the
-// AUTUMN_BUS_ADDRESS environment variable, then the daemon run file.
 func adminClient(explicitAddress string) (bus.Client, error) {
 	if token := os.Getenv("AUTUMN_BUS_ADMIN_TOKEN"); token != "" {
 		address, err := resolveBusAddress(explicitAddress)
@@ -677,6 +629,8 @@ func listTasks(args []string) error {
 	flags := flag.NewFlagSet("task list", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	readyOnly := flags.Bool("ready", false, "show only dependency-ready tasks")
+	pageLimit := flags.Int("limit", 0, "return a page of 1-500 tasks as JSON")
+	after := flags.String("after", "", "task page cursor")
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
 	address := flags.String("address", "", "Autumn Bus address")
 	if err := flags.Parse(args); err != nil {
@@ -691,6 +645,16 @@ func listTasks(args []string) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	if *pageLimit != 0 || *after != "" {
+		if *readyOnly {
+			return errors.New("--ready cannot be combined with task pagination")
+		}
+		page, err := client.TaskPage(ctx, *after, *pageLimit)
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(os.Stdout).Encode(page)
+	}
 	tasks, err := client.ListTasks(ctx, *readyOnly)
 	if err != nil {
 		return fmt.Errorf("could not list tasks: %w", err)
@@ -935,7 +899,7 @@ func runAgent(args []string) error {
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-	command.Env = setEnvironment(removeEnvironment(os.Environ(), *scopeTokenEnv),
+	command.Env = setEnvironment(removeEnvironment(os.Environ(), *scopeTokenEnv, "AUTUMN_BUS_SCOPE_TOKEN", "AUTUMN_BUS_ADMIN_TOKEN"),
 		"AUTUMN_BUS_ADDRESS", resolvedAddress,
 		"AUTUMN_BUS_MCP_URL", resolvedAddress+"/mcp",
 		"AUTUMN_BUS_AGENT_ID", session.Registration.AgentID,
@@ -987,6 +951,9 @@ func run() error {
 	case "doctor":
 		return doctor(args[1:])
 	case "scope":
+		if len(args) >= 2 && (args[1] == "list" || args[1] == "rotate-token" || args[1] == "delete") {
+			return scopeAdmin(args[1], args[2:])
+		}
 		if len(args) >= 2 && args[1] == "create" {
 			id := ""
 			if len(args) >= 3 {
@@ -1006,6 +973,8 @@ func run() error {
 		if len(args) >= 2 && args[1] == "prune" {
 			return scopePrune(args[2:])
 		}
+	case "backup":
+		return backupDatabase(args[1:])
 	case "message":
 		if len(args) >= 2 && args[1] == "receipt" {
 			return inspectReceipt(args[2:])
