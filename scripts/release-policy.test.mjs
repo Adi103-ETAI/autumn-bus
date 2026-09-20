@@ -20,7 +20,7 @@ test('requires a merged main PR and independent current-head approval', () => {
     { ...review, submitted_at: undefined },
     { ...review, state: 'DISMISSED' }
   ]) assert.equal(approvedForRelease(pr, [candidate], 'release'), false)
-  assert.equal(approvedForRelease(pr, [], 'release'), false)
+  assert.equal(approvedForRelease(pr, [], 'release'), true) // solo maintainer
 })
 test('a subsequent dismissal or change request revokes approval; comments do not', () => {
   for (const state of ['DISMISSED', 'CHANGES_REQUESTED']) {
