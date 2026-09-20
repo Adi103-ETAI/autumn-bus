@@ -73,7 +73,7 @@ try {
   const sourceMap = JSON.parse(readFileSync(mapPath, 'utf8'))
   assert.equal(resolve(dirname(mapPath), sourceMap.sourceRoot, sourceMap.sources[0]), join(root, 'node_modules/@autumn-dev/autumn-bus/src/client.ts'), 'Source maps must refer to the packaged source, not a temporary build directory')
   assert.deepEqual([...new Set(downloaded)].sort(), [manifest.name, host.name].sort())
-  assert.deepEqual(readdirSync(join(root, 'node_modules/@Adi103-ETAI')).sort(), ['autumn-bus', `autumn-bus-${host.target}`].sort())
+  assert.deepEqual(readdirSync(join(root, 'node_modules/@autumn-dev')).sort(), ['autumn-bus', `autumn-bus-${host.target}`].sort())
   const version = await runNpm(['exec', '--offline', '--', 'autumn-bus', 'version'])
   assert.ok(version.stdout.includes(`autumn-bus ${manifest.version} `), version.stdout)
   const launcher = join(root, 'node_modules/@autumn-dev/autumn-bus/cli/autumn-bus.cjs')
