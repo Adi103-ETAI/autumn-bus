@@ -22,6 +22,7 @@ import type {
   EventBatch,
   HumanEscalation,
   InboxReservation,
+  NodeStatus,
   IssuedA2APrincipal,
   IssuedOutputPrincipal,
   OutputHistory,
@@ -151,6 +152,52 @@ export class AutumnBusAdminClient {
     private readonly adminToken: string
   ) {}
 
+  /** Stream a sensitive, full SQLite disaster-recovery snapshot (not portable JSON). */
+  async *backup(options: OperationOptions = {}): AsyncGenerator<Uint8Array> {
+    const timeoutMs = options.timeoutMs ?? 300_000
+    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+      throw new BusError('INVALID_ARGUMENT', 'timeoutMs must be a positive finite number')
+    }
+    const controller = new AbortController()
+    const abort = (): void => controller.abort(options.signal?.reason)
+    if (options.signal?.aborted) abort()
+    else options.signal?.addEventListener('abort', abort, { once: true })
+    const timer = setTimeout(() => controller.abort(new Error('Database backup timed out')), timeoutMs)
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
+    try {
+      const response = await fetch(this.address + '/v1/admin/backup', {
+        headers: { Authorization: 'Bearer ' + this.adminToken },
+        signal: controller.signal
+      })
+      if (!response.ok || response.body === null) {
+        await response.body?.cancel()
+        throw new Error(`Database backup failed with HTTP ${response.status}`)
+      }
+      reader = response.body.getReader()
+      for (;;) {
+        const chunk = await reader.read()
+        if (chunk.done) return
+        yield chunk.value
+      }
+    } finally {
+      clearTimeout(timer)
+      options.signal?.removeEventListener('abort', abort)
+      await reader?.cancel().catch(() => undefined)
+    }
+  }
+
+  listScopes(options?: OperationOptions): Promise<Array<{ scopeId: string; createdAt: string }>> {
+    return request(this.address, this.adminToken, 'GET', '/v1/admin/scopes', undefined, options)
+  }
+
+  rotateScopeToken(scopeId: string, options?: OperationOptions): Promise<CreateScopeResult> {
+    return request(this.address, this.adminToken, 'POST', `/v1/admin/scopes/${encodeURIComponent(scopeId)}/rotate-token`, {}, options)
+  }
+
+  async deleteScope(scopeId: string, options?: OperationOptions): Promise<void> {
+    await request(this.address, this.adminToken, 'DELETE', `/v1/admin/scopes/${encodeURIComponent(scopeId)}`, { confirmScopeId: scopeId }, options)
+  }
+
   health(options?: OperationOptions): Promise<BusHealth> {
     return request(this.address, undefined, 'GET', '/health', undefined, options)
   }
@@ -188,6 +235,11 @@ export class AutumnBusScopeClient {
     readonly address: string,
     readonly scopeToken: string
   ) {}
+
+  taskPage(after = '', limit = 100, options?: OperationOptions): Promise<{ tasks: BusTask[]; nextCursor?: string }> {
+    const query = new URLSearchParams({ after, limit: String(limit) })
+    return request(this.address, this.scopeToken, 'GET', `/v1/tasks/page?${query}`, undefined, options)
+  }
 
   registerAgent(input: RegisterAgentInput, options?: OperationOptions): Promise<RegisterAgentResult> {
     return request(this.address, this.scopeToken, 'POST', '/v1/agents', input, options)
@@ -448,6 +500,15 @@ export class AutumnBusClient {
     readonly agentToken: string
   ) {}
 
+  taskPage(after = '', limit = 100, options?: OperationOptions): Promise<{ tasks: BusTask[]; nextCursor?: string }> {
+    const query = new URLSearchParams({ after, limit: String(limit) })
+    return request(this.address, this.agentToken, 'GET', `/v1/tasks/page?${query}`, undefined, options)
+  }
+
+  async retire(options?: OperationOptions): Promise<void> {
+    await request(this.address, this.agentToken, 'POST', '/v1/me/retire', {}, options)
+  }
+
   heartbeat(lifecycle: AgentLifecycle, ready = true, leaseMs?: number, options?: OperationOptions): Promise<Agent> {
     return request(this.address, this.agentToken, 'PATCH', '/v1/me/heartbeat', {
       lifecycle,
@@ -586,6 +647,10 @@ export class AutumnBusClient {
 
   mcpEndpoint(): { url: string; headers: Record<string, string> } {
     return { url: `${this.address}/mcp`, headers: { Authorization: `Bearer ${this.agentToken}` } }
+  }
+
+  nodeStatus(options?: OperationOptions): Promise<NodeStatus> {
+    return request(this.address, this.agentToken, 'GET', '/v1/me', undefined, options)
   }
 }
 

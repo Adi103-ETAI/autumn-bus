@@ -11,17 +11,27 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
           go-version: 1.27.x
           cache: true
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: sdk/typescript/package-lock.json
+      - name: Verify reviewed release commit
+        run: node scripts/release-policy.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: node --test scripts/release-policy.test.mjs
       - run: go test -race -count=1 ./...
       - run: go vet ./...
       - run: npm ci
@@ -32,11 +42,39 @@ jobs:
         working-directory: sdk/typescript
       - run: npm run test:errors
         working-directory: sdk/typescript
+      - run: npm run test:release
+        working-directory: sdk/typescript
+      - name: Pin reviewed evidence head for a stable runtime tag
+        id: evidence
+        if: ${{ !contains(github.ref_name, '-') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          release_evidence_sha="$(git rev-parse origin/main)"
+          GITHUB_SHA="${release_evidence_sha}" node scripts/release-policy.mjs
+          echo "sha=${release_evidence_sha}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ !contains(github.ref_name, '-') }}
+        with:
+          ref: ${{ steps.evidence.outputs.sha }}
+          path: release-evidence
+      - name: Require exact-source launch-core evidence for a stable runtime tag
+        if: ${{ !contains(github.ref_name, '-') }}
+        run: node release-evidence/scripts/check-compatibility.mjs --runtime "${GITHUB_REF_NAME#v}" --source-commit "${GITHUB_SHA}" --require-attestation --launch-core
       - run: go build -o /tmp/autumn-bus ./cmd/autumn-bus
       - run: npm run test:integration
         working-directory: sdk/typescript
         env:
           AUTUMN_BUS_BINARY: /tmp/autumn-bus
+      - name: Verify signed annotated release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag_object="$(git rev-parse "${GITHUB_REF_NAME}^{tag}")"
+          verified="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_object}" --jq '.verification.verified')"
+          test "${verified}" = true
 
   build:
     needs: verify
@@ -67,8 +105,8 @@ jobs:
       GOARCH: ${{ matrix.goarch }}
       AUTUMN_BUS_VERSION: ${{ github.ref_name }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
           go-version: 1.27.x
           cache: true
@@ -84,7 +122,7 @@ jobs:
           go build -trimpath -ldflags "-s -w -X github.com/Adi103-ETAI/autumn-bus/bus.Version=${AUTUMN_BUS_VERSION}" -o "dist/${AUTUMN_BUS_DIRECTORY}/autumn-bus${AUTUMN_BUS_SUFFIX}" ./cmd/autumn-bus
           go build -trimpath -ldflags "-s -w -X github.com/Adi103-ETAI/autumn-bus/bus.Version=${AUTUMN_BUS_VERSION}" -o "dist/${AUTUMN_BUS_DIRECTORY}/autumn-bus-conformance${AUTUMN_BUS_SUFFIX}" ./cmd/autumn-bus-conformance
           cp LICENSE README.md "dist/${AUTUMN_BUS_DIRECTORY}/"
-          cp -R docs spec "dist/${AUTUMN_BUS_DIRECTORY}/"
+          cp -R docs spec adapters compatibility assets "dist/${AUTUMN_BUS_DIRECTORY}/"
           if [[ "${GOOS}" == "windows" ]]; then
             (cd dist && zip -qr "${AUTUMN_BUS_DIRECTORY}.zip" "${AUTUMN_BUS_DIRECTORY}")
           else
@@ -92,23 +130,23 @@ jobs:
           fi
       - name: Attest Unix archive
         if: matrix.goos != 'windows'
-        uses: actions/attest-build-provenance@v4.2.2
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: dist/*.tar.gz
       - name: Attest Windows archive
         if: matrix.goos == 'windows'
-        uses: actions/attest-build-provenance@v4.2.2
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: dist/*.zip
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0.24.2
+        uses: anchore/sbom-action@006b7ce8314066bdf1765b4500370d40fa6917a3 # v0.24.2
         with:
           path: dist
           format: spdx-json
           output-file: dist/autumn-bus_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.spdx.json
           upload-artifact: false
           upload-release-assets: false
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: autumn-bus-${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
@@ -134,7 +172,7 @@ jobs:
             goarch: amd64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: autumn-bus-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist
@@ -172,8 +210,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           path: dist
           pattern: autumn-bus-*

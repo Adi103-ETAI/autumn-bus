@@ -63,7 +63,7 @@ func scanEvent(row rowScanner) (BusEvent, error) {
 }
 
 func (s *Store) Events(ctx context.Context, scopeID string, after int64, limit int) (EventBatch, error) {
-	tx, err := s.db.BeginTx(ctx, nil)
+	tx, err := s.beginTx(ctx)
 	if err != nil {
 		return EventBatch{}, err
 	}
@@ -143,7 +143,8 @@ func (r *Runtime) Events(ctx context.Context, scopeToken string, after int64, li
 	if waitMS < 0 || waitMS > maxEventWaitMS {
 		return EventBatch{}, Errorf(CodeInvalidArgument, "wait must be between 0 and 25 seconds")
 	}
-	scopeID, err := r.store.AuthenticateScope(ctx, scopeToken)
+	scopeID, err := r.scopeAuthority(ctx, scopeToken)
+	ctx = withScopeCredential(ctx, scopeToken)
 	if err != nil {
 		return EventBatch{}, err
 	}
@@ -157,7 +158,7 @@ func (r *Runtime) Events(ctx context.Context, scopeToken string, after int64, li
 		if !subscribed {
 			return EventBatch{}, Errorf(CodeBackpressure, "Scope event wait limit is full")
 		}
-		if _, err := r.store.AuthenticateScope(ctx, scopeToken); err != nil {
+		if _, err := r.scopeAuthority(ctx, scopeToken); err != nil {
 			unsubscribe()
 			return EventBatch{}, err
 		}

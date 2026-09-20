@@ -26,66 +26,25 @@ Usage:
   autumn-bus stop
   autumn-bus status
   autumn-bus doctor [--json]
+  autumn-bus doctor --harness <host> --scope <scope-id> [--json]
+  autumn-bus harness list
+  autumn-bus harness config <host> --scope <scope-id> --agent <id> [--name <display>] [--output <new-file>]
   autumn-bus scope create [scope-id]
-  autumn-bus message receipt <message-id> [--json] [--address <addr>]
-  autumn-bus agent list [--json] [--address <addr>]
-  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
-  autumn-bus demo
-  autumn-bus version
-  autumn-bus start [--port <port>]
-  autumn-bus stop
-  autumn-bus status
-  autumn-bus doctor [--json]
-  autumn-bus scope create [scope-id]
-  autumn-bus message receipt <message-id> [--json] [--address <addr>]
-  autumn-bus agent list [--json] [--address <addr>]
-  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
-  autumn-bus mcp stdio
-  autumn-bus demo
-  autumn-bus version
-  autumn-bus start [--port <port>]
-  autumn-bus stop
-  autumn-bus status
-  autumn-bus doctor [--json]
-  autumn-bus scope create [scope-id]
-  autumn-bus message receipt <message-id> [--json] [--address <addr>]
-  autumn-bus agent list [--json] [--address <addr>]
-  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
-	  autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
-	  autumn-bus task list [--ready] [--json] [--address <addr>]
-  autumn-bus mcp stdio
-  autumn-bus demo
-  autumn-bus version
-  autumn-bus start [--port <port>]
-  autumn-bus stop
-  autumn-bus status
-  autumn-bus doctor [--json]
-  autumn-bus scope create [scope-id]
-  autumn-bus scope storage [--json] [--address <addr>]
-  autumn-bus scope prune --before <timestamp> [--yes] [--json] [--address <addr>]
-  autumn-bus message receipt <message-id> [--json] [--address <addr>]
-  autumn-bus agent list [--json] [--address <addr>]
-  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
-  autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
-  autumn-bus task list [--ready] [--json] [--address <addr>]
-  autumn-bus mcp stdio
-  autumn-bus demo
-  autumn-bus version
-  autumn-bus start [--port <port>]
-  autumn-bus stop
-  autumn-bus status
-  autumn-bus doctor [--json]
-  autumn-bus scope create [scope-id]
+  autumn-bus scope list [--address <addr>]
+  autumn-bus scope rotate-token --id <scope-id> [--address <addr>]
+  autumn-bus scope delete --id <scope-id> --confirm <scope-id> [--address <addr>]
+  autumn-bus backup --output <new-path> [--address <addr>]
   autumn-bus scope export --id <scope-id> --output <path> [--address <addr>]
   autumn-bus scope import --input <path> [--address <addr>]
   autumn-bus scope storage [--json] [--address <addr>]
   autumn-bus scope prune --before <timestamp> [--yes] [--json] [--address <addr>]
   autumn-bus message receipt <message-id> [--json] [--address <addr>]
   autumn-bus agent list [--json] [--address <addr>]
-  autumn-bus agent run --id <id> --name <name> [--connect-to <peer>] -- <command> [args...]
+  autumn-bus link --scope <scope-id> <agent-a> <agent-b>
+  autumn-bus agent run --id <id> --name <name> [--scope <local-scope-id>] [--connect-to <peer>] -- <command> [args...]
   autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
-  autumn-bus task list [--ready] [--json] [--address <addr>]
-  autumn-bus mcp stdio
+  autumn-bus task list [--ready] [--json] [--limit <1-500>] [--after <cursor>] [--address <addr>]
+  autumn-bus mcp stdio [--scope <scope-id> --agent <id> --name <display>]
   autumn-bus demo
   autumn-bus version
 `
@@ -176,8 +135,19 @@ func doctor(args []string) error {
 	flags := flag.NewFlagSet("doctor", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+	host := flags.String("harness", "", "check a configured harness")
+	scope := flags.String("scope", "", "local scope for the temporary bridge probe")
 	if err := flags.Parse(args); err != nil {
 		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("doctor does not accept positional arguments")
+	}
+	if *host != "" {
+		return doctorHarness(*host, *scope, *jsonOutput)
+	}
+	if *scope != "" {
+		return errors.New("doctor --scope requires --harness")
 	}
 	paths, err := bus.DefaultDaemonPaths()
 	if err != nil {
@@ -286,11 +256,19 @@ func createScope(id string) error {
 	if err != nil {
 		return err
 	}
+	lock, err := bus.LockScopeCredentials(paths.DataDir)
+	if err != nil {
+		return err
+	}
+	defer lock.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	result, err := (bus.Client{Address: run.Address, Token: run.AdminToken}).CreateScope(ctx, bus.CreateScopeInput{ID: id})
 	if err != nil {
 		return err
+	}
+	if err := bus.SaveScopeToken(paths.DataDir, result.ScopeID, result.ScopeToken); err != nil {
+		return fmt.Errorf("scope was created but its local credential could not be saved; fix the data directory and rotate the scope token: %w", err)
 	}
 	encoded, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
@@ -300,9 +278,6 @@ func createScope(id string) error {
 	return nil
 }
 
-// resolveBusAddress returns the daemon address to talk to for a CLI subcommand
-// that uses an agent credential. Precedence: explicit flag, then the
-// AUTUMN_BUS_ADDRESS environment variable, then the daemon run file.
 func adminClient(explicitAddress string) (bus.Client, error) {
 	if token := os.Getenv("AUTUMN_BUS_ADMIN_TOKEN"); token != "" {
 		address, err := resolveBusAddress(explicitAddress)
@@ -410,11 +385,21 @@ func importScope(args []string) error {
 	if err != nil {
 		return err
 	}
+	unlock, err := lockLocalScopeCredentials(client.Address)
+	if err != nil {
+		return err
+	}
+	defer unlock()
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	result, err := client.ImportScope(ctx, archive)
 	if err != nil {
 		return fmt.Errorf("could not import scope: %w", err)
+	}
+	if result.Imported {
+		if err := updateLocalScopeCredential(client.Address, result.ScopeID, result.ScopeToken); err != nil {
+			return err
+		}
 	}
 	encoded, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
@@ -677,6 +662,8 @@ func listTasks(args []string) error {
 	flags := flag.NewFlagSet("task list", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	readyOnly := flags.Bool("ready", false, "show only dependency-ready tasks")
+	pageLimit := flags.Int("limit", 0, "return a page of 1-500 tasks as JSON")
+	after := flags.String("after", "", "task page cursor")
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
 	address := flags.String("address", "", "Autumn Bus address")
 	if err := flags.Parse(args); err != nil {
@@ -691,6 +678,16 @@ func listTasks(args []string) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	if *pageLimit != 0 || *after != "" {
+		if *readyOnly {
+			return errors.New("--ready cannot be combined with task pagination")
+		}
+		page, err := client.TaskPage(ctx, *after, *pageLimit)
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(os.Stdout).Encode(page)
+	}
 	tasks, err := client.ListTasks(ctx, *readyOnly)
 	if err != nil {
 		return fmt.Errorf("could not list tasks: %w", err)
@@ -871,6 +868,7 @@ func runAgent(args []string) error {
 	id := flags.String("id", "", "stable agent id")
 	name := flags.String("name", "", "agent display name")
 	address := flags.String("address", "", "Autumn Bus address")
+	localScope := flags.String("scope", "", "local scope ID; uses protected cached credentials, not environment authority")
 	scopeTokenEnv := flags.String("scope-token-env", "AUTUMN_BUS_SCOPE_TOKEN", "environment variable containing the scope token")
 	lease := flags.Duration("lease", 5*time.Minute, "execution lease")
 	heartbeat := flags.Duration("heartbeat", 0, "heartbeat interval")
@@ -889,10 +887,19 @@ func runAgent(args []string) error {
 		return errors.New("scope token environment variable name is required")
 	}
 	scopeToken := os.Getenv(*scopeTokenEnv)
-	if scopeToken == "" {
-		return fmt.Errorf("%s is required", *scopeTokenEnv)
-	}
 	resolvedAddress := *address
+	if *localScope != "" {
+		if *address != "" || scopeToken != "" || os.Getenv("AUTUMN_BUS_AGENT_TOKEN") != "" {
+			return errors.New("--scope uses local discovery only; do not mix --address or inherited scope/agent credentials")
+		}
+		owner, err := localScopeClient(*localScope)
+		if err != nil {
+			return err
+		}
+		scopeToken, resolvedAddress = owner.Token, owner.Address
+	} else if scopeToken == "" {
+		return fmt.Errorf("use --scope <local-scope-id> or provide %s", *scopeTokenEnv)
+	}
 	if resolvedAddress == "" {
 		resolvedAddress = os.Getenv("AUTUMN_BUS_ADDRESS")
 	}
@@ -935,7 +942,7 @@ func runAgent(args []string) error {
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-	command.Env = setEnvironment(removeEnvironment(os.Environ(), *scopeTokenEnv),
+	command.Env = setEnvironment(removeEnvironment(os.Environ(), *scopeTokenEnv, "AUTUMN_BUS_SCOPE_TOKEN", "AUTUMN_BUS_ADMIN_TOKEN"),
 		"AUTUMN_BUS_ADDRESS", resolvedAddress,
 		"AUTUMN_BUS_MCP_URL", resolvedAddress+"/mcp",
 		"AUTUMN_BUS_AGENT_ID", session.Registration.AgentID,
@@ -986,8 +993,18 @@ func run() error {
 		return status()
 	case "doctor":
 		return doctor(args[1:])
+	case "link":
+		return linkAgents(args[1:])
+	case "harness":
+		return harness(args[1:])
 	case "scope":
+		if len(args) >= 2 && (args[1] == "list" || args[1] == "rotate-token" || args[1] == "delete") {
+			return scopeAdmin(args[1], args[2:])
+		}
 		if len(args) >= 2 && args[1] == "create" {
+			if len(args) > 3 {
+				return errors.New("scope create accepts at most one scope ID")
+			}
 			id := ""
 			if len(args) >= 3 {
 				id = args[2]
@@ -1006,6 +1023,8 @@ func run() error {
 		if len(args) >= 2 && args[1] == "prune" {
 			return scopePrune(args[2:])
 		}
+	case "backup":
+		return backupDatabase(args[1:])
 	case "message":
 		if len(args) >= 2 && args[1] == "receipt" {
 			return inspectReceipt(args[2:])
@@ -1025,10 +1044,10 @@ func run() error {
 			return listTasks(args[2:])
 		}
 	case "mcp":
-		if len(args) == 2 && args[1] == "stdio" {
+		if len(args) >= 2 && args[1] == "stdio" {
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer cancel()
-			return runMCPStdio(ctx)
+			return runMCPStdio(ctx, args[2:]...)
 		}
 	case "demo":
 		return bus.RunDemo(context.Background())

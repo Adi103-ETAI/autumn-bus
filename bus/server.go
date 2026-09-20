@@ -27,22 +27,27 @@ type ServerOptions struct {
 	StartedAt      string
 	PublicBaseURL  string
 	AllowedOrigins []string
+	// AllowedHosts lists exact HTTP Host authorities, including the port as sent,
+	// that may reach /mcp in addition to loopback. It does not affect /v1 routes.
+	AllowedHosts []string
 }
 
 type Server struct {
-	runtime      *Runtime
-	options      ServerOptions
-	waitContext  context.Context
-	cancelWaits  context.CancelFunc
-	httpServer   *http.Server
-	listener     net.Listener
-	mcpHandler   http.Handler
-	router       http.Handler
-	address      string
-	closeOnce    sync.Once
-	serveDone    chan error
-	shutdown     chan struct{}
-	shutdownOnce sync.Once
+	runtime         *Runtime
+	options         ServerOptions
+	waitContext     context.Context
+	cancelWaits     context.CancelFunc
+	httpServer      *http.Server
+	listener        net.Listener
+	mcpHandler      http.Handler
+	router          http.Handler
+	address         string
+	closeOnce       sync.Once
+	serveDone       chan error
+	shutdown        chan struct{}
+	shutdownOnce    sync.Once
+	requests        chan struct{}
+	controlRequests chan struct{}
 }
 
 type mcpTokenKey struct{}
@@ -59,6 +64,8 @@ func NewServer(runtime *Runtime, options ServerOptions) *Server {
 		runtime: runtime, options: options,
 		waitContext: waitContext, cancelWaits: cancelWaits,
 		serveDone: make(chan error, 1), shutdown: make(chan struct{}),
+		requests:        make(chan struct{}, maxConcurrentRequests),
+		controlRequests: make(chan struct{}, 32),
 	}
 	server.mcpHandler = mcp.NewStreamableHTTPHandler(func(request *http.Request) *mcp.Server {
 		token, _ := request.Context().Value(mcpTokenKey{}).(string)
@@ -69,6 +76,10 @@ func NewServer(runtime *Runtime, options ServerOptions) *Server {
 	}, &mcp.StreamableHTTPOptions{
 		Stateless: true, JSONResponse: true, MaxRequestBodyBytes: maxBodyBytes,
 		PropagateRequestCancellation: true,
+		// The go-sdk DNS-rebinding guard is disabled because Server.serveMCP owns the
+		// Host policy: it honours AllowedHosts, returns the JSON failure envelope, and
+		// is covered by this package's tests. Do not re-enable without removing that check.
+		DisableLocalhostProtection: true,
 	})
 	server.router = server.newRouter()
 	server.httpServer = &http.Server{
@@ -204,6 +215,19 @@ func writeFailure(response http.ResponseWriter, err error) {
 }
 
 func (s *Server) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	budget := s.requests
+	switch request.URL.Path {
+	case "/v1/me/heartbeat", "/v1/me/retire", "/health", "/health/live", "/health/ready", "/v1/admin/shutdown":
+		budget = s.controlRequests
+	}
+	select {
+	case budget <- struct{}{}:
+		defer func() { <-budget }()
+	default:
+		response.Header().Set("Retry-After", "1")
+		writeFailure(response, Errorf(CodeBackpressure, "Concurrent request limit is full"))
+		return
+	}
 	s.router.ServeHTTP(response, request)
 }
 
@@ -270,9 +294,27 @@ func (s *Server) newMCPServer(token string) *mcp.Server {
 			count, err := s.runtime.AcknowledgeMessages(ctx, token, input.MessageIDs)
 			return nil, map[string]int64{"acknowledged": count}, err
 		})
+	type receiptInput struct {
+		MessageID string `json:"messageId"`
+	}
+	mcp.AddTool(server, &mcp.Tool{Name: "message_receipt", Description: "Inspect a sent or received message's delivery state and linked response, without message contents."},
+		func(ctx context.Context, _ *mcp.CallToolRequest, input receiptInput) (*mcp.CallToolResult, any, error) {
+			result, err := s.runtime.Receipt(ctx, token, input.MessageID)
+			return nil, result, err
+		})
+	// Avoid naming this field Title: jsonschema-go treats a top-level Go field
+	// with that name as the schema's title annotation and omits the JSON
+	// property. The MCP validator would then reject the required task title.
+	type addTaskInput struct {
+		TaskTitle    string   `json:"title"`
+		Description  string   `json:"description,omitempty"`
+		Dependencies []string `json:"dependencies,omitempty"`
+	}
 	mcp.AddTool(server, &mcp.Tool{Name: "add_task", Description: "Add a shared task with optional dependencies."},
-		func(ctx context.Context, _ *mcp.CallToolRequest, input AddTaskInput) (*mcp.CallToolResult, any, error) {
-			result, err := s.runtime.AddTask(ctx, token, input)
+		func(ctx context.Context, _ *mcp.CallToolRequest, input addTaskInput) (*mcp.CallToolResult, any, error) {
+			result, err := s.runtime.AddTask(ctx, token, AddTaskInput{
+				Title: input.TaskTitle, Description: input.Description, Dependencies: input.Dependencies,
+			})
 			return nil, result, err
 		})
 	type taskIDInput struct {

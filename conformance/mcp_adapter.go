@@ -24,6 +24,9 @@ type MCPAdapterOptions struct {
 	Command     string
 	Args        []string
 	Environment []string
+	// LocalPaths opts into the reference CLI's self-registration check. Use only
+	// an isolated daemon whose private data/discovery directories belong to this run.
+	LocalPaths *bus.DaemonPaths
 }
 
 type adapterConnection struct {
@@ -302,6 +305,88 @@ func RunMCPAdapter(ctx context.Context, options MCPAdapterOptions) (result Resul
 		return result, err
 	}
 
+	if err := record.check("long-poll-delivery", func() error {
+		// Verify adapter-managed long-poll delivery: a blocked check_inbox with a
+		// positive waitMs receives a message enqueued while the poll is in flight,
+		// the reservation is committed inside the adapter's runtime (not by this
+		// check), and the delivery is acknowledged exactly once through the adapter.
+		// This does NOT assert ready-edge behavior — enqueue itself wakes a blocked
+		// reserve regardless of agent readiness, so the check passes without a
+		// ready transition. Ready-edge conformance requires a genuinely host-paused
+		// consumer and is out of scope for this generic delivery check.
+		drainReg, err := owner.RegisterAgent(ctx, bus.RegisterAgentInput{
+			ID: "drain-host", DisplayName: "Drain Host", LeaseMS: 30000,
+		})
+		if err != nil {
+			return err
+		}
+		if err := owner.LinkAgents(ctx, "controller", "drain-host"); err != nil {
+			return err
+		}
+		drainAdapter, err := connectAdapter(ctx, options, scope.ScopeToken, drainReg)
+		if err != nil {
+			return err
+		}
+		logs = append(logs, drainAdapter.stderr)
+		defer func() { _ = drainAdapter.close() }()
+
+		// Block the adapter's inbox loop in a long waitMs reserve. The reservation
+		// is adapter-managed: check_inbox performs ReserveInbox then CommitInbox
+		// inside the adapter-under-test's runtime, so this check never issues a
+		// reservation of its own.
+		type inboxOutcome struct {
+			messages []bus.Message
+			err      error
+		}
+		inboxDone := make(chan inboxOutcome, 1)
+		go func() {
+			inbox, err := callTool[struct {
+				Messages []bus.Message `json:"messages"`
+			}](ctx, drainAdapter.session, "check_inbox", map[string]any{"limit": 10, "waitMs": 8000})
+			inboxDone <- inboxOutcome{messages: inbox.Messages, err: err}
+		}()
+		// Let the reserve actually subscribe before anything else runs.
+		time.Sleep(50 * time.Millisecond)
+
+		// Queue a delivery while the host's loop is blocked in the long poll.
+		queued, err := controller.SendMessage(ctx, bus.SendMessageInput{
+			To: "drain-host", Body: "queued during long poll",
+		})
+		if err != nil {
+			return err
+		}
+
+		// The blocked adapter-managed reserve must return exactly the queued
+		// delivery, and promptly. Enqueue wakes a blocked reserve, so the poll
+		// should resolve well before its 8s waitMs budget.
+		select {
+		case got := <-inboxDone:
+			if got.err != nil {
+				return got.err
+			}
+			if len(got.messages) != 1 || got.messages[0].ID != queued.MessageID {
+				return fmt.Errorf("long-poll did not return the queued delivery: %#v", got.messages)
+			}
+		case <-time.After(2 * time.Second):
+			return errors.New("adapter inbox loop did not receive within 2s of enqueue")
+		}
+
+		// The adapter already committed its reservation inside check_inbox.
+		// Acknowledge exactly one delivery through the adapter.
+		acknowledged, err := callTool[map[string]int64](ctx, drainAdapter.session, "acknowledge_messages", map[string]any{
+			"messageIds": []string{queued.MessageID},
+		})
+		if err != nil {
+			return err
+		}
+		if acknowledged["acknowledged"] != 1 {
+			return fmt.Errorf("expected exactly one acknowledgement, got %#v", acknowledged)
+		}
+		return nil
+	}); err != nil {
+		return result, err
+	}
+
 	if err := record.check("exact-peer-discovery", func() error {
 		peers, err := callTool[struct {
 			Peers []bus.Agent `json:"peers"`
@@ -497,7 +582,7 @@ func RunMCPAdapter(ctx context.Context, options MCPAdapterOptions) (result Resul
 		if err != nil {
 			return err
 		}
-		if _, err := workerSession.Client.ResolveEscalation(ctx, escalation.ID, "yes"); requireCode(err, bus.CodeUnauthenticated) != nil {
+		if _, err := workerSession.Client.ResolveEscalation(ctx, escalation.ID, "yes"); requireCode(err, bus.CodePermissionDenied) != nil {
 			return fmt.Errorf("agent resolved its own escalation: %v", err)
 		}
 		resolved, err := owner.ResolveEscalation(ctx, escalation.ID, "yes")
@@ -560,6 +645,10 @@ func RunMCPAdapter(ctx context.Context, options MCPAdapterOptions) (result Resul
 			stopClean()
 			return err
 		}
+		if _, err := cleanSession.Client.Heartbeat(ctx, bus.HeartbeatInput{Lifecycle: bus.LifecycleReady, Ready: true, LeaseMS: 30000}); err == nil {
+			stopClean()
+			return errors.New("closed execution retained heartbeat authority")
+		}
 		stopClean()
 		agents, err := owner.ListAgents(ctx)
 		if err != nil {
@@ -570,35 +659,26 @@ func RunMCPAdapter(ctx context.Context, options MCPAdapterOptions) (result Resul
 			return fmt.Errorf("clean worker did not go offline: %#v, %v", cleanAgent, err)
 		}
 
-		crashContext, stopCrash := context.WithCancel(ctx)
-		crashSession, err := bus.StartAgentSession(crashContext, bus.AgentSessionOptions{
-			Address: options.Address, ScopeToken: scope.ScopeToken,
-			Registration:      bus.RegisterAgentInput{ID: "crash-worker", DisplayName: "Crash Worker", LeaseMS: 30000},
-			HeartbeatInterval: 100 * time.Millisecond, InitialLifecycle: bus.LifecycleReady, InitialReady: true,
-		})
+		// Register without a managed heartbeat/retirement helper: this scenario
+		// must exercise unclean lease expiry, not graceful context cancellation.
+		crashRegistration, err := owner.RegisterAgent(ctx, bus.RegisterAgentInput{ID: "crash-worker", DisplayName: "Crash Worker", LeaseMS: 30000})
 		if err != nil {
-			stopCrash()
 			return err
 		}
-		crashAdapter, err := connectAdapter(ctx, options, scope.ScopeToken, crashSession.Registration)
+		crashAdapter, err := connectAdapter(ctx, options, scope.ScopeToken, crashRegistration)
 		if err != nil {
-			stopCrash()
 			return err
 		}
 		logs = append(logs, crashAdapter.stderr)
 		task, err := callTool[bus.Task](ctx, crashAdapter.session, "add_task", map[string]any{"title": "Recover after expiry"})
 		if err != nil {
 			_ = crashAdapter.close()
-			stopCrash()
 			return err
 		}
 		if _, err := callTool[bus.Task](ctx, crashAdapter.session, "claim_task", map[string]any{"taskId": task.ID}); err != nil {
 			_ = crashAdapter.close()
-			stopCrash()
 			return err
 		}
-		stopCrash()
-		<-crashSession.Done()
 		if err := crashAdapter.close(); err != nil {
 			return err
 		}
@@ -640,6 +720,79 @@ func RunMCPAdapter(ctx context.Context, options MCPAdapterOptions) (result Resul
 	}); err != nil {
 		return result, err
 	}
+	if options.LocalPaths != nil {
+		if err := record.check("self-registering-stdio-lifecycle", func() error {
+			return checkSelfRegistration(ctx, options, scope, owner, controller)
+		}); err != nil {
+			return result, err
+		}
+	}
 
 	return result, nil
+}
+
+func checkSelfRegistration(ctx context.Context, options MCPAdapterOptions, scope bus.CreateScopeResult, owner, controller bus.Client) error {
+	paths := options.LocalPaths
+	if err := bus.SaveScopeToken(paths.DataDir, scope.ScopeID, scope.ScopeToken); err != nil {
+		return err
+	}
+	defer bus.RemoveScopeToken(paths.DataDir, scope.ScopeID)
+	args := append(append([]string{}, options.Args...), "--scope", scope.ScopeID, "--agent", "stdio-owned", "--data-dir", paths.DataDir, "--runtime-dir", paths.RuntimeDir)
+	command := exec.CommandContext(ctx, options.Command, args...)
+	command.Env = removeEnvironment(os.Environ(), "HOME", "USERPROFILE", "LOCALAPPDATA", "XDG_DATA_HOME", "XDG_RUNTIME_DIR", "AUTUMN_BUS_DATA_DIR", "AUTUMN_BUS_RUNTIME_DIR", "AUTUMN_BUS_ADDRESS", "AUTUMN_BUS_ADMIN_TOKEN", "AUTUMN_BUS_SCOPE_TOKEN", "AUTUMN_BUS_AGENT_TOKEN", "AUTUMN_BUS_AGENT_ID", "AUTUMN_BUS_EXECUTION_ID")
+	var stderr bytes.Buffer
+	command.Stderr = &stderr
+	client := mcp.NewClient(&mcp.Implementation{Name: "self-registering-conformance", Version: bus.Version}, nil)
+	session, err := client.Connect(ctx, &mcp.CommandTransport{Command: command}, nil)
+	if err != nil {
+		return fmt.Errorf("self-registering bridge did not start: %w", err)
+	}
+	defer session.Close()
+	if err := owner.LinkAgents(ctx, "controller", "stdio-owned"); err != nil {
+		return err
+	}
+	receipt, err := controller.SendMessage(ctx, bus.SendMessageInput{To: "stdio-owned", Body: "self-registering request", Mode: bus.MessageRequest})
+	if err != nil {
+		return err
+	}
+	inbox, err := callTool[struct {
+		Messages []bus.Message `json:"messages"`
+	}](ctx, session, "check_inbox", map[string]any{"waitMs": 0})
+	if err != nil || len(inbox.Messages) != 1 || inbox.Messages[0].ID != receipt.MessageID {
+		return fmt.Errorf("self-registering delivery mismatch: %v", err)
+	}
+	encoded, _ := json.Marshal([]string{receipt.MessageID})
+	if _, err := callTool[map[string]int64](ctx, session, "acknowledge_messages", map[string]any{"messageIds": string(encoded)}); err != nil {
+		return err
+	}
+	response, err := callTool[bus.DeliveryReceipt](ctx, session, "message_peer", map[string]any{"peer": "controller", "message": "self-registering reply", "mode": "response", "responseTo": receipt.MessageID})
+	if err != nil {
+		return err
+	}
+	linked, err := callTool[bus.DeliveryReceipt](ctx, session, "message_receipt", map[string]any{"messageId": receipt.MessageID})
+	if err != nil || linked.ResponseMessageID != response.MessageID {
+		return fmt.Errorf("self-registering receipt mismatch: %v", err)
+	}
+	task, err := callTool[bus.Task](ctx, session, "add_task", map[string]any{"title": "Retirement releases this claim"})
+	if err != nil {
+		return err
+	}
+	if _, err := callTool[bus.Task](ctx, session, "claim_task", map[string]any{"taskId": task.ID}); err != nil {
+		return err
+	}
+	if err := session.Close(); err != nil {
+		return err
+	}
+	agents, err := owner.ListAgents(ctx)
+	if err != nil {
+		return err
+	}
+	agent, err := findAgent(agents, "stdio-owned")
+	if err != nil || agent.Reachable || agent.Lifecycle != bus.LifecycleOffline {
+		return fmt.Errorf("stdio EOF did not retire the execution: %v", err)
+	}
+	if _, err := controller.ClaimTask(ctx, task.ID); err != nil {
+		return fmt.Errorf("stdio EOF did not release the claim: %w", err)
+	}
+	return checkNoCredentials([]*bytes.Buffer{&stderr}, scope.ScopeToken, options.AdminToken)
 }

@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { checkHarnessSetup } from './harness-integration.mjs'
 import {
   AutumnBusAdminClient,
   AutumnBusAgentSession,
@@ -51,6 +52,7 @@ async function readRunFile() {
 
 try {
   const run = await readRunFile()
+  await checkHarnessSetup(binary, run, { ...process.env, AUTUMN_BUS_DATA_DIR: dataDir, AUTUMN_BUS_RUNTIME_DIR: runtimeDir }, root)
   const admin = new AutumnBusAdminClient(run.address, run.adminToken)
   const health = await admin.health()
   assert.equal(health.protocolVersion, '0.1')
@@ -99,7 +101,7 @@ try {
   const scopedAccess = await fetch(`${run.address}/v1/agents`, {
     headers: { authorization: `Bearer ${issuedPrincipal.credential}` }
   })
-  assert.equal(scopedAccess.status, 401)
+  assert.equal(scopedAccess.status, 403)
   const disabledPrincipal = await owner.setA2APrincipalEnabled(issuedPrincipal.principal.id, false)
   assert.equal(disabledPrincipal.enabled, false)
   const rotatedPrincipal = await owner.rotateA2APrincipal(issuedPrincipal.principal.id)
@@ -113,6 +115,10 @@ try {
   await reviewerSession.setState('ready', true)
   const planner = plannerSession.client
   const reviewer = reviewerSession.client
+  const node = await planner.nodeStatus()
+  assert.equal(node.identity.agentId, 'planner')
+  assert.equal(node.identity.executionId, plannerSession.registration.executionId)
+  assert.equal(node.agent.id, 'planner')
   const outputStream = await owner.createOutputStream({
     name: 'site-preview',
     retentionLimit: 2,
@@ -183,6 +189,9 @@ try {
   }, (value) => value)
   assert.equal(completed.task.status, 'done')
   assert.equal(completed.value, 'reviewed')
+  const page = await plannerSession.client.taskPage('', 1)
+  assert.equal(page.tasks.length, 1)
+  assert.equal(page.tasks[0].id, task.id)
   const progress = await owner.listTaskProgress(task.id)
   assert.equal(progress.length, 1)
   assert.equal(progress[0].text, 'Review started')
@@ -207,6 +216,24 @@ try {
   await plannerSession.close()
   const agentsAfterClose = await owner.listAgents()
   assert.equal(agentsAfterClose.every((agent) => !agent.reachable && agent.lifecycle === 'offline'), true)
+  let backupBytes = 0
+  let prefix = Buffer.alloc(0)
+  for await (const chunk of admin.backup()) {
+    backupBytes += chunk.byteLength
+    if (prefix.length < 16) prefix = Buffer.concat([prefix, Buffer.from(chunk)]).subarray(0, 16)
+  }
+  assert.equal(prefix.toString(), 'SQLite format 3\0')
+  assert.ok(backupBytes > 16)
+  await assert.rejects(plannerSession.client.heartbeat('ready', true), (error) => error.code === 'UNAUTHENTICATED')
+  await plannerSession.client.retire() // idempotent, without reviving authority
+  const recovered = await admin.rotateScopeToken(scope.scopeId)
+  await assert.rejects(owner.listAgents(), (error) => error.code === 'UNAUTHENTICATED')
+  const recoveredOwner = new AutumnBusScopeClient(run.address, recovered.scopeToken)
+  assert.equal((await recoveredOwner.listAgents()).length, 2)
+  assert.equal((await admin.listScopes()).some((entry) => entry.scopeId === scope.scopeId), true)
+  await admin.deleteScope(scope.scopeId)
+  await admin.deleteScope(scope.scopeId)
+  assert.equal((await admin.listScopes()).length, 0)
 } finally {
   await reviewerSession?.close()
   await plannerSession?.close()

@@ -25,6 +25,11 @@ export interface AgentIdentity {
   executionId: ExecutionId
 }
 
+export interface NodeStatus {
+  identity: AgentIdentity & { leaseExpiresAt: string }
+  agent: Agent
+}
+
 export interface Agent {
   id: AgentId
   displayName: string
@@ -504,6 +509,8 @@ export interface PruneScopeInput {
 }
 
 export interface RetentionCounts {
+  a2aTasks: number
+  a2aMessages: number
   messages: number
   tasks: number
   taskProgress: number
@@ -535,6 +542,8 @@ export interface BusHealth {
   name: 'autumn-bus'
   protocolVersion: string
   runtimeVersion: string
+  /** Missing on older daemons; unknown feature identifiers may be ignored. */
+  features?: string[]
   status: 'ready' | 'not_ready'
   startedAt: string
   storage: {

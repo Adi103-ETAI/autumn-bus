@@ -33,7 +33,7 @@ Import is atomic. Retrying the exact same archive returns the existing scope wit
 
 The reference runtime retains the metadata-only import marker so retries remain idempotent after normal event retention.
 
-The archive identifier is:
+The initial archive identifier is:
 
 ```text
 format: autumn-bus.scope
@@ -41,3 +41,9 @@ version: 2
 ```
 
 New archive versions require an explicit reader implementation. Readers must reject versions they do not support.
+
+## Transfer limits and full-database recovery
+
+The reference runtime validates every successful export with its importer and checks its encoded size. Portable HTTP imports remain limited to 64 MiB. Exports apply a conservative payload/record-overhead budget before materializing state and may return `BACKPRESSURE` below that limit. Empty collections, including an output stream's publisher IDs, serialize as arrays, never null.
+
+For larger retained state, the reference-runtime extension `GET /v1/admin/backup` streams a consistent SQLite snapshot rather than a JSON envelope. It requires admin authority and has a five-minute server deadline. This is a full-database disaster-recovery snapshot, not a portable scope archive: it includes credential hashes, executions, leases, all scopes, and event history. Protect it as sensitive data. See [operations](../../docs/operations.md) for offline restore and rollback.

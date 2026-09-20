@@ -2,7 +2,9 @@ package bus
 
 import (
 	"context"
+	"net"
 	"net/http"
+	"net/netip"
 	"strconv"
 	"strings"
 	"time"
@@ -67,9 +69,13 @@ func (s *Server) newRouter() http.Handler {
 	registerRoute(router, "/v1/admin/shutdown",
 		routeMethod{http.MethodPost, s.shutdownServer},
 	)
+	registerRoute(router, "/v1/admin/backup", routeMethod{http.MethodGet, s.backupDatabase})
 	registerRoute(router, "/v1/admin/scopes/import",
 		routeMethod{http.MethodPost, s.importScope},
 	)
+	registerRoute(router, "/v1/admin/scopes", routeMethod{http.MethodGet, s.listScopes})
+	registerRoute(router, "/v1/admin/scopes/{scopeId}/rotate-token", routeMethod{http.MethodPost, s.rotateScopeToken})
+	registerRoute(router, "/v1/admin/scopes/{scopeId}", routeMethod{http.MethodDelete, s.deleteScope})
 	registerRoute(router, "/v1/admin/scopes/{scopeId}/export",
 		routeMethod{http.MethodGet, s.exportScope},
 	)
@@ -86,6 +92,10 @@ func (s *Server) newRouter() http.Handler {
 	registerRoute(router, "/v1/me/heartbeat",
 		routeMethod{http.MethodPatch, s.heartbeat},
 	)
+	registerRoute(router, "/v1/me/retire",
+		routeMethod{http.MethodPost, s.retireAgent},
+	)
+	registerRoute(router, "/v1/me", routeMethod{http.MethodGet, s.nodeStatus})
 	registerRoute(router, "/v1/peers",
 		routeMethod{http.MethodGet, s.listPeers},
 	)
@@ -111,6 +121,7 @@ func (s *Server) newRouter() http.Handler {
 		routeMethod{http.MethodGet, s.listTasks},
 		routeMethod{http.MethodPost, s.addTask},
 	)
+	registerRoute(router, "/v1/tasks/page", routeMethod{http.MethodGet, s.taskPage})
 	registerRoute(router, "/v1/tasks/{taskId}/claim",
 		routeMethod{http.MethodPost, s.claimTask},
 	)
@@ -257,6 +268,7 @@ func (s *Server) health(response http.ResponseWriter, request *http.Request) err
 	writeJSON(response, httpStatus, Health{
 		Name: "autumn-bus", ProtocolVersion: ProtocolVersion, RuntimeVersion: Version,
 		Status: status, StartedAt: s.options.StartedAt, Storage: storage,
+		Features: []string{FeatureSessionRetirement},
 	})
 	return nil
 }
@@ -275,8 +287,39 @@ func (s *Server) serveMCP(response http.ResponseWriter, request *http.Request) {
 		writeFailure(response, err)
 		return
 	}
+	if !s.mcpHostAllowed(request.Host) {
+		writeFailure(response, Errorf(CodePermissionDenied, "MCP Host is not allowed"))
+		return
+	}
 	request = request.WithContext(context.WithValue(request.Context(), mcpTokenKey{}, token))
 	s.mcpHandler.ServeHTTP(response, request)
+}
+
+// mcpHostAllowed is the Bus DNS-rebinding policy for /mcp. Loopback authorities are
+// always accepted. Any other Host must match a configured entry exactly, including port.
+func (s *Server) mcpHostAllowed(host string) bool {
+	if host == "" {
+		return false
+	}
+	name, _, err := net.SplitHostPort(host)
+	if err != nil {
+		name = host
+		if strings.HasPrefix(name, "[") && strings.HasSuffix(name, "]") {
+			name = name[1 : len(name)-1]
+		}
+	}
+	if strings.EqualFold(name, "localhost") {
+		return true
+	}
+	if ip, parseErr := netip.ParseAddr(name); parseErr == nil && ip.IsLoopback() {
+		return true
+	}
+	for _, candidate := range s.options.AllowedHosts {
+		if host == candidate {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Server) shutdownServer(response http.ResponseWriter, request *http.Request) error {
@@ -399,6 +442,19 @@ func (s *Server) heartbeat(response http.ResponseWriter, request *http.Request) 
 		return err
 	}
 	result, err := s.runtime.Heartbeat(request.Context(), token, input)
+	if err != nil {
+		return err
+	}
+	writeResult(response, http.StatusOK, result)
+	return nil
+}
+
+func (s *Server) nodeStatus(response http.ResponseWriter, request *http.Request) error {
+	token, err := bearer(request)
+	if err != nil {
+		return err
+	}
+	result, err := s.runtime.NodeStatus(request.Context(), token)
 	if err != nil {
 		return err
 	}
