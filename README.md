@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="assets/autumn-bus-wordmark.svg" alt="Autumn Bus terminal wordmark" width="900">
-
 # Autumn Bus
 
 ### Independent agents. Shared work.
