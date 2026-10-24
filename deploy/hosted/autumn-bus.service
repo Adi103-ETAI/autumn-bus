@@ -1,0 +1,27 @@
+[Unit]
+Description=Autumn Bus private coordination runtime
+After=network.target
+
+[Service]
+Type=simple
+User=autumn-bus
+Group=autumn-bus
+StateDirectory=autumn-bus
+StateDirectoryMode=0700
+RuntimeDirectory=autumn-bus
+RuntimeDirectoryMode=0700
+Environment=AUTUMN_BUS_DATA_DIR=/var/lib/autumn-bus
+Environment=AUTUMN_BUS_RUNTIME_DIR=/run/autumn-bus
+ExecStart=/usr/local/bin/autumn-bus start --port 4765
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=20
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

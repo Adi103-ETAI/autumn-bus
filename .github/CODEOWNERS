@@ -1,0 +1,12 @@
+# Default review owner
+* @adii
+
+# Protocol, runtime, security, and release boundaries
+/bus/ @adii
+/a2abridge/ @adii
+/spec/ @adii
+/conformance/ @adii
+/sdk/ @adii
+/.github/ @adii
+/go.mod @adii
+/go.sum @adii

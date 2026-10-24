@@ -1,0 +1,251 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version: 1.27.x
+          cache: true
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: sdk/typescript/package-lock.json
+      - name: Verify reviewed release commit
+        run: node scripts/release-policy.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: node --test scripts/release-policy.test.mjs
+      - run: node --test scripts/managed-runtime-manifest.test.mjs
+      - run: go test -race -count=1 ./...
+      - run: go vet ./...
+      - run: npm ci
+        working-directory: sdk/typescript
+      - run: npm run typecheck
+        working-directory: sdk/typescript
+      - run: npm run build
+        working-directory: sdk/typescript
+      - run: npm run test:errors
+        working-directory: sdk/typescript
+      - run: npm run test:release
+        working-directory: sdk/typescript
+      - name: Pin reviewed evidence head for a stable runtime tag
+        id: evidence
+        if: ${{ !contains(github.ref_name, '-') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          release_evidence_sha="$(git rev-parse origin/main)"
+          GITHUB_SHA="${release_evidence_sha}" node scripts/release-policy.mjs
+          echo "sha=${release_evidence_sha}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ !contains(github.ref_name, '-') }}
+        with:
+          ref: ${{ steps.evidence.outputs.sha }}
+          path: release-evidence
+      - name: Require exact-source launch-core evidence for a stable runtime tag
+        if: ${{ !contains(github.ref_name, '-') }}
+        run: node release-evidence/scripts/check-compatibility.mjs --runtime "${GITHUB_REF_NAME#v}" --source-commit "${GITHUB_SHA}" --require-attestation --launch-core
+      - run: go build -o /tmp/autumn-bus ./cmd/autumn-bus
+      - run: npm run test:integration
+        working-directory: sdk/typescript
+        env:
+          AUTUMN_BUS_BINARY: /tmp/autumn-bus
+      - name: Verify signed annotated release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag_object="$(git rev-parse "${GITHUB_REF_NAME}^{tag}")"
+          verified="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_object}" --jq '.verification.verified')"
+          test "${verified}" = true
+
+  build:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+    env:
+      CGO_ENABLED: "0"
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      AUTUMN_BUS_VERSION: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version: 1.27.x
+          cache: true
+      - name: Build release archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          AUTUMN_BUS_VERSION="${AUTUMN_BUS_VERSION#v}"
+          AUTUMN_BUS_DIRECTORY="autumn-bus_${AUTUMN_BUS_VERSION}_${GOOS}_${GOARCH}"
+          mkdir -p "dist/${AUTUMN_BUS_DIRECTORY}"
+          AUTUMN_BUS_SUFFIX=""
+          if [[ "${GOOS}" == "windows" ]]; then AUTUMN_BUS_SUFFIX=".exe"; fi
+          go build -buildvcs=true -trimpath -ldflags "-s -w -X github.com/Adi103-ETAI/autumn-bus/bus.Version=${AUTUMN_BUS_VERSION}" -o "dist/${AUTUMN_BUS_DIRECTORY}/autumn-bus${AUTUMN_BUS_SUFFIX}" ./cmd/autumn-bus
+          go build -buildvcs=true -trimpath -ldflags "-s -w -X github.com/Adi103-ETAI/autumn-bus/bus.Version=${AUTUMN_BUS_VERSION}" -o "dist/${AUTUMN_BUS_DIRECTORY}/autumn-bus-conformance${AUTUMN_BUS_SUFFIX}" ./cmd/autumn-bus-conformance
+          cp LICENSE README.md "dist/${AUTUMN_BUS_DIRECTORY}/"
+          cp -R docs spec adapters compatibility assets "dist/${AUTUMN_BUS_DIRECTORY}/"
+          if [[ "${GOOS}" == "windows" ]]; then
+            (cd dist && zip -qr "${AUTUMN_BUS_DIRECTORY}.zip" "${AUTUMN_BUS_DIRECTORY}")
+          else
+            tar -C dist -czf "dist/${AUTUMN_BUS_DIRECTORY}.tar.gz" "${AUTUMN_BUS_DIRECTORY}"
+          fi
+      - name: Attest Unix archive
+        if: matrix.goos != 'windows'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*.tar.gz
+      - name: Attest Windows archive
+        if: matrix.goos == 'windows'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*.zip
+      - name: Generate SBOM
+        uses: anchore/sbom-action@006b7ce8314066bdf1765b4500370d40fa6917a3 # v0.24.2
+        with:
+          path: dist
+          format: spdx-json
+          output-file: dist/autumn-bus_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: autumn-bus-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.spdx.json
+          if-no-files-found: error
+
+  smoke:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            goos: linux
+            goarch: amd64
+          - runner: ubuntu-24.04-arm
+            goos: linux
+            goarch: arm64
+          - runner: macos-latest
+            goos: darwin
+            goarch: arm64
+          - runner: windows-latest
+            goos: windows
+            goarch: amd64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: autumn-bus-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist
+      - name: Smoke-test Unix archive
+        if: matrix.goos != 'windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          AUTUMN_BUS_ARCHIVE="$(find dist -maxdepth 1 -name '*.tar.gz' -print -quit)"
+          test -n "${AUTUMN_BUS_ARCHIVE}"
+          tar -xzf "${AUTUMN_BUS_ARCHIVE}" -C dist
+          AUTUMN_BUS_BINARY="$(find dist -type f -name autumn-bus -print -quit)"
+          test -n "${AUTUMN_BUS_BINARY}"
+          "${AUTUMN_BUS_BINARY}" version
+          "${AUTUMN_BUS_BINARY}" version --json | jq -e --arg version "${GITHUB_REF_NAME#v}" '.runtimeVersion == $version and (.protocolVersion | type == "string")'
+          "${AUTUMN_BUS_BINARY}" demo
+          jq empty dist/*.spdx.json
+      - name: Smoke-test Windows archive
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        run: |
+          $archive = Get-ChildItem dist -Filter *.zip | Select-Object -First 1
+          if (-not $archive) { throw "release archive not found" }
+          Expand-Archive $archive.FullName -DestinationPath dist/unpacked
+          $binary = Get-ChildItem dist/unpacked -Recurse -Filter autumn-bus.exe | Select-Object -First 1
+          if (-not $binary) { throw "autumn-bus.exe not found" }
+          & $binary.FullName version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $binary.FullName demo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Content (Get-ChildItem dist -Filter *.spdx.json | Select-Object -First 1).FullName | ConvertFrom-Json | Out-Null
+
+  publish:
+    needs: [build, smoke]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version: 1.27.x
+          cache: true
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          path: dist
+          pattern: autumn-bus-*
+          merge-multiple: true
+      - name: Verify Linux source metadata and generate the managed helper manifest
+        run: |
+          set -euo pipefail
+          protocol_version="$(go run ./cmd/autumn-bus version --json | jq -er .protocolVersion)"
+          node scripts/managed-runtime-manifest.mjs dist "${GITHUB_REF_NAME#v}" "${GITHUB_SHA}" "${protocol_version}"
+          cp LICENSE dist/LICENSE
+      - name: Create checksums
+        working-directory: dist
+        run: |
+          sha256sum * > checksums.txt
+          sha256sum -c checksums.txt
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTUMN_BUS_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          AUTUMN_BUS_RELEASE_ARGS=("${AUTUMN_BUS_TAG}" dist/* --verify-tag --generate-notes)
+          if [[ "${AUTUMN_BUS_TAG}" == *-* ]]; then AUTUMN_BUS_RELEASE_ARGS+=(--prerelease); fi
+          gh release create "${AUTUMN_BUS_RELEASE_ARGS[@]}"

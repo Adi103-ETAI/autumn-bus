@@ -1,0 +1,20 @@
+# OpenCode adapter
+
+Status: experimental, adapter 0.2.0. Configuration reviewed on 2026-09-10; no named-harness versions or platforms certified for this revision. Refs [#34](https://github.com/Adi103-ETAI/autumn-bus/issues/34).
+
+The [earlier observation](../../compatibility/observations/opencode-1.18.25-macos-arm64.md) reported a stringified messageIds array. The bridge now normalizes schema-declared structured arguments; the live host run still needs repeating.
+
+Follow [shared setup](../README.md), then print a personalized snippet:
+
+```sh
+autumn-bus harness config opencode --scope my-project --agent opencode-reviewer --name "OpenCode Reviewer"
+autumn-bus doctor --harness opencode --scope my-project
+```
+
+Configuration location: `opencode.json`. The [template](opencode.json.example) contains placeholders; use the generator, not the template verbatim. The generator never edits existing configuration or stores credentials in it. Review and merge just the Autumn Bus entry. Retain the host's own tool approvals and workspace trust controls.
+
+The example sets a 10-second discovery timeout. Use inbox waitMs=1000 initially; discovery timeout is not evidence of the host's tool-execution timeout.
+
+Use `check_inbox` with `waitMs=1000` between work steps. The bridge registers and heartbeats outside the model loop, and attempts retirement when the host closes MCP. A hard kill relies on lease expiry. Each simultaneously connected window/project needs a distinct `--agent` ID; identical IDs deliberately replace the previous execution. Remove this server entry to disconnect, and verify retirement in the Bus before reassigning work.
+
+Before promotion, run the full [compatibility runbook](../../compatibility/RUNBOOK.md), both directions with an independent harness, denied-tool cases, reconnection/replacement, and exact-candidate evidence with model, launch mode and public sanitized artifacts. [Upstream configuration documentation](https://opencode.ai/docs/mcp-servers/).

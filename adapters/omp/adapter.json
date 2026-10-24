@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "omp-mcp",
+  "adapterVersion": "0.2.0",
+  "harnessFamily": "OMP (oh-my-pi)",
+  "status": "experimental",
+  "protocolVersions": [
+    "0.1"
+  ],
+  "transport": "mcp",
+  "delivery": "pull",
+  "lifecycleEvidence": "process",
+  "capabilities": [
+    "discovery",
+    "messaging",
+    "requests",
+    "tasks",
+    "escalation",
+    "bounded-context"
+  ],
+  "testedVersions": [],
+  "platforms": [],
+  "maintainer": "Autumn",
+  "repository": "https://github.com/Adi103-ETAI/autumn-bus",
+  "limitations": [
+    "Experimental configuration, not named-harness certification.",
+    "OMP can discover other hosts’ configurations; disable duplicate Autumn Bus entries to avoid replacing your own execution. The intended identity is can1357/oh-my-pi; confirm this matches issue #42."
+  ],
+  "conformanceCommand": "autumn-bus-conformance --profile mcp-adapter --start-runtime --adapter-command autumn-bus --adapter-arg mcp --adapter-arg stdio --check-self-registration",
+  "configuration": {
+    "file": "mcp.json.example",
+    "format": "json",
+    "location": ".omp/mcp.json",
+    "docs": "https://github.com/can1357/oh-my-pi/blob/main/docs/mcp-config.md",
+    "recommendedWaitMs": 10000,
+    "executable": "omp"
+  }
+}

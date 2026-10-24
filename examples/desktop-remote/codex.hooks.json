@@ -1,0 +1,8 @@
+{
+  "hooks": {
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "\"/home/worker/.autumn/servers/<install>/current/bin/autumn-bus\" hook session-start codex", "timeout": 10 }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "\"/home/worker/.autumn/servers/<install>/current/bin/autumn-bus\" hook pre-prompt codex", "timeout": 10 }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "\"/home/worker/.autumn/servers/<install>/current/bin/autumn-bus\" hook stop codex", "timeout": 10 }] }],
+    "PermissionRequest": [{ "hooks": [{ "type": "command", "command": "\"/home/worker/.autumn/servers/<install>/current/bin/autumn-bus\" hook notify codex", "timeout": 10 }] }]
+  }
+}

@@ -1,0 +1,25 @@
+[Unit]
+Description=Autumn Bus hosted MCP gateway
+Requires=autumn-bus.service
+After=autumn-bus.service network.target
+PartOf=autumn-bus.service
+
+[Service]
+Type=simple
+User=autumn-bus
+Group=autumn-bus
+Environment=AUTUMN_BUS_DATA_DIR=/var/lib/autumn-bus
+Environment=AUTUMN_BUS_RUNTIME_DIR=/run/autumn-bus
+ExecStart=/usr/local/bin/autumn-bus gateway start --config /var/lib/autumn-bus/gateway.json --listen 127.0.0.1:8787
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=20
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

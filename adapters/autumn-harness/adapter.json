@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "autumn-harness-native",
+  "adapterVersion": "0.2.0",
+  "harnessFamily": "Autumn Harness",
+  "status": "experimental",
+  "protocolVersions": ["0.1"],
+  "transport": "native",
+  "delivery": "pull",
+  "lifecycleEvidence": "process",
+  "capabilities": ["discovery", "messaging", "requests", "tasks", "escalation", "bounded-context"],
+  "testedVersions": [],
+  "platforms": [],
+  "maintainer": "Autumn",
+  "repository": "https://github.com/Adi103-ETAI/autumn-bus",
+  "limitations": [
+    "Uses the separately released Autumn Harness's public Bus integration via agent run; no additional MCP configuration or Pi extension.",
+    "Native host hooks and upstream-main active delivery are not certified here; exact-release lifecycle and tool-error evidence is still required."
+  ]
+}
