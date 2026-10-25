@@ -25,7 +25,7 @@ type DaemonPaths struct {
 }
 
 func DefaultDaemonPaths() (DaemonPaths, error) {
-	dataRoot := os.Getenv("AUTUMN_BUS_DATA_DIR")
+	dataRoot := os.Getenv("OCTOBER_BUS_DATA_DIR")
 	if dataRoot == "" {
 		if runtime.GOOS == "windows" {
 			dataRoot = os.Getenv("LOCALAPPDATA")
@@ -36,7 +36,7 @@ func DefaultDaemonPaths() (DaemonPaths, error) {
 					return DaemonPaths{}, err
 				}
 			}
-			dataRoot = filepath.Join(dataRoot, "Autumn Bus")
+			dataRoot = filepath.Join(dataRoot, "October Bus")
 		} else {
 			dataRoot = os.Getenv("XDG_DATA_HOME")
 			if dataRoot == "" {
@@ -46,20 +46,20 @@ func DefaultDaemonPaths() (DaemonPaths, error) {
 				}
 				dataRoot = filepath.Join(home, ".local", "share")
 			}
-			dataRoot = filepath.Join(dataRoot, "autumn-bus")
+			dataRoot = filepath.Join(dataRoot, "october-bus")
 		}
 	}
-	runtimeRoot := os.Getenv("AUTUMN_BUS_RUNTIME_DIR")
+	runtimeRoot := os.Getenv("OCTOBER_BUS_RUNTIME_DIR")
 	if runtimeRoot == "" {
 		if runtime.GOOS != "windows" && os.Getenv("XDG_RUNTIME_DIR") != "" {
-			runtimeRoot = filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), "autumn-bus")
+			runtimeRoot = filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), "october-bus")
 		} else {
 			name := "user"
 			if current, err := user.Current(); err == nil {
 				name = current.Uid
 			}
 			name = strings.NewReplacer("/", "_", `\`, "_", ":", "_").Replace(name)
-			runtimeRoot = filepath.Join(os.TempDir(), "autumn-bus-"+name)
+			runtimeRoot = filepath.Join(os.TempDir(), "october-bus-"+name)
 		}
 	}
 	return DaemonPaths{
@@ -81,7 +81,7 @@ func ReadRunFile(path string) (RunFile, error) {
 	}
 	parsed, err := url.Parse(run.Address)
 	if err != nil || parsed.Scheme != "http" || parsed.Hostname() != "127.0.0.1" || run.ProtocolVersion != ProtocolVersion || run.PID < 1 || run.StartedAt == "" || len(run.AdminToken) != 43 {
-		return RunFile{}, errors.New("Autumn Bus run file is invalid")
+		return RunFile{}, errors.New("Agent Intercom run file is invalid")
 	}
 	return run, nil
 }
@@ -164,7 +164,7 @@ func acquireLock(paths DaemonPaths) (*os.File, error) {
 	// let an upgrade take ownership from a live legacy daemon.
 	if run, err := ReadRunFile(paths.RunFile); err == nil && processMayBeAlive(run.PID) {
 		file.Close()
-		return nil, errors.New("Autumn Bus discovery names a live process; stop it before starting another daemon")
+		return nil, errors.New("Agent Intercom discovery names a live process; stop it before starting another daemon")
 	}
 	return file, nil
 }
@@ -217,13 +217,13 @@ func StartDaemon(ctx context.Context, port int, paths *DaemonPaths) (*RunningDae
 	}
 	startedAt := time.Now().UTC().Format(time.RFC3339Nano)
 	allowedOrigins := []string{}
-	for _, origin := range strings.Split(os.Getenv("AUTUMN_BUS_ALLOWED_ORIGINS"), ",") {
+	for _, origin := range strings.Split(os.Getenv("OCTOBER_BUS_ALLOWED_ORIGINS"), ",") {
 		if origin = strings.TrimSpace(origin); origin != "" {
 			allowedOrigins = append(allowedOrigins, origin)
 		}
 	}
 	allowedHosts := []string{}
-	for _, host := range strings.Split(os.Getenv("AUTUMN_BUS_ALLOWED_HOSTS"), ",") {
+	for _, host := range strings.Split(os.Getenv("OCTOBER_BUS_ALLOWED_HOSTS"), ",") {
 		if host = strings.TrimSpace(host); host != "" {
 			allowedHosts = append(allowedHosts, host)
 		}
@@ -247,11 +247,11 @@ func StartDaemon(ctx context.Context, port int, paths *DaemonPaths) (*RunningDae
 }
 
 func runtimeOptionsFromEnvironment() (RuntimeOptions, error) {
-	messageLimit, err := positiveEnvironmentInt64("AUTUMN_BUS_A2A_PRINCIPAL_MESSAGE_LIMIT")
+	messageLimit, err := positiveEnvironmentInt64("OCTOBER_BUS_A2A_PRINCIPAL_MESSAGE_LIMIT")
 	if err != nil {
 		return RuntimeOptions{}, err
 	}
-	byteLimit, err := positiveEnvironmentInt64("AUTUMN_BUS_A2A_PRINCIPAL_BYTE_LIMIT")
+	byteLimit, err := positiveEnvironmentInt64("OCTOBER_BUS_A2A_PRINCIPAL_BYTE_LIMIT")
 	if err != nil {
 		return RuntimeOptions{}, err
 	}

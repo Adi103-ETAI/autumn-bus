@@ -95,7 +95,7 @@ func TestMCPStdioBridgeForwardsDaemonTools(t *testing.T) {
 	defer session.Close()
 
 	tools, err := session.ListTools(ctx, nil)
-	if err != nil || len(tools.Tools) != 15 {
+	if err != nil || len(tools.Tools) != 23 {
 		t.Fatalf("unexpected forwarded tools: %d, %v; stderr: %s", len(tools.Tools), err, stderr.String())
 	}
 	directClient := mcp.NewClient(&mcp.Implementation{Name: "direct-test", Version: "1"}, nil)
@@ -139,7 +139,11 @@ func TestMCPStdioBridgeRejectsUnavailableDaemon(t *testing.T) {
 	stderr := new(bytes.Buffer)
 	client := mcp.NewClient(&mcp.Implementation{Name: "bridge-test", Version: "1"}, nil)
 	_, err := client.Connect(ctx, &mcp.CommandTransport{Command: mcpBridgeCommand("http://127.0.0.1:1", "agent-token", stderr)}, nil)
+<<<<<<<< HEAD:cmd/autumn-bus/main_test.go
 	if err == nil || !strings.Contains(stderr.String(), "could not connect to Autumn Bus") {
+========
+	if err == nil || !strings.Contains(stderr.String(), "could not connect to Agent Intercom") {
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main_test.go
 		t.Fatalf("expected unavailable daemon error, got %v; stderr: %s", err, stderr.String())
 	}
 }
@@ -221,7 +225,11 @@ func TestSetEnvironmentReplacesExistingValues(t *testing.T) {
 }
 
 func TestRemoveEnvironmentRemovesCredentials(t *testing.T) {
+<<<<<<<< HEAD:cmd/autumn-bus/main_test.go
 	result := removeEnvironment([]string{"PATH=/bin", "AUTUMN_BUS_SCOPE_TOKEN=secret", "OTHER=value"}, "autumn_bus_scope_token")
+========
+	result := removeEnvironment([]string{"PATH=/bin", "OCTOBER_BUS_SCOPE_TOKEN=secret", "OCTOBER_BUS_STRIPE_SECRET_KEY=secret", "october_bus_stripe_webhook_secret=secret", "OTHER=value"}, "october_bus_scope_token")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main_test.go
 	require(t, len(result) == 2 && result[0] == "PATH=/bin" && result[1] == "OTHER=value", "unexpected environment: %#v", result)
 }
 

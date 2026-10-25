@@ -19,6 +19,7 @@ import (
 	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 const usage = `Autumn Bus
 
 Usage:
@@ -54,6 +55,75 @@ Usage:
   autumn-bus gateway start --config <file> [--listen 127.0.0.1:8787]
   autumn-bus demo
   autumn-bus version [--json]
+========
+const usage = `Agent Intercom
+
+Usage:
+  agentintercom install [--only claude|codex] [--workspace <name> | --hosted <profile>] [--print] [--no-service]
+  agentintercom uninstall [--only claude|codex]
+  agentintercom service install|uninstall|status
+  agentintercom session attach claude
+  agentintercom session attach codex --thread <UUID|name> --agent <connected-agent-id>
+  agentintercom channel list
+  agentintercom attachment list
+  agentintercom attachment upload --file <path> [--key <retry-key>]
+  agentintercom attachment download --id <attachment-id> --file <new-path>
+  agentintercom attachment delete --id <attachment-id>
+  agentintercom channel create --name <name> [--description <text>]
+  agentintercom channel join|leave --id <channel-id>
+  agentintercom channel post --id <channel-id> --body <text> [--thread <root-post-id>] [--key <retry-key>]
+  agentintercom channel read [--id <channel-id>] [--thread <root-post-id>] [--query <text>] [--before <cursor>]
+  agentintercom session start <claude|codex> --workspace <name> [--name <label>] -- [app arguments]
+  agentintercom session status
+  agentintercom session retry <message-id>
+  agentintercom hosted login [--server <https-origin>] [--profile <name>] [--name <device-label>]
+  agentintercom hosted logout [--profile <name>]
+  agentintercom connect --hosted <profile> [--name <session-label>] [--format json|toml|entry]
+  agentintercom session start <claude|codex> --hosted <profile> [--name <label>] -- [app arguments]
+  agentintercom hosted serve --public-url <https-origin> [--listen 127.0.0.1:4780]
+  agentintercom database migrate [--url-env OCTOBER_BUS_DATABASE_URL]
+  agentintercom database check [--url-env OCTOBER_BUS_DATABASE_URL]
+  agentintercom workspace create <name>
+  agentintercom workspace list [--json]
+  agentintercom connect --workspace <name> [--name <session-label>] [--format json|toml|entry] [--output <new-file>]
+  agentintercom sessions --workspace <name> [--json]
+  agentintercom start [--port <port>]
+  agentintercom stop
+  agentintercom status
+  agentintercom doctor [--json]
+  agentintercom doctor --harness <host> --scope <scope-id> [--json]
+  agentintercom harness list
+  agentintercom harness config <host> --scope <scope-id> --agent <id> [--name <display>] [--output <new-file>]
+  agentintercom scope create [scope-id]
+  agentintercom scope list [--address <addr>]
+  agentintercom scope rotate-token --id <scope-id> [--address <addr>]
+  agentintercom scope delete --id <scope-id> --confirm <scope-id> [--address <addr>]
+  agentintercom backup --output <new-path> [--address <addr>]
+  agentintercom scope export --id <scope-id> --output <path> [--address <addr>]
+  agentintercom scope import --input <path> [--address <addr>]
+  agentintercom scope storage [--json] [--address <addr>]
+  agentintercom scope prune --before <timestamp> [--yes] [--json] [--address <addr>]
+  agentintercom message send --to <session-id> --body <text> [--mode request] [--reply-to <message-id>] [--key <retry-key>] [--json]
+  agentintercom inbox [--follow] [--limit <count>] [--wait 25s] [--json]
+  agentintercom message ack <message-id> [--json]
+  agentintercom message receipt <message-id> [--json] [--address <addr>]
+  agentintercom agent list [--json] [--address <addr>]
+  agentintercom link --scope <scope-id> <agent-a> <agent-b>
+  agentintercom agent run --id <id> --name <name> [--scope <local-scope-id>] [--connect-to <peer>] -- <command> [args...]
+  agentintercom task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
+  agentintercom task list [--ready] [--json] [--limit <1-500>] [--after <cursor>] [--address <addr>]
+  agentintercom mcp stdio [--scope <scope-id> --agent <id> --name <display>]
+  agentintercom mcp stdio --scope <scope-id> --new-session [--name <display>]
+  agentintercom mcp stdio --connection-file </absolute/private/connection.json>
+  agentintercom mcp stdio --remote <https-base-url> --scope-token-file <file> --agent <id> [--connect-to <peer>]
+  agentintercom mcp check [--connection-file <path>] [--json]
+  agentintercom hook [--connection-file <path>] <event> [<flavor>]
+  agentintercom gateway init --public-url <https-origin> --scope <id> --config <new-file> --key-file <new-file>
+  agentintercom gateway key --output <new-private-file>
+  agentintercom gateway start --config <file> [--listen 127.0.0.1:8787]
+  agentintercom demo
+  agentintercom version [--json]
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 `
 
 type stringList []string
@@ -79,7 +149,11 @@ func start(args []string) error {
 	if err != nil {
 		return err
 	}
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	fmt.Printf("Autumn Bus listening on %s\n", daemon.RunFile.Address)
+========
+	fmt.Printf("Agent Intercom listening on %s\n", daemon.RunFile.Address)
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	fmt.Printf("Run file: %s\n", daemon.Paths.RunFile)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -93,7 +167,11 @@ func start(args []string) error {
 	defer cancel()
 	stopErr := daemon.Stop(shutdown)
 	if serveErr != nil {
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 		return fmt.Errorf("Autumn Bus stopped unexpectedly: %w", serveErr)
+========
+		return fmt.Errorf("Agent Intercom stopped unexpectedly: %w", serveErr)
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	}
 	return stopErr
 }
@@ -115,12 +193,20 @@ func stop() error {
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
 		if _, err := os.Stat(paths.RunFile); errors.Is(err, os.ErrNotExist) {
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 			fmt.Println("Autumn Bus stopped")
+========
+			fmt.Println("Agent Intercom stopped")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 			return nil
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	return errors.New("Autumn Bus did not stop within 10 seconds")
+========
+	return errors.New("Agent Intercom did not stop within 10 seconds")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 }
 
 type diagnosticReport struct {
@@ -200,7 +286,11 @@ func doctor(args []string) error {
 			}
 		}
 	} else if report.Problem == "" {
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 		report.Problem = "Autumn Bus is not running"
+========
+		report.Problem = "Agent Intercom is not running"
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	}
 	if *jsonOutput {
 		encoded, err := json.MarshalIndent(report, "", "  ")
@@ -213,7 +303,11 @@ func doctor(args []string) error {
 		if report.Healthy {
 			state = "ready"
 		}
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 		fmt.Printf("Autumn Bus is %s\n", state)
+========
+		fmt.Printf("Agent Intercom is %s\n", state)
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 		fmt.Printf("Runtime %s, protocol %s\n", report.RuntimeVersion, report.ProtocolVersion)
 		fmt.Printf("Data: %s\n", report.DataDirectory)
 		fmt.Printf("Runtime: %s\n", report.RuntimeDirectory)
@@ -228,7 +322,11 @@ func doctor(args []string) error {
 		}
 	}
 	if !report.Healthy {
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 		return errors.New("Autumn Bus diagnostics did not pass")
+========
+		return errors.New("Agent Intercom diagnostics did not pass")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	}
 	return nil
 }
@@ -248,34 +346,20 @@ func status() error {
 	if err != nil {
 		return err
 	}
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	fmt.Printf("Autumn Bus is %s at %s\n", health.Status, run.Address)
+========
+	fmt.Printf("Agent Intercom is %s at %s\n", health.Status, run.Address)
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	fmt.Printf("Runtime %s, protocol %s, pid %d\n", health.RuntimeVersion, health.ProtocolVersion, run.PID)
 	fmt.Printf("Storage %s (%s)\n", health.Storage.Backend, health.Storage.Status)
 	return nil
 }
 
 func createScope(id string) error {
-	paths, err := bus.DefaultDaemonPaths()
+	result, err := createLocalScope(id)
 	if err != nil {
 		return err
-	}
-	run, err := bus.ReadRunFile(paths.RunFile)
-	if err != nil {
-		return err
-	}
-	lock, err := bus.LockScopeCredentials(paths.DataDir)
-	if err != nil {
-		return err
-	}
-	defer lock.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	result, err := (bus.Client{Address: run.Address, Token: run.AdminToken}).CreateScope(ctx, bus.CreateScopeInput{ID: id})
-	if err != nil {
-		return err
-	}
-	if err := bus.SaveScopeToken(paths.DataDir, result.ScopeID, result.ScopeToken); err != nil {
-		return fmt.Errorf("scope was created but its local credential could not be saved; fix the data directory and rotate the scope token: %w", err)
 	}
 	encoded, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
@@ -283,6 +367,34 @@ func createScope(id string) error {
 	}
 	fmt.Println(string(encoded))
 	return nil
+}
+
+// Keep the legacy scope command's output while letting onboarding reuse the
+// same credential transaction without printing the workspace owner secret.
+func createLocalScope(id string) (bus.CreateScopeResult, error) {
+	paths, err := bus.DefaultDaemonPaths()
+	if err != nil {
+		return bus.CreateScopeResult{}, err
+	}
+	run, err := bus.ReadRunFile(paths.RunFile)
+	if err != nil {
+		return bus.CreateScopeResult{}, fmt.Errorf("local daemon is unavailable; run agentintercom start: %w", err)
+	}
+	lock, err := bus.LockScopeCredentials(paths.DataDir)
+	if err != nil {
+		return bus.CreateScopeResult{}, err
+	}
+	defer lock.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	result, err := (bus.Client{Address: run.Address, Token: run.AdminToken}).CreateScope(ctx, bus.CreateScopeInput{ID: id})
+	if err != nil {
+		return bus.CreateScopeResult{}, err
+	}
+	if err := bus.SaveScopeToken(paths.DataDir, result.ScopeID, result.ScopeToken); err != nil {
+		return bus.CreateScopeResult{}, fmt.Errorf("scope was created but its local credential could not be saved; fix the data directory and rotate the scope token: %w", err)
+	}
+	return result, nil
 }
 
 func adminClient(explicitAddress string) (bus.Client, error) {
@@ -312,7 +424,11 @@ func exportScope(args []string) error {
 	flags.SetOutput(os.Stderr)
 	scopeID := flags.String("id", "", "scope id to export")
 	output := flags.String("output", "", "archive output path")
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
+========
+	address := flags.String("address", "", "Agent Intercom address")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -360,7 +476,11 @@ func importScope(args []string) error {
 	flags := flag.NewFlagSet("scope import", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	input := flags.String("input", "", "archive input path")
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
+========
+	address := flags.String("address", "", "Agent Intercom address")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -440,7 +560,11 @@ func resolveBusAddress(explicit string) (string, error) {
 	return run.Address, nil
 }
 
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 // inspectReceipt implements `autumn-bus message receipt <message-id>`.
+========
+// inspectReceipt implements `agentintercom message receipt <message-id>`.
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 //
 // It reads the agent credential from AUTUMN_BUS_AGENT_TOKEN and fetches the
 // delivery receipt through the public client API. The receipt deliberately
@@ -450,7 +574,11 @@ func inspectReceipt(args []string) error {
 	flags := flag.NewFlagSet("message receipt", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
+========
+	address := flags.String("address", "", "Agent Intercom address")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	if err := flags.Parse(receiptFlagArgs(args)); err != nil {
 		return err
 	}
@@ -538,14 +666,23 @@ func printReceiptHuman(receipt bus.DeliveryReceipt) error {
 	return nil
 }
 
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 // listAgents implements `autumn-bus agent list [--json] [--address <addr>]`.
 // It reads the scope credential from AUTUMN_BUS_SCOPE_TOKEN and returns only
+========
+// listAgents implements `agentintercom agent list [--json] [--address <addr>]`.
+// It reads the scope credential from OCTOBER_BUS_SCOPE_TOKEN and returns only
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 // the agent metadata visible to that scope.
 func listAgents(args []string) error {
 	flags := flag.NewFlagSet("agent list", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
+========
+	address := flags.String("address", "", "Agent Intercom address")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -630,7 +767,11 @@ func addTask(args []string) error {
 	flags.SetOutput(os.Stderr)
 	title := flags.String("title", "", "short task title")
 	description := flags.String("description", "", "task description")
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
+========
+	address := flags.String("address", "", "Agent Intercom address")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
 	var dependencies stringList
 	flags.Var(&dependencies, "depends-on", "dependency task id, repeatable")
@@ -672,7 +813,11 @@ func listTasks(args []string) error {
 	pageLimit := flags.Int("limit", 0, "return a page of 1-500 tasks as JSON")
 	after := flags.String("after", "", "task page cursor")
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
+========
+	address := flags.String("address", "", "Agent Intercom address")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -741,7 +886,11 @@ func scopeStorage(args []string) error {
 	flags := flag.NewFlagSet("scope storage", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
+========
+	address := flags.String("address", "", "Agent Intercom address")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -792,7 +941,11 @@ func scopePrune(args []string) error {
 	before := flags.String("before", "", "remove terminal records older than this RFC 3339 timestamp")
 	execute := flags.Bool("yes", false, "execute the retention operation")
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
+========
+	address := flags.String("address", "", "Agent Intercom address")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -855,6 +1008,8 @@ func setEnvironment(base []string, values ...string) []string {
 }
 
 func removeEnvironment(base []string, names ...string) []string {
+	// Service credentials must never reach an agent subprocess, including future
+	// Stripe settings added to the hosted service environment.
 	removed := map[string]bool{}
 	for _, name := range names {
 		removed[strings.ToUpper(name)] = true
@@ -862,7 +1017,7 @@ func removeEnvironment(base []string, names ...string) []string {
 	result := make([]string, 0, len(base))
 	for _, entry := range base {
 		key, _, _ := strings.Cut(entry, "=")
-		if !removed[strings.ToUpper(key)] {
+		if !removed[strings.ToUpper(key)] && !strings.HasPrefix(strings.ToUpper(key), "OCTOBER_BUS_STRIPE_") {
 			result = append(result, entry)
 		}
 	}
@@ -874,7 +1029,11 @@ func runAgent(args []string) error {
 	flags.SetOutput(os.Stderr)
 	id := flags.String("id", "", "stable agent id")
 	name := flags.String("name", "", "agent display name")
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
+========
+	address := flags.String("address", "", "Agent Intercom address")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	localScope := flags.String("scope", "", "local scope ID; uses protected cached credentials, not environment authority")
 	scopeTokenEnv := flags.String("scope-token-env", "AUTUMN_BUS_SCOPE_TOKEN", "environment variable containing the scope token")
 	lease := flags.Duration("lease", 5*time.Minute, "execution lease")
@@ -949,12 +1108,21 @@ func runAgent(args []string) error {
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	command.Env = setEnvironment(removeEnvironment(os.Environ(), *scopeTokenEnv, "AUTUMN_BUS_SCOPE_TOKEN", "AUTUMN_BUS_ADMIN_TOKEN"),
 		"AUTUMN_BUS_ADDRESS", resolvedAddress,
 		"AUTUMN_BUS_MCP_URL", resolvedAddress+"/mcp",
 		"AUTUMN_BUS_AGENT_ID", session.Registration.AgentID,
 		"AUTUMN_BUS_EXECUTION_ID", session.Registration.ExecutionID,
 		"AUTUMN_BUS_AGENT_TOKEN", session.Registration.AgentToken,
+========
+	command.Env = setEnvironment(removeEnvironment(os.Environ(), *scopeTokenEnv, "OCTOBER_BUS_SCOPE_TOKEN", "OCTOBER_BUS_ADMIN_TOKEN", "OCTOBER_BUS_DATABASE_URL", "OCTOBER_BUS_ENCRYPTION_KEY", "OCTOBER_BUS_BILLING_SECRET"),
+		"OCTOBER_BUS_ADDRESS", resolvedAddress,
+		"OCTOBER_BUS_MCP_URL", resolvedAddress+"/mcp",
+		"OCTOBER_BUS_AGENT_ID", session.Registration.AgentID,
+		"OCTOBER_BUS_EXECUTION_ID", session.Registration.ExecutionID,
+		"OCTOBER_BUS_AGENT_TOKEN", session.Registration.AgentToken,
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	)
 	if err := command.Start(); err != nil {
 		_ = closeSession()
@@ -992,6 +1160,28 @@ func run() error {
 		return nil
 	}
 	switch args[0] {
+	case "install":
+		return installCommand(args[1:], os.Stdout)
+	case "uninstall":
+		return uninstallCommand(args[1:], os.Stdout)
+	case "service":
+		return serviceCommand(args[1:], os.Stdout)
+	case "session":
+		return sessionCommand(args[1:])
+	case "channel":
+		return channelCommand(args[1:], os.Stdin, os.Stdout)
+	case "attachment":
+		return attachmentCommand(args[1:], os.Stdin, os.Stdout)
+	case "hosted":
+		return hostedCommand(args[1:])
+	case "database":
+		return databaseCommand(args[1:], os.Stdout)
+	case "workspace":
+		return workspaceCommand(args[1:], os.Stdout)
+	case "connect":
+		return connectCommand(args[1:], os.Stdout)
+	case "sessions":
+		return sessionsCommand(args[1:], os.Stdout)
 	case "start":
 		return start(args[1:])
 	case "gateway":
@@ -1034,7 +1224,15 @@ func run() error {
 		}
 	case "backup":
 		return backupDatabase(args[1:])
+	case "inbox":
+		return inboxCommand(args[1:], os.Stdout)
 	case "message":
+		if len(args) >= 2 && args[1] == "send" {
+			return sendMessageCommand(args[2:], os.Stdin, os.Stdout)
+		}
+		if len(args) >= 2 && args[1] == "ack" {
+			return acknowledgeCommand(args[2:], os.Stdout)
+		}
 		if len(args) >= 2 && args[1] == "receipt" {
 			return inspectReceipt(args[2:])
 		}
@@ -1092,7 +1290,11 @@ func printVersion(args []string, out io.Writer) error {
 		_, err = fmt.Fprintln(out, string(encoded))
 		return err
 	}
+<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	_, err := fmt.Fprintf(out, "autumn-bus %s (protocol %s)\n", bus.Version, bus.ProtocolVersion)
+========
+	_, err := fmt.Fprintf(out, "agentintercom %s (protocol %s)\n", bus.Version, bus.ProtocolVersion)
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/main.go
 	return err
 }
 

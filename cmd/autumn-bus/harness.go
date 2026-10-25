@@ -110,7 +110,11 @@ func harness(args []string) error {
 		return err
 	}
 	complete = true
+<<<<<<<< HEAD:cmd/autumn-bus/harness.go
 	fmt.Printf("Created %s. Review and add only the Autumn Bus entry to %s. This is not harness certification.\n", *output, adapter.Configuration.Location)
+========
+	fmt.Printf("Created %s. Review and add only the Agent Intercom entry to %s. This is not harness certification.\n", *output, adapter.Configuration.Location)
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/harness.go
 	return nil
 }
 
@@ -210,7 +214,11 @@ func probeLocalBridge(ctx context.Context, scope string) (count int, resultErr e
 	command := exec.CommandContext(ctx, executable, "mcp", "stdio", "--scope", scope, "--agent", id, "--data-dir", paths.DataDir, "--runtime-dir", paths.RuntimeDir)
 	command.Env = removeEnvironment(os.Environ(), "AUTUMN_BUS_ADDRESS", "AUTUMN_BUS_ADMIN_TOKEN", "AUTUMN_BUS_SCOPE_TOKEN", "AUTUMN_BUS_AGENT_TOKEN")
 	command.Stderr = io.Discard
+<<<<<<<< HEAD:cmd/autumn-bus/harness.go
 	client := mcp.NewClient(&mcp.Implementation{Name: "autumn-bus-doctor", Version: bus.Version}, nil)
+========
+	client := mcp.NewClient(&mcp.Implementation{Name: "agentintercom-doctor", Version: bus.Version}, nil)
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/harness.go
 	session, err := client.Connect(ctx, &mcp.CommandTransport{Command: command}, nil)
 	if err != nil {
 		return 0, errors.New("could not start the configured stdio bridge")

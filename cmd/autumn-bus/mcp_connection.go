@@ -65,7 +65,11 @@ type managedMCPConnection struct {
 	ExecutionID string `json:"executionId"`
 	AgentToken  string `json:"agentToken"`
 	// HookToken is the optional per-execution lifecycle credential used by
+<<<<<<<< HEAD:cmd/autumn-bus/mcp_connection.go
 	// `autumn-bus hook`. It is issued and revoked with this execution; it is not
+========
+	// `agentintercom hook`. It is issued and revoked with this execution; it is not
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/mcp_connection.go
 	// a controller administrator credential or a process-lifetime hook secret.
 	HookToken string    `json:"hookToken,omitempty"`
 	ExpiresAt time.Time `json:"expiresAt"`

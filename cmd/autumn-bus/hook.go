@@ -43,11 +43,19 @@ func runHook(args []string, stdin io.Reader, stdinIsTerminal bool, stdout, stder
 		return
 	}
 	if flags.NArg() < 1 || flags.NArg() > 2 {
+<<<<<<<< HEAD:cmd/autumn-bus/hook.go
 		fmt.Fprintln(stderr, "autumn-bus hook: usage: hook [--connection-file <path>] <event> [<flavor>]")
 		return
 	}
 	event, flavor := flags.Arg(0), flags.Arg(1)
 	diagnostics := &bridgeDiagnostics{out: stderr, prefix: "autumn-bus hook"}
+========
+		fmt.Fprintln(stderr, "agentintercom hook: usage: hook [--connection-file <path>] <event> [<flavor>]")
+		return
+	}
+	event, flavor := flags.Arg(0), flags.Arg(1)
+	diagnostics := &bridgeDiagnostics{out: stderr, prefix: "agentintercom hook"}
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/hook.go
 	// Outside a managed execution (no file named), the hook is inert: a shared
 	// harness configuration must not contact or drain any authority.
 	connectionPath := resolveManagedConnectionPath(*connectionFile)

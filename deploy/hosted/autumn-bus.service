@@ -1,18 +1,18 @@
 [Unit]
-Description=Autumn Bus private coordination runtime
+Description=Agent Intercom private coordination runtime
 After=network.target
 
 [Service]
 Type=simple
-User=autumn-bus
-Group=autumn-bus
-StateDirectory=autumn-bus
+User=october-bus
+Group=october-bus
+StateDirectory=october-bus
 StateDirectoryMode=0700
-RuntimeDirectory=autumn-bus
+RuntimeDirectory=october-bus
 RuntimeDirectoryMode=0700
-Environment=AUTUMN_BUS_DATA_DIR=/var/lib/autumn-bus
-Environment=AUTUMN_BUS_RUNTIME_DIR=/run/autumn-bus
-ExecStart=/usr/local/bin/autumn-bus start --port 4765
+Environment=OCTOBER_BUS_DATA_DIR=/var/lib/october-bus
+Environment=OCTOBER_BUS_RUNTIME_DIR=/run/october-bus
+ExecStart=/usr/local/bin/october-bus start --port 4765
 Restart=on-failure
 RestartSec=3
 TimeoutStopSec=20

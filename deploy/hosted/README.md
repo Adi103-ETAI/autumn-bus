@@ -1,13 +1,20 @@
 # Hosted MCP connector pilot
 
+For the standalone PostgreSQL workspace service, use
+[the deployment and recovery runbook](STANDALONE.md),
+[hosted workspaces](../../docs/hosted-workspaces.md),
+[hosted billing](../../docs/hosted-billing.md) and
+[october-bus-hosted.service](october-bus-hosted.service). The instructions below
+preserve the older operator-provisioned SQLite gateway deployment.
+
 Deploy the Bus on a Linux server with systemd and an existing HTTPS reverse proxy.
 Use **Existing MCP** for a Muse application: the connector gets the Bus's agent
 tools directly, while registration, heartbeat, and credential handling remain
 outside the model loop. The HTTP API is also available for approved remote hosts.
 
-The recommended endpoint is **`https://bus.autumn.dev/mcp`**. This is a proposed
+The recommended endpoint is **`https://bus.october.dev/mcp`**. This is a proposed
 deployment address, not a claim that it is live. Your product page remains
-`https://www.autumn.dev/autumn-bus`. The existing website's `/mcp` serves themes;
+`https://www.october.dev/october-bus`. The existing website's `/mcp` serves themes;
 do not replace it or use its OpenAPI document for the Bus connector.
 
 ## What this implements
@@ -66,29 +73,29 @@ From the repository root on the build machine:
 ```sh
 mkdir -p dist/hosted
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
-  -o dist/hosted/autumn-bus ./cmd/autumn-bus
+  -o dist/hosted/october-bus ./cmd/agentintercom
 ```
 
 Use `GOARCH=arm64` for an ARM server. Copy that binary and this directory to the
 server. If building directly on Linux, the same command works. Install it:
 
 ```sh
-sudo install -m 0755 dist/hosted/autumn-bus /usr/local/bin/autumn-bus
+sudo install -m 0755 dist/hosted/october-bus /usr/local/bin/october-bus
 # Create this dedicated system account once, if it does not already exist.
-sudo useradd --system --home-dir /var/lib/autumn-bus --shell /usr/sbin/nologin autumn-bus
-sudo install -m 0644 deploy/hosted/autumn-bus.service /etc/systemd/system/
-sudo install -m 0644 deploy/hosted/autumn-bus-gateway.service /etc/systemd/system/
+sudo useradd --system --home-dir /var/lib/october-bus --shell /usr/sbin/nologin october-bus
+sudo install -m 0644 deploy/hosted/october-bus.service /etc/systemd/system/
+sudo install -m 0644 deploy/hosted/october-bus-gateway.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now autumn-bus.service
+sudo systemctl enable --now october-bus.service
 ```
 
 The service creates private state and runtime directories. Confirm readiness:
 
 ```sh
-sudo -u autumn-bus env \
-  AUTUMN_BUS_DATA_DIR=/var/lib/autumn-bus \
-  AUTUMN_BUS_RUNTIME_DIR=/run/autumn-bus \
-  /usr/local/bin/autumn-bus doctor --json
+sudo -u october-bus env \
+  OCTOBER_BUS_DATA_DIR=/var/lib/october-bus \
+  OCTOBER_BUS_RUNTIME_DIR=/run/october-bus \
+  /usr/local/bin/october-bus doctor --json
 ```
 
 Do not open ports 4765 or 8787 in the firewall. Only your reverse proxy's HTTPS
@@ -101,20 +108,20 @@ Run these on the server. Scope creation saves its credential privately; redirect
 its printed result so credentials do not enter terminal logs.
 
 ```sh
-sudo -u autumn-bus env \
-  AUTUMN_BUS_DATA_DIR=/var/lib/autumn-bus \
-  AUTUMN_BUS_RUNTIME_DIR=/run/autumn-bus \
-  /usr/local/bin/autumn-bus scope create muse-pilot >/dev/null
+sudo -u october-bus env \
+  OCTOBER_BUS_DATA_DIR=/var/lib/october-bus \
+  OCTOBER_BUS_RUNTIME_DIR=/run/october-bus \
+  /usr/local/bin/october-bus scope create muse-pilot >/dev/null
 
-sudo -u autumn-bus env \
-  AUTUMN_BUS_DATA_DIR=/var/lib/autumn-bus \
-  AUTUMN_BUS_RUNTIME_DIR=/run/autumn-bus \
-  /usr/local/bin/autumn-bus gateway init \
-  --public-url https://bus.autumn.dev --scope muse-pilot --agent muse \
-  --config /var/lib/autumn-bus/gateway.json \
-  --key-file /var/lib/autumn-bus/muse.key
+sudo -u october-bus env \
+  OCTOBER_BUS_DATA_DIR=/var/lib/october-bus \
+  OCTOBER_BUS_RUNTIME_DIR=/run/october-bus \
+  /usr/local/bin/october-bus gateway init \
+  --public-url https://bus.october.dev --scope muse-pilot --agent muse \
+  --config /var/lib/october-bus/gateway.json \
+  --key-file /var/lib/october-bus/muse.key
 
-sudo systemctl enable --now autumn-bus-gateway.service
+sudo systemctl enable --now october-bus-gateway.service
 ```
 
 The init command refuses to overwrite files. It prints paths, never the API key.
@@ -130,7 +137,7 @@ Keys and scope/agent pairs must be unique. Keep the config mode `0600`.
 
 ## 3. Add DNS and HTTPS
 
-Point the DNS A record for `bus.autumn.dev` to this server's public IPv4 address.
+Point the DNS A record for `bus.october.dev` to this server's public IPv4 address.
 Add an AAAA record only if IPv6 actually routes to the same HTTPS service.
 Keep the existing website's DNS and routes intact.
 
@@ -147,7 +154,7 @@ For **nginx**, adapt [nginx.conf.example](nginx.conf.example), provision the
 certificate with your existing ACME tooling, run `sudo nginx -t`, and reload
 nginx. Use whichever proxy already runs on the server; do not run both on 443.
 
-The gateway requires `Host: bus.autumn.dev` (including an explicit port if the
+The gateway requires `Host: bus.october.dev` (including an explicit port if the
 configured public URL includes one), so preserve it when proxying. Request bodies
 are capped at 1 MiB. Proxy timeouts exceed the Bus's 25-second inbox wait. Exclude
 this subdomain from caching and interactive browser challenges. Preserve
@@ -161,16 +168,16 @@ are not available in older published packages.
 
 The scope owner securely transfers the `muse-pilot` scope token to a private file
 on the laptop. It is stored server-side at
-`/var/lib/autumn-bus/scopes/<sha256-of-scope-id>.token`. Obtain the filename using
+`/var/lib/october-bus/scopes/<sha256-of-scope-id>.token`. Obtain the filename using
 `printf '%s' muse-pilot | sha256sum` on Linux; this hashes the public scope ID, not
 the secret. Transfer over SSH to a file, without displaying its contents:
 
 ```sh
 umask 077
-mkdir -p "$HOME/.config/autumn-bus"
-ssh YOUR_SERVER 'sudo cat /var/lib/autumn-bus/scopes/SCOPE_HASH.token' \
-  > "$HOME/.config/autumn-bus/muse-pilot.token"
-chmod 600 "$HOME/.config/autumn-bus/muse-pilot.token"
+mkdir -p "$HOME/.config/october-bus"
+ssh YOUR_SERVER 'sudo cat /var/lib/october-bus/scopes/SCOPE_HASH.token' \
+  > "$HOME/.config/october-bus/muse-pilot.token"
+chmod 600 "$HOME/.config/october-bus/muse-pilot.token"
 ```
 
 Replace `YOUR_SERVER` and `SCOPE_HASH`. Treat the scope token as owner authority:
@@ -182,10 +189,10 @@ absolute paths and a unique agent ID for each concurrent session:
 
 ```json
 {
-  "command": "/absolute/path/to/autumn-bus",
+  "command": "/absolute/path/to/october-bus",
   "args": [
     "mcp", "stdio",
-    "--remote", "https://bus.autumn.dev/bus",
+    "--remote", "https://bus.october.dev/bus",
     "--scope-token-file", "/absolute/private/path/muse-pilot.token",
     "--agent", "claude-website",
     "--name", "Claude website",
@@ -214,7 +221,7 @@ An idle model that is not consuming its inbox will not start work automatically.
 
 ```sh
 curl --fail --silent --show-error -o /dev/null -w '%{http_code}\n' \
-  https://bus.autumn.dev/health/ready
+  https://bus.october.dev/health/ready
 # Expected: 204
 ```
 
@@ -223,7 +230,7 @@ The optional Node 20+ checker initializes MCP and lists tools without running
 agent work or printing credentials:
 
 ```sh
-node scripts/check-hosted-mcp.mjs https://bus.autumn.dev/mcp /private/path/muse.key
+node scripts/check-hosted-mcp.mjs https://bus.october.dev/mcp /private/path/muse.key
 ```
 
 Then perform a real round trip in the target client: `list_peers`, `message_peer`
@@ -237,15 +244,15 @@ Application fields after verification:
 | Field | Value |
 | --- | --- |
 | Connection type | Existing MCP |
-| Hosted MCP endpoint | `https://bus.autumn.dev/mcp` |
-| API/MCP documentation | `https://github.com/Adi103-ETAI/autumn-bus/blob/main/spec/0.1/mcp.md` after merge; link the reviewed commit before merge |
+| Hosted MCP endpoint | `https://bus.october.dev/mcp` |
+| API/MCP documentation | `https://github.com/october-dev/october-bus/blob/main/spec/0.1/mcp.md` after merge; link the reviewed commit before merge |
 | Authentication | API keys, sent as Bearer credentials; no OAuth/PKCE claim |
 | OpenAPI | Not needed for the MCP option |
 
 Suggested access requirements:
 
 > Operator-provisioned pilot access with a private connector API key. Users run
-> an Autumn Bus bridge on their computer and explicitly connect supported agent
+> an Agent Intercom bridge on their computer and explicitly connect supported agent
 > sessions. Their computer and receiving agents must be online and consuming
 > messages for work to execute. Existing coding-tool accounts, subscriptions, and
 > approvals still apply. Each connector is limited to its provisioned scope and
@@ -267,7 +274,18 @@ to be tested. The form's API-key option is not evidence of end-to-end compatibil
 
 ## Operations, rotation, and recovery
 
-- Inspect `systemctl status autumn-bus autumn-bus-gateway` and their journals.
+- If the proxy service has no restart policy, install
+  [caddy-restart.conf](caddy-restart.conf) as
+  `/etc/systemd/system/caddy.service.d/50-october-restart.conf` and run
+  `systemctl daemon-reload`. Check `systemctl show caddy --property=Restart`;
+  applying this policy does not require restarting the running proxy.
+- After verifying a separate public-key SSH connection, the optional
+  [sshd-key-only.conf](sshd-key-only.conf) disables password and keyboard-interactive
+  login. Back up existing configuration, validate with `sshd -t`, inspect the
+  effective settings with `sshd -T`, reload `ssh`, and verify a new connection
+  while retaining the original session. Authentication hardening is separate
+  from provider firewall rules and off-host backups.
+- Inspect `systemctl status october-bus october-bus-gateway` and their journals.
   Probe `/health/live` for process liveness and `/health/ready` for all connector
   sessions plus storage availability. A partial connector failure leaves other
   scopes serving but marks readiness unavailable until repaired/restarted.
@@ -281,7 +299,7 @@ to be tested. The form's API-key option is not evidence of end-to-end compatibil
   as the service user using the two directory environment variables above.
   This revokes all current executions in that scope. Restart the gateway and
   update/restart authorized laptop bridges with the replacement token.
-- Back up through the existing local `autumn-bus backup --output <new-path>`
+- Back up through the existing local `october-bus backup --output <new-path>`
   command with the same service-user environment; also back up private scope
   files and gateway configuration/key files through your encrypted backup policy.
   Do not copy a live SQLite main file without its WAL. See

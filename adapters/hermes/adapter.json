@@ -20,14 +20,14 @@
   ],
   "testedVersions": [],
   "platforms": [],
-  "maintainer": "Autumn",
-  "repository": "https://github.com/Adi103-ETAI/autumn-bus",
+  "maintainer": "October",
+  "repository": "https://github.com/october-dev/october-bus",
   "limitations": [
     "Configuration reviewed against upstream documentation; this adapter revision has no named-harness certification",
     "Pull-only: queued work does not start a model turn",
     "One MCP configuration is one execution; duplicate agent IDs replace earlier executions"
   ],
-  "conformanceCommand": "autumn-bus-conformance --profile mcp-adapter --start-runtime --adapter-command autumn-bus --adapter-arg mcp --adapter-arg stdio --check-self-registration",
+  "conformanceCommand": "agentintercom-conformance --profile mcp-adapter --start-runtime --adapter-command agentintercom --adapter-arg mcp --adapter-arg stdio --check-self-registration",
   "configuration": {
     "file": "config.yaml.example",
     "format": "yaml",

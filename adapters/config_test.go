@@ -14,7 +14,7 @@ func TestEveryConfigurationRendersWithoutCredentials(t *testing.T) {
 	if len(all) < 28 {
 		t.Fatal("expected the reviewed MCP host configurations")
 	}
-	values := map[string]string{"command": `C:\Bus With Spaces\autumn-bus.exe`, "scope": "project", "agent": "editor", "name": `Reviewer "One"`, "dataDir": `C:\User Data\bus`, "runtimeDir": `C:\User Data\run`}
+	values := map[string]string{"command": `C:\Bus With Spaces\agentintercom.exe`, "scope": "project", "agent": "editor", "name": `Reviewer "One"`, "dataDir": `C:\User Data\bus`, "runtimeDir": `C:\User Data\run`}
 	for _, manifest := range all {
 		if manifest.Configuration == nil {
 			continue
@@ -45,7 +45,7 @@ func TestEveryConfigurationRendersWithoutCredentials(t *testing.T) {
 	if _, err := Lookup("../../other"); err == nil {
 		t.Fatal("accepted unknown host path")
 	}
-	if _, err := Lookup("autumn-harness"); err == nil {
+	if _, err := Lookup("october-harness"); err == nil {
 		t.Fatal("native launcher must not return a fabricated MCP configuration")
 	}
 }

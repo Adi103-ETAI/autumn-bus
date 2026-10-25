@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "io.github.adi103-etai.autumn-bus",
-  "name": "Autumn Bus",
+  "id": "io.github.october-dev.agentintercom",
+  "name": "Agent Intercom",
   "version": "0.1.0",
-  "author": "adii",
+  "author": "October",
   "license": "Apache-2.0",
-  "description": "Run Autumn Bus as the local coordination layer for AI agents on Omarchy.",
+  "description": "Run Agent Intercom as the local coordination layer for AI agents on Omarchy.",
   "kinds": ["service"],
   "entryPoints": {
     "service": "integrations/omarchy/Service.qml"

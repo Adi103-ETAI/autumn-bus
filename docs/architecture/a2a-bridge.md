@@ -2,7 +2,7 @@
 
 Status: experimental
 
-Autumn Bus is a coordination runtime and bridge. A2A is the protocol used at the boundary between compatible agents. MCP remains the primary adapter surface for coding harnesses.
+Agent Intercom is a coordination runtime and bridge. A2A is the protocol used at the boundary between compatible agents. MCP remains the primary adapter surface for coding harnesses.
 
 ## Compatibility target
 
@@ -18,16 +18,15 @@ SDK versions and A2A protocol versions are independent. The bridge records both.
 
 ## Boundaries
 
-- The Autumn Bus domain model remains canonical inside the runtime.
+- The Agent Intercom domain model remains canonical inside the runtime.
 - A2A types are translated at transport boundaries.
 - An Agent Card describes an agent. It does not grant access to the agent or its scope.
 - Public cards contain no execution IDs, credentials, prompts, local paths, or private context.
 - A scope owner chooses which agent cards to publish. The shared daemon does not enumerate agents publicly.
 - A deployment gives each published agent a stable interface URL. Execution IDs are never public identity.
 - Agent interfaces use bearer authentication. Loopback HTTP is allowed for local development. Remote interfaces require HTTPS.
-- Autumn Bus shared work items are a coordination pool. They are not A2A Tasks. A2A Tasks represent one delegated interaction and its result stream.
 - Remote principals are bound to one publication. Their credentials do not inherit scope, agent, MCP, or administrative authority.
-- Autumn Bus shared work items are a coordination pool. They are not A2A Tasks. A2A Tasks represent one delegated interaction and its result stream.
+- Agent Intercom shared work items are a coordination pool. They are not A2A Tasks. A2A Tasks represent one delegated interaction and its result stream.
 
 The reference daemon stores owner-controlled publications, scoped remote principals, and durable A2A task correlations. Each accepted A2A message maps to one Bus request and its optional linked response. The published interface accepts A2A `SendMessage` over HTTP+JSON and returns the durable A2A Task. Text parts are supported in the first write surface. Streaming, push notifications, task listing, task reads, and cancellation are not yet supported.
 
@@ -56,8 +55,8 @@ Owner-controlled publications use a zero-second cache lifetime so clients revali
 
 ## Extensions
 
-Core A2A behavior is implemented before any Autumn-specific extension. Extension identifiers are not published until their domain and lifecycle are established. Extension support will have separate conformance evidence from core A2A support.
+Core A2A behavior is implemented before any October-specific extension. Extension identifiers are not published until their domain and lifecycle are established. Extension support will have separate conformance evidence from core A2A support.
 
 ## Version policy
 
-Autumn Bus is pre-1.0. Bridge APIs may change as the A2A server surface is implemented. Public compatibility claims require the applicable A2A TCK checks and released interoperability evidence.
+Agent Intercom is pre-1.0. Bridge APIs may change as the A2A server surface is implemented. Public compatibility claims require the applicable A2A TCK checks and released interoperability evidence.

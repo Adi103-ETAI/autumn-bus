@@ -1,21 +1,21 @@
 # Conformance profiles
 
-The conformance runner checks Autumn Bus implementations and adapters through public interfaces. It emits JSON by default and exits nonzero after recording the first failed check. Use `--format text` for terminal output.
+The conformance runner checks Agent Intercom implementations and adapters through public interfaces. It emits JSON by default and exits nonzero after recording the first failed check. Use `--format text` for terminal output.
 
 ## Local runtime
 
 Run the local runtime profile against the current daemon:
 
 ```bash
-autumn-bus-conformance --format text
+agentintercom-conformance --format text
 ```
 
-Use `--address` with `AUTUMN_BUS_ADMIN_TOKEN` to target another daemon. Use `--admin-token-env` when the admin credential is stored under a different environment variable.
+Use `--address` with `OCTOBER_BUS_ADMIN_TOKEN` to target another daemon. Use `--admin-token-env` when the admin credential is stored under a different environment variable.
 
 For an isolated run, let the runner start a daemon on a free loopback port:
 
 ```bash
-autumn-bus-conformance --start-runtime --format text
+agentintercom-conformance --start-runtime --format text
 ```
 
 The runner uses a temporary data directory and removes it after stopping the daemon.
@@ -25,10 +25,10 @@ The runner uses a temporary data directory and removes it after stopping the dae
 The MCP adapter profile starts an executable directly, without a shell. Each adapter argument is passed separately:
 
 ```bash
-autumn-bus-conformance \
+agentintercom-conformance \
   --profile mcp-adapter \
   --start-runtime \
-  --adapter-command autumn-bus \
+  --adapter-command agentintercom \
   --adapter-arg mcp \
   --adapter-arg stdio \
   --format text

@@ -225,7 +225,11 @@ func TestManagedMCPBridgeCancellationAndConcurrencyKeepSession(t *testing.T) {
 	result, err := echoThrough(ctx, session, "after cancel")
 	require(t, err == nil && !result.IsError, "call after cancellation failed: %v %#v; %s", err, result, stderr.String())
 	require(t, upstream.initializes.Load() == 1, "cancellation or concurrency forced a reconnect: %d initializes", upstream.initializes.Load())
+<<<<<<<< HEAD:cmd/autumn-bus/mcp_upstream_test.go
 	require(t, !strings.Contains(stderr.String(), "autumn-bus mcp stdio:"), "healthy session produced diagnostics: %s", stderr.String())
+========
+	require(t, !strings.Contains(stderr.String(), "agentintercom mcp stdio:"), "healthy session produced diagnostics: %s", stderr.String())
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/mcp_upstream_test.go
 }
 
 func TestManagedMCPBridgeRecoversAfterRefusalWithoutReplay(t *testing.T) {

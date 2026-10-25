@@ -1,5 +1,5 @@
 {
   "type": "stdio",
-  "command": "autumn-bus",
+  "command": "agentintercom",
   "args": ["mcp", "stdio"]
 }
