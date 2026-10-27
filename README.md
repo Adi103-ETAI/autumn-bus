@@ -1,29 +1,33 @@
 <div align="center">
 
-<img src="assets/autumn-bus-banner.png" alt="Separate workstations connected through an intercom" width="900">
+<img src="assets/agent-intercom-banner.png" alt="Separate workstations connected through an intercom" width="900">
 
-# Autumn Bus
+# Agent Intercom
 
-**Connect AI agents, harnesses and apps.**
+**Stop copy/pasting between your agents.**
 
-[Website](https://autumn-bus.org/) · [Get started](#quickstart) · [Documentation](docs/installation.md)
+[Website](https://agentintercom.org/) · [Get started](#quickstart) · [Documentation](docs/installation.md)
 
 </div>
 
-Copying an answer from Claude into Codex, then carrying Codex's reply back to Claude?
+Claude Code has an update for your teammate's agent. You paste it into Slack,
+they paste it into their session, and the reply takes the same route back.
 
-Ever had two agents work on the same task because neither knew the other had started?
+Meanwhile, two agents have picked up the same task. Someone's agent has changed
+a file, and you're trying to find out why. You're jumping between sessions to
+share decisions, check progress and remind an agent to follow a PR through CI.
 
-Sent a request to a teammate's agent and ended up chasing the teammate for an update?
+Skills and `AGENTS.md` give agents project instructions. They don't keep
+separate sessions in sync.
 
-**Autumn Bus is open-source messaging and coordination for AI agents,
-harnesses and apps.** It gives them a shared workspace to exchange requests,
-claim tasks and share context. Your agents keep the tools, models and permissions
-they already use.
+**Agent Intercom is an open-source toolkit for connecting AI agents, harnesses
+and apps.** It gives you and your team a shared workspace for messages, tasks
+and files, so agents can ask each other questions, hand off work and report
+back. Keep using the agents, models and tools you already work with.
 
-Start with two agents on your laptop, or connect your team's agents across
-machines. Use Claude Code, Codex, ChatGPT, another compatible harness or app,
-or an agent you built yourself.
+Connect two agents for a quick handoff, or combine messaging and shared tasks
+into workflows across your team and machines. Use Claude Code, Codex, ChatGPT,
+another compatible harness or app, or an agent you built yourself.
 
 ### Messaging
 
@@ -49,13 +53,13 @@ follow progress and answer questions from your agents.
 With Node.js 20 or later, install the CLI:
 
 ```sh
-npm install -g @autumn-dev/autumn-bus@0.1.0-next.15
+npm install -g agentintercom-cli@0.2.0
 ```
 
 With Claude Code or Codex already installed on macOS or Linux:
 
 ```sh
-autumn-bus install --workspace my-project
+agentintercom install --workspace my-project
 ```
 
 Reconnect MCP or restart the apps. Ask one to list its connected sessions, then
@@ -63,7 +67,7 @@ use a session's name in a request:
 
 > “Ask my Codex session to review this plan and send back anything I've missed.”
 
-For a demo that needs no accounts, run `npx @autumn-dev/autumn-bus@0.1.0-next.15 demo`.
+For a demo that needs no accounts, run `npx agentintercom-cli@0.2.0 demo`.
 Version `0.2.0` is a release candidate; use the version shown above because npm's
 `latest` tag still points to a placeholder.
 
@@ -114,4 +118,4 @@ and [planned pricing](docs/hosted-billing.md). Public signup is not open yet.
 Code and documentation: [Apache 2.0](LICENSE). Brand names and artwork are not
 licensed for use in modified distributions.
 
-Built by [Autumn](https://autumn.dev) · [autumn-bus.org](https://autumn-bus.org/)
+Built by [October](https://october.dev) · [agentintercom.org](https://agentintercom.org/)
