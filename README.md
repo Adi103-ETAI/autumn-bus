@@ -1,34 +1,36 @@
 <div align="center">
 
-<img src="assets/autumn-bus-banner.png" alt="Separate workstations connected through an intercom" width="900">
+<img src="assets/agent-intercom-banner.png" alt="Separate workstations connected through an intercom" width="900">
 
-# Autumn Bus
+# Agent Intercom
 
-**Let your AI apps talk to each other.**
+**Connect AI agents, harnesses and apps.**
 
-[Website](https://autumn-bus.org/) · [Get started](#quickstart) · [Documentation](docs/installation.md)
+[Website](https://agentintercom.org/) · [Get started](#quickstart) · [Documentation](docs/installation.md)
 
 </div>
 
-When your plan is in ChatGPT and your code is in Codex, you end up carrying
-messages between them. The same thing happens across your teammates' agents.
+When agents work in different harnesses, apps or machines, you end up carrying
+messages between them. That includes your own agents and your teammates' agents.
 
-Autumn Bus connects **Claude, ChatGPT, Codex and other AI apps** through
-shared messages, tasks and files. Ask one connected session to send work to another,
-then collect its reply. Each app keeps its own models, tools and permissions.
+Agent Intercom gives them **shared messages, tasks and files**. Connect coding
+harnesses such as Claude Code and Codex, apps such as Claude and ChatGPT, and
+agents you build yourself. Ask one connected agent to send work to another and
+collect its reply. Models, tools and permissions stay with the system running
+each agent.
 
 ## Quickstart
 
 With Node.js 20 or later, install the CLI:
 
 ```sh
-npm install -g @autumn-dev/autumn-bus@0.1.0-next.15
+npm install -g agentintercom-cli@0.2.0
 ```
 
 With Claude Code or Codex already installed on macOS or Linux:
 
 ```sh
-autumn-bus install --workspace my-project
+agentintercom install --workspace my-project
 ```
 
 Reconnect MCP or restart the apps. Ask one to list its connected sessions, then
@@ -36,20 +38,21 @@ use a session's name in a request:
 
 > “Ask my Codex session to review this plan and send back anything I've missed.”
 
-For a demo that needs no accounts, run `npx @autumn-dev/autumn-bus@0.1.0-next.15 demo`.
+For a demo that needs no accounts, run `npx agentintercom-cli@0.2.0 demo`.
 Version `0.2.0` is a release candidate; use the version shown above because npm's
 `latest` tag still points to a placeholder.
 
-For Windows and other apps, follow the [connection guide](docs/connect-sessions.md).
+For other harnesses, Windows and custom agents, see the
+[connection options](#ways-to-connect) below.
 [Installation details](docs/installation.md) cover setup, troubleshooting and uninstalling.
 
 ## What you can do
 
-### Send work between apps
+### Send work between agents
 
 Send a request, share a file and get a reply in the same workspace. See whether
-work was delivered or answered. Your apps' private chat histories are not
-imported automatically.
+work was delivered or answered. Private agent conversations and app chat histories
+are not imported automatically.
 
 ### Keep a project moving
 
@@ -62,16 +65,22 @@ On a hosted server, invite people and connect agents from different machines to
 the same workspace. Use the browser workspace to follow progress and answer
 questions from your agents.
 
-## Connect your apps
+<a id="connect-your-apps"></a>
 
-Autumn Bus uses **MCP**, the standard for connecting AI apps to tools.
-Claude, Cowork and ChatGPT web can connect to a reachable hosted server; desktop
-and terminal apps can also use local connections where supported. Your app must
-allow custom MCP connections. [Choose your app and follow its setup guide](docs/connect-sessions.md#chat-apps-and-desktop-clients).
+## Ways to connect
 
-MCP lets an app check its inbox when its agent runs. Claude Code also supports
-waking a session when work arrives; Codex terminal wake is experimental. Other
-chat apps may need you to ask them to check for replies. See
+Use **MCP** to connect a compatible harness or AI app. Integrate your own agents
+through the [HTTP API](spec/0.1/http.md), [CLI](docs/cli-messages.md), or
+[Go and TypeScript SDKs](docs/clients.md). They can all communicate in the same workspace.
+
+Claude, Cowork and ChatGPT web use a reachable hosted server; supported desktop
+and terminal clients can also connect locally. Your client must allow custom MCP
+connections. [App setup guides](docs/connect-sessions.md#chat-apps-and-desktop-clients)
+and [harness adapters](adapters/README.md) explain the available routes.
+
+Automatically waking an idle agent depends on its harness. Claude Code supports
+native wake; Codex terminal wake is experimental. Other agents can check their
+inbox when they run, and chat apps may need you to ask them to check for replies. See
 [incoming messages and session attachment](docs/installation.md#native-attachment).
 
 <a id="hosted-multiplayer"></a>
@@ -79,8 +88,8 @@ chat apps may need you to ask them to check for replies. See
 ## Run it your way
 
 **Local use and self-hosting are free.** Run a workspace on your machine, or
-[host the server yourself](deploy/hosted/STANDALONE.md) to connect apps, machines
-and teammates. Model subscriptions and compute stay with the apps you use.
+[host the server yourself](deploy/hosted/STANDALONE.md) to connect agents, machines
+and teammates. Model subscriptions and compute stay with the tools running your agents.
 
 **Managed hosting is coming soon.** See [hosted workspaces](docs/hosted-workspaces.md)
 and [planned pricing](docs/hosted-billing.md). Public signup is not open yet.
@@ -98,4 +107,4 @@ and [planned pricing](docs/hosted-billing.md). Public signup is not open yet.
 Code and documentation: [Apache 2.0](LICENSE). Brand names and artwork are not
 licensed for use in modified distributions.
 
-Built by [Autumn](https://autumn.dev) · [autumn-bus.org](https://autumn-bus.org/)
+Built by [October](https://october.dev) · [agentintercom.org](https://agentintercom.org/)
