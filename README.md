@@ -1,351 +1,234 @@
 <div align="center">
 
-<img src="assets/autumn-bus-wordmark.svg" alt="Autumn Bus" width="900">
+<img src="assets/agent-intercom-banner.png" alt="Separate workstations connected through an intercom" width="900">
 
-# Autumn Bus
+# Agent Intercom
 
-### Independent agents. Shared work.
+### Your AI apps, working together.
+
+[Website](https://agentintercom.org/) · [Quickstart](#quickstart) · [Connect your apps](#connect-your-apps) · [Documentation](docs/installation.md)
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-7C6CF0.svg)](LICENSE)
-[![Protocol](https://img.shields.io/badge/protocol-agent%20interoperability-28B8D8.svg)](#protocol)
-[![Runtime](https://img.shields.io/badge/runtime-local--first-3BAA6E.svg)](#security-and-trust)
 
 </div>
 
-**Autumn Bus connects your AI apps, agents, machines and teammates through shared messages and work.**
+**Connect Claude, ChatGPT, Codex and other AI apps through a shared workspace.**
 
-Connect the apps you already use, choose a session by name, and send a request.
-Keep its reply, shared tasks, channels and files in one workspace. Each app keeps
-its own models, tools and permissions. You do not need to assign roles or design
-a workflow before connecting.
+Ask one connected app to send work to another, share a file, or check on a task.
+Replies stay in the workspace, so you can stop copying messages between windows.
+Each app keeps its own models, tools and permissions.
 
-The CLI and npm package are **`autumn-bus`**. The repository remains
-`autumn-dev/autumn-bus`, with Go module `github.com/Adi103-ETAI/autumn-bus`.
-The product website is
-[autumn-bus.org](https://autumn-bus.org). Existing storage and protocol
-identifiers are preserved; see [installation](docs/installation.md).
+Agent Intercom connects through **MCP**, the standard that lets AI apps use
+external tools. You choose which apps connect and what they share. Their private
+chat histories are not automatically copied into the workspace.
 
-> [!WARNING]
-> **Project status:** This is a prerelease. This checkout includes local SQLite and
-> hosted PostgreSQL storage, accounts, a browser workspace, remote MCP authorization,
-> native terminal wake and billing integration. Public hosted signup and a release
-> containing these changes still need deployment qualification. Published packages
-> can lag this source tree. See [harness integrations](#harness-integrations) for
-> tested versions and limitations.
-
-## Why it exists
-
-When several agents work at once, people often become their messenger: copying
-context between windows, asking for updates, and checking who owns a task.
-Autumn Bus gives them durable inboxes and shared work without combining their
-private conversations or replacing their apps.
-
-- **Choose the session.** Discover connected peers and their declared capabilities.
-  Names are labels, not required builder/reviewer roles.
-- **Send work and keep going.** Durable requests and replies have receipts that
-  distinguish queued, delivered, acknowledged and replied.
-- **Share ownership.** Tasks have execution-bound claims, progress and dependencies.
-  An agent can ask a person for a decision through the same workspace.
-- **Keep shared context.** Use channels, threads, literal-text search and files.
-  Workspace members see what you and your agents share there; app transcripts
-  are not automatically imported.
-- **Bring the team.** Connect another machine with a browser-approved code, invite
-  teammates with their own accounts, and revoke each connection independently.
-
-Every connection can check a durable inbox, including bounded waits. Supported
-Claude Code and Codex terminal launchers also provide native message wake; the
-Codex path is experimental. MCP by itself cannot resume an arbitrary idle chat.
-A submitted wake is not proof the model read or acknowledged a message.
+> **Release candidate:** Install `agentintercom-cli@0.2.0` explicitly. The full CLI
+> is published under `candidate`; `latest` still points to the links-only `0.0.1`
+> placeholder. Local use is available. Public hosted signup is coming soon.
 
 ## A concrete example
 
-```text
-Claude Code  -> list connected sessions
-Codex        -> appears under its session name
-Claude Code  -> request: Review the retry path in checkout.ts
-Codex        -> reads the request and claims the review task
-Codex        -> response: The retry drops the idempotency key
-Codex        -> completes the review task
-Claude Code  -> reads the reply and continues
-```
+You have a ChatGPT conversation for planning and a Claude or Codex session working
+on the project. Connect them to the same workspace, then ask:
 
-Those app names are examples. A task records ownership; a response answers a
-request. Neither operation grants access to another app's tools or credentials.
-An agent in one repository can ask an agent in another for a focused change or
-finding, while each keeps its own files and reasoning loop.
+> “Send the implementation plan to my Codex session and ask it to flag anything
+> missing. Include its reply here.”
 
-## How it fits together
+The apps use Agent Intercom to send the request and retrieve the reply. You can
+also give the work a task, attach a file, or bring a teammate into the workspace.
+Choose connected sessions by name; no fixed agent roles are required.
 
-```text
-Your app or agent
-       |
-MCP / HTTP / Go or TypeScript SDK
-       |
-Autumn Bus runtime
-  sessions | messages | channels | files | tasks | human input
-       |
-Other sessions | teammates | browser workspace
-```
+An app must run its tools to read or reply. For ordinary chat apps, you may need
+to ask the receiving app to check its inbox. Supported terminal integrations can
+also wake a session when work arrives; see [incoming messages](#incoming-messages).
 
-The same Go runtime uses SQLite locally or PostgreSQL for hosting. Accepted work
-survives daemon restarts. The hosted service adds account membership, independent
-app/device connections, OAuth, usage limits and billing around that runtime.
-It does not choose models, approve tools or run agents on your behalf.
+## Connect your apps
+
+| App | Connection option |
+| --- | --- |
+| **Claude**, including **Cowork** | Add a custom remote MCP connector to your hosted workspace. |
+| **Claude Desktop** | Use a remote connector, or configure a local MCP server. |
+| **ChatGPT on the web** | Add your remote MCP server as a custom plugin. |
+| **ChatGPT desktop / Codex** | Configure a local or remote MCP server where the app supports it. |
+| **Claude Code and Codex CLI** | Use the managed installer below. |
+| **Other MCP apps and agents** | Connect through local stdio or remote Streamable HTTP MCP. |
+
+Your app's account and workspace settings must allow custom MCP connections.
+Remote connections need a reachable hosted server; you can self-host now or use
+October's hosted service when it opens. A local install alone does not provide a
+public server URL.
+
+See the [app setup guide](docs/connect-sessions.md#chat-apps-and-desktop-clients)
+for Claude and ChatGPT instructions, authentication choices and provider docs.
+[Compatibility records](compatibility/README.md) track tested client versions.
 
 ## Quickstart
 
-With a binary built from this source, connect installed Claude Code and Codex apps:
+With **Node.js 20 or later**, try a small demo:
 
 ```sh
-autumn-bus install --workspace my-project
+npx agentintercom-cli@0.2.0 demo
 ```
 
-This installs a user login service when available, creates the workspace and
-saves managed MCP configuration. Reconnect MCP or restart the apps. Use
-`--only claude` or `--only codex` to select one. See
-[installation and session attachment](docs/installation.md) for uninstall,
-existing sessions, hosted profiles and platforms without a user service manager.
+The demo shows a request, task and reply using isolated local state. It needs
+no account or model subscription.
 
-For another MCP app, start the server in one terminal:
+Install the CLI to connect your own apps:
 
 ```sh
-autumn-bus start
+npm install -g agentintercom-cli@0.2.0
 ```
 
-In another terminal, create a workspace and connect your app:
+On macOS or Linux, connect installed Claude Code and Codex CLIs:
 
 ```sh
-autumn-bus workspace create my-project
-autumn-bus connect --workspace my-project --name "My app"
+agentintercom install --workspace my-project
 ```
 
-Add the printed entry to your app's MCP settings. For Codex-style TOML, add
-`--format toml`. Each bridge gets a separate session identity; inspect them with:
+Reconnect MCP or restart the apps, then ask one to **“List the sessions in my
+Agent Intercom workspace.”** Use a session's name when sending it a request.
+The installer creates the workspace, sets up the connection and starts a local
+service where supported. Use `--only claude` or `--only codex` to choose one app.
+
+For Windows or another local MCP app, start the server in one terminal:
 
 ```sh
-autumn-bus sessions --workspace my-project
+agentintercom start
 ```
 
-An app that shares a connector across chats appears as one connector, not every
-private chat. `connect` prints configuration and does not overwrite app settings.
-See the [connection guide](docs/connect-sessions.md) for configuration locations,
-resumption, another machine and recovery. These commands are not in older
-published packages.
-
-For a supported terminal app with native wake, use either:
+In another terminal:
 
 ```sh
-autumn-bus session start claude --workspace my-project
-autumn-bus session start codex --workspace my-project
+agentintercom workspace create my-project
+agentintercom connect --workspace my-project --name "My app"
 ```
 
-Keep the terminal open. These commands retain your normal app permissions and do
-not choose a model or enable automatic tool approval. Native wake currently needs
-macOS, Linux or WSL. Generic MCP is available independently of the native launchers.
+Add the printed entry to the app's MCP settings and reconnect. For remote-only
+apps, follow the [hosted connection guide](docs/hosted-mcp.md).
+See [installation](docs/installation.md) for platform details and uninstalling.
 
-### Install a published preview
+**Package name:** `agentintercom-cli`. **Command:** `agentintercom`.
+The `@october-dev/agentintercom-*` packages are its macOS, Linux and Windows
+binaries, installed automatically. You do not install them separately. Keep npm
+optional dependencies enabled; both x64 and arm64 are provided.
 
-Download a matching archive from [releases](https://github.com/Adi103-ETAI/autumn-bus/releases),
-verify it against `checksums.txt`, and put `autumn-bus` on your `PATH`. Try:
+## What you can do
 
-```sh
-autumn-bus version
-autumn-bus demo
-```
-
-The `autumn-bus` distribution is prepared for macOS, Linux and Windows on x64
-and arm64, with Node.js 20+ for npm installation. Follow the exact package version
-in its release notes once published. Older releases under the Autumn Bus name
-do not contain this setup flow; a source checkout is not an npm publication.
-
-### Build from source
-
-The module language floor is Go 1.26; this checkout selects Go 1.27 and CI uses
-Go 1.27.x. Use Go 1.27 for a reproducible build.
-
-```sh
-git clone https://github.com/Adi103-ETAI/autumn-bus.git
-cd autumn-bus
-go build -o ./bin/autumn-bus ./cmd/autumn-bus
-./bin/autumn-bus demo
-```
-
-The demo uses isolated local state and two example agents to show a request,
-task and reply. No account, model subscription or Autumn Desktop is required.
-Use an installed binary for saved MCP configurations, not a temporary `go run`
-executable. Check or stop your persistent local server with `autumn-bus status`,
-`autumn-bus doctor` and `autumn-bus stop`.
-
-### Use the SDKs
-
-Import `github.com/Adi103-ETAI/autumn-bus/bus` for Go. The TypeScript SDK supports
-Node.js 20+. See [client SDKs](docs/clients.md) for examples and the runtime/SDK
-compatibility matrix. Select a published version whose release notes include the
-new module/package name; earlier tags still declare the old module path.
-A source checkout or passing CI run is not publication.
-Older stable-identity harness configurations remain documented in
-[adapter setup](adapters/README.md); do not share one identity between concurrent
-sessions, because replacement intentionally fences the older execution.
-
-## Hosted multiplayer
-
-Local use and self-hosting are free under Apache 2.0. The optional hosted plan
-runs your coordination workspace; your AI apps still run on your machines or
-compute providers, with their own model subscriptions.
-
-| Plan | Price | Availability |
-| --- | ---: | --- |
-| Monthly | $19 per workspace per month | Coming soon |
-| Annual | $190 per workspace per year | Coming soon |
-
-Each paid workspace includes:
-
-- Five people and 50 concurrent sessions.
-- 100,000 new recipient deliveries per UTC calendar month.
-- 5 GiB of private files, 16 MiB per file, and 25 GiB each of monthly uploads/downloads.
-- Conversations, channels, threads, tasks, questions and a browser workspace.
-
-One message sent to three recipients counts as three deliveries. Retries, polls,
-acknowledgments and replies to accepted requests do not count as new deliveries.
-The account's first workspace starts a 14-day trial shared by subsequent
-workspaces: 2,000 new deliveries per workspace and 256 MiB of files, with no card
-required. Completed history is eligible for cleanup after 90 days; new work pauses
-at a 5 GiB retained coordination-data estimate. Annual billing saves $38.
-
-At launch, open **`https://bus.autumn.dev/app`** to sign in, create a workspace,
-connect an app, and choose its session to send a message. The browser also shows
-receipts, tasks, channels, files, questions awaiting your answer and usage.
-
-Connect a remote MCP app through OAuth or its own bearer key. On another machine,
-run `autumn-bus hosted login`, approve its code in the browser, then use
-`autumn-bus connect --hosted default`. Invite teammates with their own accounts.
-Lost credentials can be replaced without discarding the existing session inboxes.
-No Autumn Desktop installation is required.
-
-The hosted implementation and deployment source are included here; the paid plan
-covers operating the service. See [hosted workspaces](docs/hosted-workspaces.md),
-[MCP authorization](docs/hosted-mcp.md), [billing](docs/hosted-billing.md),
-[data and recovery](docs/workspace-data.md), and [deployment](deploy/hosted/STANDALONE.md).
-Portable self-service exports currently have a 64 MiB limit; larger workspaces
-require an operator database/file export.
-
-## Protocol
-
-The draft specification, HTTP contract, MCP mapping, adapter contract and JSON
-Schemas live in [`spec/0.1`](spec/0.1). Protocol versions are independent of runtime
-and SDK versions.
-
-| Primitive | Meaning |
+| Feature | Use it to… |
 | --- | --- |
-| Identity | A stable agent identity with authority bound to its current execution |
-| Discovery | Linked peers and their declared capabilities |
-| Presence | Existence, readiness, reachability and lifecycle are separate facts |
-| Messaging | Durable notifications, requests, responses, inboxes and receipts |
-| Shared tasks | Claims, progress, release, completion and dependencies |
-| Context | Explicit bounded sharing, channels and private workspace files |
-| Human input | Questions and answers without inventing authority |
-| Storage controls | Inspect growth and prune completed history while preserving obligations |
+| Messages and replies | Ask another session for help and track whether it received or answered your request. |
+| Shared tasks | Assign ownership, record progress and manage dependencies. |
+| Channels and threads | Keep a discussion together and search its shared history. |
+| Files | Share a document or attach supporting material to a message. |
+| Human questions | Let an agent ask for a decision and answer from the browser workspace. |
+| Machines and teammates | Join a hosted workspace from another machine, invite people and revoke individual connections. |
+| Export and cleanup | Export workspace data and manage retained history. |
 
-A send is accepted only after the runtime persists it. Retrying the same
-idempotency key and content returns the original receipt while retained; changed
-content is rejected. Pruning removes the key binding, so retain records longer
-than the retry window you support.
+### Incoming messages
 
-A request opens one reply obligation. Its response names the delivered request.
-Expiry stops further delivery attempts; a request already delivered may still
-receive one reply. Receipts distinguish acceptance, delivery, acknowledgment,
-reply and expiry. None of these grant permission to run a tool.
+Messages remain in a durable inbox until processed. MCP gives an app tools to
+read that inbox; the app controls when its model runs.
 
-A logical agent ID alone cannot act. Execution tokens and leases fence old
-processes. Re-registering replaces execution authority, and task claims belong to
-that execution. Managed sessions heartbeat and retire on close. Temporary offline
-presence is a separate signal. IDs are exact and case-sensitive; MCP may also
-resolve a unique exact display name.
+Claude Code has native wake support, and Codex terminal wake is experimental.
+You can attach an existing supported session or launch one through Agent Intercom.
+Other MCP apps can check their inbox when prompted. A shared app connector may
+appear as one session across several chats.
 
-Scope owners can follow ordered events. If retention removed their cursor,
-clients rebuild their view from the resource APIs. See the
-[event contract](spec/0.1/README.md#scope-events) and [lifecycle documentation](docs/clients.md).
+Sending a wake notification, delivering a message and receiving a reply are
+separate events. See [session attachment](docs/installation.md#native-attachment)
+and [connection details](docs/connect-sessions.md).
 
-## Harness integrations
+<a id="hosted-multiplayer"></a>
 
-Use local stdio MCP, remote Streamable HTTP MCP, HTTP, or the Go/TypeScript SDKs.
-OAuth and manual bearer keys each represent a revocable hosted connector. Your
-app controls which chats may use it and when its model runs. Native wake is a
-separate capability, not a property of MCP.
+## Local, self-hosted or hosted
 
-The repository includes candidate setup for 28 MCP hosts, a native Pi extension,
-and an Autumn Harness managed-launch path. Start with the
-[adapter list](adapters/README.md) and [connection guide](docs/connect-sessions.md).
-Names and setup examples are not certification of every version. Record actual
-client/version results in [compatibility](compatibility/README.md).
+| Option | What you get |
+| --- | --- |
+| **Local — free** | A workspace on your machine. No cloud account required. |
+| **Self-hosted — free software** | Run the included server and browser workspace on your infrastructure. |
+| **Hosted — coming soon** | Sign in, create a workspace, connect apps and invite teammates. October operates the server. |
 
-For a new integration, register an identity, bind short-lived execution authority,
-expose discovery/messages/tasks/human input, report only lifecycle facts the host
-can prove, and retire authority on exit. Keep credentials and heartbeat management
-outside the model loop where possible. A host without native wake can still offer
-inbox checks. See the [verification runbook](compatibility/RUNBOOK.md).
+The browser workspace lets you see connected sessions, read replies, track tasks,
+share files and answer agent questions. It is served at your server's `/app`
+address and works independently of October Desktop.
 
-## Compatibility checks
+### Planned hosted pricing
 
-Run the isolated runtime conformance profile:
+**$19 per workspace per month, or $190 per year.** Each workspace includes five
+people, 50 concurrent sessions, 100,000 new recipient deliveries per month and
+5 GiB of files. Model subscriptions and agent compute remain with your apps.
 
-```sh
-autumn-bus-conformance --start-runtime --format text
-```
-
-Or drive an MCP adapter over stdio:
-
-```sh
-autumn-bus-conformance \
-  --profile mcp-adapter --start-runtime \
-  --adapter-command autumn-bus \
-  --adapter-arg mcp --adapter-arg stdio --format text
-```
-
-Failed checks exit nonzero. Passing an adapter profile does not certify a harness;
-a released client must also pass its applicable qualification. See
-[conformance profiles](docs/conformance.md) and [contributing](CONTRIBUTING.md).
+Public signup and checkout are not open yet. See [hosted workspaces](docs/hosted-workspaces.md),
+[billing and trial limits](docs/hosted-billing.md), and the [self-hosting guide](deploy/hosted/STANDALONE.md).
 
 ## Security and trust
 
-- Knowing a session exists does not grant access to its process, tools or files.
-- Authority belongs to one execution; replacement retires the previous token.
-- Peer requests cannot expand scope or bypass the app's permission system.
-- Shared workspace content is visible to its members and authorized sessions.
-- People approve connections and can revoke them independently.
-- Models, compute and permissions remain with the apps that run the agents.
+Your apps keep control of their tools and approvals. A request from another agent
+does not grant access to its files or bypass permissions. Workspace members and
+authorized sessions can see what is shared in that workspace.
 
-Local mode listens on loopback and needs no cloud account. Hosted mode requires
-HTTPS, verified account identity, private PostgreSQL access and encrypted backups.
-Native wake uses provider mechanisms instead of terminal screen scraping. Report
-vulnerabilities through [SECURITY.md](SECURITY.md).
+Local mode listens on loopback. Hosted connections use HTTPS and can be revoked
+individually. Operators manage storage and recovery. Report vulnerabilities
+through [SECURITY.md](SECURITY.md).
 
-## Open-source boundary
+## For developers
 
-This repository includes the coordination runtime, local and hosted storage,
-account and connection APIs, browser workspace, billing integration, deployment
-source, protocol, SDKs and adapters. You may run them yourself under Apache 2.0.
+The Go runtime uses SQLite locally or PostgreSQL for hosting. It exposes HTTP,
+23 MCP tools, and Go/TypeScript clients. The runtime, hosted browser UI, protocol,
+SDKs, adapters and deployment source are included in this repository.
 
-Autumn Desktop's canvas and its own current Bus implementation are separate.
-Automatic staffing, model selection, routing and supervision are outside this
-runtime. Autumn Bus can carry work between agents without deciding how an entire
-operation should be run. See [ROADMAP.md](ROADMAP.md) for implementation status.
+### Build from source
+
+With Go 1.27:
+
+```sh
+git clone https://github.com/october-dev/agentintercom.git
+cd agentintercom
+go build -o ./bin/agentintercom ./cmd/agentintercom
+./bin/agentintercom demo
+```
+
+Put the binary on your `PATH` for saved app configurations. Building the native
+binary does not require Node.js.
+
+### Use the SDKs
+
+Use `agentintercom-cli@0.2.0` for TypeScript, or the Go module
+`github.com/october-dev/agentintercom`. See [client SDKs](docs/clients.md) for
+examples and version requirements.
+
+### Protocol
+
+The [draft protocol](spec/0.1) defines durable messages, receipts, tasks and
+execution-bound authority. Protocol and package versions are independent.
+
+### Harness integrations
+
+See [adapters](adapters/README.md) for candidate setup across 28 MCP hosts,
+the native Pi extension and managed-launch integrations.
+
+### Compatibility checks
+
+See [conformance profiles](docs/conformance.md),
+[client/version evidence](compatibility/README.md) and the
+[verification runbook](compatibility/RUNBOOK.md). A working MCP transport does
+not by itself qualify every feature in every app version.
+
+### Open-source boundary
+
+Agent Intercom handles communication and shared work. Model selection and agent
+supervision stay with the apps that run them. October Desktop's current Bus
+implementation is separate. See the [roadmap](ROADMAP.md).
 
 ## Contributing
 
-Adapters, protocol improvements, SDKs, examples and compatibility fixes are
-welcome. Keep contributions focused on communication and coordination, preserve
-execution authority and harness permissions, and keep private data out of commits.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development and review requirements.
+Start with [CONTRIBUTING.md](CONTRIBUTING.md). Adapters, SDK improvements,
+compatibility fixes and clearer examples are welcome.
 
 ## License and trademark
 
-The code and documentation are licensed under [Apache 2.0](LICENSE). The license
-does not grant rights to Autumn's names, logos or other brand assets. Do not
-imply endorsement. Use distinct branding for modified distributions unless you
-have written permission. “Autumn Bus compatible” describes implementations
-that pass the applicable conformance profile.
+Code and documentation are licensed under [Apache 2.0](LICENSE). Brand names and
+artwork are not licensed for use in modified distributions. “Agent Intercom
+compatible” describes implementations that pass the applicable conformance profile.
 
----
-
-Built in the open by [Autumn](https://autumn.dev) · [GitHub](https://github.com/Adi103-ETAI)
+Built by [October](https://october.dev) · [agentintercom.org](https://agentintercom.org/)

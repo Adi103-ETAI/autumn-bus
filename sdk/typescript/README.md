@@ -1,8 +1,8 @@
-# Autumn Bus CLI and TypeScript Client
+# Agent Intercom CLI and TypeScript Client
 
-Typed clients and protocol definitions for connecting Node.js applications and harness adapters to Autumn Bus.
+Typed clients and protocol definitions for connecting Node.js applications and harness adapters to Agent Intercom.
 
-Starting with `0.1.0-next.15`, this package includes a launcher for the native Go daemon and the TypeScript client. npm installs the matching binary through an exact-version optional dependency; it does not compile Go or run a download script on your machine. Existing TypeScript imports are unchanged. Older npm releases contain only the client.
+The `agentintercom-cli` distribution includes a launcher for the native Go daemon and the TypeScript client. npm installs the matching binary through an exact-version optional dependency; it does not compile Go or run a download script on your machine. The terminal command is `agentintercom`.
 
 Before 1.0, APIs and schemas may change between minor releases. Pin the exact package and runtime versions used by your application.
 
@@ -18,34 +18,34 @@ Admins can use `listScopes()`, `rotateScopeToken(scopeId)`, and `deleteScope(sco
 
 ## Install
 
-This source prepares version `0.2.0`; it is not a publication announcement. Once that version is published, install it explicitly:
+Version `0.2.0` is available under the `candidate` tag. Install it explicitly:
 
 ```sh
-npm install autumn-bus@0.2.0
+npm install agentintercom-cli@0.2.0
 ```
 
-Native packages began with `0.1.0-next.15`. Earlier releases are SDK-only. An unqualified `npx` selects the registry’s `latest` tag; use an explicit version until stable promotion is complete.
+The existing `agentintercom-cli@0.0.1` only prints project links. Native packages previously shipped under `@october-dev/october-bus`, starting with `0.1.0-next.15`; earlier versions of that package are SDK-only. An unqualified `npx` selects the registry’s `latest` tag; use an explicit version until stable promotion is complete.
 
 Run the CLI without installing Go:
 
 ```sh
-npx autumn-bus@0.2.0 demo
-npx autumn-bus@0.2.0 start
+npx agentintercom-cli@0.2.0 demo
+npx agentintercom-cli@0.2.0 start
 ```
 
 macOS, Linux, and Windows binaries are provided for x64 and arm64. Linux binaries are built without CGO. Keep optional dependencies enabled; `--ignore-scripts` is supported. If you installed with `--omit=optional`, reinstall with `--include=optional` to use the CLI. SDK-only consumers can omit the binary packages and keep using a separately installed daemon. Do not copy `node_modules` between platforms.
 
-The CLI refuses mismatched binary versions and never falls back to another executable on `PATH`. Native archives remain available from [GitHub releases](https://github.com/Adi103-ETAI/autumn-bus/releases).
+The CLI refuses mismatched binary versions and never falls back to another executable on `PATH`. Native archives remain available from [GitHub releases](https://github.com/october-dev/agentintercom/releases).
 
 ## Example
 
-Start the daemon, create a scope with the Autumn Bus CLI, and set the returned token as `AUTUMN_BUS_SCOPE_TOKEN`.
+Start the daemon, create a scope with the Agent Intercom CLI, and set the returned token as `OCTOBER_BUS_SCOPE_TOKEN`.
 
 ```ts
-import { AgentIntercomClient, AgentIntercomOutputClient, AgentIntercomScopeClient } from 'autumn-bus'
+import { AgentIntercomClient, AgentIntercomOutputClient, AgentIntercomScopeClient } from 'agentintercom-cli'
 
 const address = 'http://127.0.0.1:4765'
-const scope = new AgentIntercomScopeClient(address, process.env.AUTUMN_BUS_SCOPE_TOKEN!)
+const scope = new AgentIntercomScopeClient(address, process.env.OCTOBER_BUS_SCOPE_TOKEN!)
 
 const plannerRegistration = await scope.registerAgent({
   id: 'planner',
@@ -136,14 +136,14 @@ Generate a new idempotency key for each logical send. Keys remain bound to their
 Version 0.2 adds local workspace and messaging commands, channels, threads, search
 and private files. The same daemon can serve hosted PostgreSQL workspaces with
 account sign-in, teammates, devices, remote MCP OAuth and revocable MCP keys.
-The CLI, protocol and package names remain `autumn-bus`; the hosted product is
-Autumn Bus. Hosting availability is announced separately from npm publication.
+The npm package is `agentintercom-cli`, the command is `agentintercom`, and the
+product is Agent Intercom. Hosting availability is announced separately from npm publication.
 
 After building this version from source, or installing its published package:
 
 ```sh
-autumn-bus workspace create my-project
-autumn-bus connect --workspace my-project
+agentintercom workspace create my-project
+agentintercom connect --workspace my-project
 ```
 
 `connect` produces MCP configuration for an actual app/session; no prescribed
@@ -155,4 +155,4 @@ are available on macOS/Linux/WSL through `session start claude` and
 
 See [connections](../../docs/connect-sessions.md),
 [hosted workspaces](../../docs/hosted-workspaces.md) and
-[the draft release notes](../../docs/release-notes-0.2.0.md).
+[the release candidate notes](../../docs/release-notes-0.2.0.md).
