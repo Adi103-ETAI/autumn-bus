@@ -8,18 +8,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/october-dev/october-bus/bus"
-	"github.com/october-dev/october-bus/conformance"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/conformance"
 )
 
 func buildRuntimeCommand(t *testing.T) string {
 	t.Helper()
-	name := "agentintercom"
+	name := "autumn-bus"
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
 	path := filepath.Join(t.TempDir(), name)
-	command := exec.Command("go", "build", "-o", path, "../cmd/agentintercom")
+	command := exec.Command("go", "build", "-o", path, "../cmd/autumn-bus")
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("build runtime command: %v\n%s", err, output)
 	}

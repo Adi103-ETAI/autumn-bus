@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/agent-intercom-wordmark.svg" alt="Agent Intercom" width="900">
+<img src="assets/autumn-bus-wordmark.svg" alt="Autumn Bus" width="900">
 
-# Agent Intercom
+# Autumn Bus
 
 ### Independent agents. Shared work.
 
@@ -12,17 +12,17 @@
 
 </div>
 
-**Agent Intercom connects your AI apps, agents, machines and teammates through shared messages and work.**
+**Autumn Bus connects your AI apps, agents, machines and teammates through shared messages and work.**
 
 Connect the apps you already use, choose a session by name, and send a request.
 Keep its reply, shared tasks, channels and files in one workspace. Each app keeps
 its own models, tools and permissions. You do not need to assign roles or design
 a workflow before connecting.
 
-The CLI and npm package are **`agentintercom`**. The repository remains
-`october-dev/october-bus`, with Go module `github.com/october-dev/october-bus`.
+The CLI and npm package are **`autumn-bus`**. The repository remains
+`autumn-dev/autumn-bus`, with Go module `github.com/Adi103-ETAI/autumn-bus`.
 The product website is
-[agentintercom.org](https://agentintercom.org). Existing storage and protocol
+[autumn-bus.org](https://autumn-bus.org). Existing storage and protocol
 identifiers are preserved; see [installation](docs/installation.md).
 
 > [!WARNING]
@@ -37,7 +37,7 @@ identifiers are preserved; see [installation](docs/installation.md).
 
 When several agents work at once, people often become their messenger: copying
 context between windows, asking for updates, and checking who owns a task.
-Agent Intercom gives them durable inboxes and shared work without combining their
+Autumn Bus gives them durable inboxes and shared work without combining their
 private conversations or replacing their apps.
 
 - **Choose the session.** Discover connected peers and their declared capabilities.
@@ -81,7 +81,7 @@ Your app or agent
        |
 MCP / HTTP / Go or TypeScript SDK
        |
-Agent Intercom runtime
+Autumn Bus runtime
   sessions | messages | channels | files | tasks | human input
        |
 Other sessions | teammates | browser workspace
@@ -97,7 +97,7 @@ It does not choose models, approve tools or run agents on your behalf.
 With a binary built from this source, connect installed Claude Code and Codex apps:
 
 ```sh
-agentintercom install --workspace my-project
+autumn-bus install --workspace my-project
 ```
 
 This installs a user login service when available, creates the workspace and
@@ -109,21 +109,21 @@ existing sessions, hosted profiles and platforms without a user service manager.
 For another MCP app, start the server in one terminal:
 
 ```sh
-agentintercom start
+autumn-bus start
 ```
 
 In another terminal, create a workspace and connect your app:
 
 ```sh
-agentintercom workspace create my-project
-agentintercom connect --workspace my-project --name "My app"
+autumn-bus workspace create my-project
+autumn-bus connect --workspace my-project --name "My app"
 ```
 
 Add the printed entry to your app's MCP settings. For Codex-style TOML, add
 `--format toml`. Each bridge gets a separate session identity; inspect them with:
 
 ```sh
-agentintercom sessions --workspace my-project
+autumn-bus sessions --workspace my-project
 ```
 
 An app that shares a connector across chats appears as one connector, not every
@@ -135,8 +135,8 @@ published packages.
 For a supported terminal app with native wake, use either:
 
 ```sh
-agentintercom session start claude --workspace my-project
-agentintercom session start codex --workspace my-project
+autumn-bus session start claude --workspace my-project
+autumn-bus session start codex --workspace my-project
 ```
 
 Keep the terminal open. These commands retain your normal app permissions and do
@@ -145,17 +145,17 @@ macOS, Linux or WSL. Generic MCP is available independently of the native launch
 
 ### Install a published preview
 
-Download a matching archive from [releases](https://github.com/october-dev/october-bus/releases),
-verify it against `checksums.txt`, and put `agentintercom` on your `PATH`. Try:
+Download a matching archive from [releases](https://github.com/Adi103-ETAI/autumn-bus/releases),
+verify it against `checksums.txt`, and put `autumn-bus` on your `PATH`. Try:
 
 ```sh
-agentintercom version
-agentintercom demo
+autumn-bus version
+autumn-bus demo
 ```
 
-The `agentintercom` distribution is prepared for macOS, Linux and Windows on x64
+The `autumn-bus` distribution is prepared for macOS, Linux and Windows on x64
 and arm64, with Node.js 20+ for npm installation. Follow the exact package version
-in its release notes once published. Older releases under the October Bus name
+in its release notes once published. Older releases under the Autumn Bus name
 do not contain this setup flow; a source checkout is not an npm publication.
 
 ### Build from source
@@ -164,21 +164,21 @@ The module language floor is Go 1.26; this checkout selects Go 1.27 and CI uses
 Go 1.27.x. Use Go 1.27 for a reproducible build.
 
 ```sh
-git clone https://github.com/october-dev/october-bus.git
-cd october-bus
-go build -o ./bin/agentintercom ./cmd/agentintercom
-./bin/agentintercom demo
+git clone https://github.com/Adi103-ETAI/autumn-bus.git
+cd autumn-bus
+go build -o ./bin/autumn-bus ./cmd/autumn-bus
+./bin/autumn-bus demo
 ```
 
 The demo uses isolated local state and two example agents to show a request,
-task and reply. No account, model subscription or October Desktop is required.
+task and reply. No account, model subscription or Autumn Desktop is required.
 Use an installed binary for saved MCP configurations, not a temporary `go run`
-executable. Check or stop your persistent local server with `agentintercom status`,
-`agentintercom doctor` and `agentintercom stop`.
+executable. Check or stop your persistent local server with `autumn-bus status`,
+`autumn-bus doctor` and `autumn-bus stop`.
 
 ### Use the SDKs
 
-Import `github.com/october-dev/october-bus/bus` for Go. The TypeScript SDK supports
+Import `github.com/Adi103-ETAI/autumn-bus/bus` for Go. The TypeScript SDK supports
 Node.js 20+. See [client SDKs](docs/clients.md) for examples and the runtime/SDK
 compatibility matrix. Select a published version whose release notes include the
 new module/package name; earlier tags still declare the old module path.
@@ -212,15 +212,15 @@ workspaces: 2,000 new deliveries per workspace and 256 MiB of files, with no car
 required. Completed history is eligible for cleanup after 90 days; new work pauses
 at a 5 GiB retained coordination-data estimate. Annual billing saves $38.
 
-At launch, open **`https://bus.october.dev/app`** to sign in, create a workspace,
+At launch, open **`https://bus.autumn.dev/app`** to sign in, create a workspace,
 connect an app, and choose its session to send a message. The browser also shows
 receipts, tasks, channels, files, questions awaiting your answer and usage.
 
 Connect a remote MCP app through OAuth or its own bearer key. On another machine,
-run `agentintercom hosted login`, approve its code in the browser, then use
-`agentintercom connect --hosted default`. Invite teammates with their own accounts.
+run `autumn-bus hosted login`, approve its code in the browser, then use
+`autumn-bus connect --hosted default`. Invite teammates with their own accounts.
 Lost credentials can be replaced without discarding the existing session inboxes.
-No October Desktop installation is required.
+No Autumn Desktop installation is required.
 
 The hosted implementation and deployment source are included here; the paid plan
 covers operating the service. See [hosted workspaces](docs/hosted-workspaces.md),
@@ -274,7 +274,7 @@ app controls which chats may use it and when its model runs. Native wake is a
 separate capability, not a property of MCP.
 
 The repository includes candidate setup for 28 MCP hosts, a native Pi extension,
-and an October Harness managed-launch path. Start with the
+and an Autumn Harness managed-launch path. Start with the
 [adapter list](adapters/README.md) and [connection guide](docs/connect-sessions.md).
 Names and setup examples are not certification of every version. Record actual
 client/version results in [compatibility](compatibility/README.md).
@@ -290,15 +290,15 @@ inbox checks. See the [verification runbook](compatibility/RUNBOOK.md).
 Run the isolated runtime conformance profile:
 
 ```sh
-agentintercom-conformance --start-runtime --format text
+autumn-bus-conformance --start-runtime --format text
 ```
 
 Or drive an MCP adapter over stdio:
 
 ```sh
-agentintercom-conformance \
+autumn-bus-conformance \
   --profile mcp-adapter --start-runtime \
-  --adapter-command agentintercom \
+  --adapter-command autumn-bus \
   --adapter-arg mcp --adapter-arg stdio --format text
 ```
 
@@ -326,9 +326,9 @@ This repository includes the coordination runtime, local and hosted storage,
 account and connection APIs, browser workspace, billing integration, deployment
 source, protocol, SDKs and adapters. You may run them yourself under Apache 2.0.
 
-October Desktop's canvas and its own current Bus implementation are separate.
+Autumn Desktop's canvas and its own current Bus implementation are separate.
 Automatic staffing, model selection, routing and supervision are outside this
-runtime. Agent Intercom can carry work between agents without deciding how an entire
+runtime. Autumn Bus can carry work between agents without deciding how an entire
 operation should be run. See [ROADMAP.md](ROADMAP.md) for implementation status.
 
 ## Contributing
@@ -341,11 +341,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development and review requirements.
 ## License and trademark
 
 The code and documentation are licensed under [Apache 2.0](LICENSE). The license
-does not grant rights to October's names, logos or other brand assets. Do not
+does not grant rights to Autumn's names, logos or other brand assets. Do not
 imply endorsement. Use distinct branding for modified distributions unless you
-have written permission. “Agent Intercom compatible” describes implementations
+have written permission. “Autumn Bus compatible” describes implementations
 that pass the applicable conformance profile.
 
 ---
 
-Built in the open by [October](https://october.dev) · [GitHub](https://github.com/october-dev)
+Built in the open by [Autumn](https://autumn.dev) · [GitHub](https://github.com/Adi103-ETAI)

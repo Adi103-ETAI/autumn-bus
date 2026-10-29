@@ -75,7 +75,7 @@ expiry. Workspace history is checked daily in bounded passes, with failed passes
 retried after an hour. Failures are logged without customer content.
 
 Migration `011_hosted_storage.sql` adds this accounting and customer pause state
-only to the standalone `october_bus` schema. Local SQLite retention remains an
+only to the standalone `autumn_bus` schema. Local SQLite retention remains an
 explicit operator action; hosted automatic retention does not alter local data.
 
 ## Account API

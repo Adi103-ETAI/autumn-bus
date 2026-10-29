@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 func databaseCommand(args []string, out io.Writer) error {
@@ -17,7 +17,7 @@ func databaseCommand(args []string, out io.Writer) error {
 		return errors.New("use database migrate or database check [--url-env <environment-variable>]")
 	}
 	flags := flag.NewFlagSet("database "+args[0], flag.ContinueOnError)
-	variable := flags.String("url-env", "OCTOBER_BUS_DATABASE_URL", "environment variable containing the PostgreSQL connection URL")
+	variable := flags.String("url-env", "AUTUMN_BUS_DATABASE_URL", "environment variable containing the PostgreSQL connection URL")
 	if err := flags.Parse(args[1:]); err != nil {
 		return err
 	}

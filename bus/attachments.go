@@ -19,7 +19,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/october-dev/october-bus/deploy/hosted/migrations"
+	"github.com/Adi103-ETAI/autumn-bus/deploy/hosted/migrations"
 )
 
 const MaxAttachmentBytes = 16 * 1024 * 1024
@@ -84,7 +84,7 @@ func (f *attachmentFiles) open(source string) error {
 			return Errorf(CodeInternal, "Attachment storage is not configured")
 		}
 		if source == ":memory:" {
-			dir, err := os.MkdirTemp("", "agentintercom-files-")
+			dir, err := os.MkdirTemp("", "autumn-bus-files-")
 			if err != nil {
 				return err
 			}
@@ -216,7 +216,7 @@ func scanAttachment(row rowScanner) (Attachment, error) {
 	var created int64
 	err := row.Scan(&a.ID, &a.Name, &a.MediaType, &a.Size, &a.SHA256, &a.AuthorKind, &a.AuthorID, &created)
 	a.CreatedAt = instant(created)
-	a.URI = "october-bus://attachments/" + a.ID
+	a.URI = "autumn-bus://attachments/" + a.ID
 	return a, err
 }
 func attachmentFrom(ctx context.Context, q sqlExecutor, scopeID, id string) (Attachment, error) {
@@ -359,7 +359,7 @@ func (s *Store) UploadAttachment(ctx context.Context, scopeID string, input Uplo
 	if err := appendEvent(ctx, tx, scopeID, "attachment.created", id, eventAttributes("name", input.Name, "size", strconv.Itoa(len(data))), now); err != nil {
 		return zero, err
 	}
-	a := Attachment{ID: id, Name: input.Name, MediaType: input.MediaType, Size: int64(len(data)), SHA256: digest, AuthorKind: kind, AuthorID: actor, CreatedAt: instant(now), URI: "october-bus://attachments/" + id}
+	a := Attachment{ID: id, Name: input.Name, MediaType: input.MediaType, Size: int64(len(data)), SHA256: digest, AuthorKind: kind, AuthorID: actor, CreatedAt: instant(now), URI: "autumn-bus://attachments/" + id}
 	return a, tx.Commit()
 }
 

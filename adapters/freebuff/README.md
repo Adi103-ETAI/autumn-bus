@@ -2,7 +2,7 @@
 
 Experimental adapter 0.2.0. No released host version is certified.
 
-Run `agentintercom harness config freebuff --scope my-project --agent freebuff-reviewer`. Review the output and add only its Agent Intercom entry to `.agents/mcp.json`, preserving existing settings. See [shared setup](../README.md) for scope creation, linking and removal.
+Run `autumn-bus harness config freebuff --scope my-project --agent freebuff-reviewer`. Review the output and add only its Autumn Bus entry to `.agents/mcp.json`, preserving existing settings. See [shared setup](../README.md) for scope creation, linking and removal.
 
 The public CLI loads mcpServers from .agents/mcp.json through its SDK and adds them to base agents. The inspected loader visits project, parent, then home directories; later entries override earlier ones despite a contradictory source comment. Check all three for duplicate agent_intercom entries. Its MCP client caches connections and converts tool content without preserving isError; error reporting, reconnects, model access and shutdown therefore need explicit host verification before support can be promoted. This does not certify Freebuff Desktop, Web or Cloud. Review the vendor's data-use policy before sharing peer work.
 

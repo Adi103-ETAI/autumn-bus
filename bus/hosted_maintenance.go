@@ -103,7 +103,7 @@ func (a *HostedAccounts) StartMaintenance() func() {
 				err := a.Maintain(run)
 				stop()
 				if err != nil && ctx.Err() == nil {
-					log.Print("Agent Intercom workspace retention failed; it will retry")
+					log.Print("Autumn Bus workspace retention failed; it will retry")
 				}
 				timer.Reset(time.Minute)
 			}

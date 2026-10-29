@@ -1,7 +1,7 @@
 # Replace ONLY the Bus site after standalone service, identity and backup
 # qualification. Keep every other site (including the worker gateway) unchanged.
 # Change this public hostname and the marketing upstream for your deployment.
-bus.october.dev {
+bus.autumn.dev {
 	header {
 		X-Content-Type-Options nosniff
 		Strict-Transport-Security "max-age=31536000"
@@ -53,12 +53,12 @@ bus.october.dev {
 			rewrite @marketing_home /bus
 			rewrite @marketing_robots /bus-robots.txt
 			rewrite @marketing_sitemap /bus-sitemap.xml
-			reverse_proxy https://october-products.vercel.app {
-				header_up Host october-products.vercel.app
+			reverse_proxy https://autumn-products.vercel.app {
+				header_up Host autumn-products.vercel.app
 				header_up -Authorization
 				header_up -Cookie
 				transport http {
-					tls_server_name october-products.vercel.app
+					tls_server_name autumn-products.vercel.app
 					dial_timeout 5s
 					response_header_timeout 30s
 				}

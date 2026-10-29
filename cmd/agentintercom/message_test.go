@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 func TestMessageCLIRequestReplyAndExplicitAcknowledgement(t *testing.T) {
@@ -16,8 +16,8 @@ func TestMessageCLIRequestReplyAndExplicitAcknowledgement(t *testing.T) {
 	requireNoError(t, err)
 	b, err := owner.RegisterAgent(ctx, bus.RegisterAgentInput{ID: "b", DisplayName: "Second", ConnectTo: []string{"a"}})
 	requireNoError(t, err)
-	t.Setenv("OCTOBER_BUS_ADDRESS", owner.Address)
-	t.Setenv("OCTOBER_BUS_AGENT_TOKEN", a.AgentToken)
+	t.Setenv("AUTUMN_BUS_ADDRESS", owner.Address)
+	t.Setenv("AUTUMN_BUS_AGENT_TOKEN", a.AgentToken)
 	var out bytes.Buffer
 	args := []string{"--to", "b", "--body-file", "-", "--mode", "request", "--key", "cli-request", "--json"}
 	requireNoError(t, sendMessageCommand(args, strings.NewReader("Review this\x1b[2J"), &out))
@@ -28,7 +28,7 @@ func TestMessageCLIRequestReplyAndExplicitAcknowledgement(t *testing.T) {
 	var retry bus.DeliveryReceipt
 	requireNoError(t, json.Unmarshal(out.Bytes(), &retry))
 	require(t, retry.MessageID == receipt.MessageID, "CLI retry duplicated the request")
-	t.Setenv("OCTOBER_BUS_AGENT_TOKEN", b.AgentToken)
+	t.Setenv("AUTUMN_BUS_AGENT_TOKEN", b.AgentToken)
 	out.Reset()
 	requireNoError(t, inboxCommand(nil, &out))
 	require(t, !strings.Contains(out.String(), "\x1b") && strings.Contains(out.String(), receipt.MessageID), "inbox emitted terminal controls or lost the message")
@@ -49,12 +49,12 @@ func TestMessageCLIRequestReplyAndExplicitAcknowledgement(t *testing.T) {
 	requireNoError(t, inboxCommand([]string{"--json"}, &out))
 	require(t, strings.TrimSpace(out.String()) == "[]", "acknowledged work was delivered again")
 	// A scope token must never accidentally be used as execution authority.
-	t.Setenv("OCTOBER_BUS_AGENT_TOKEN", "")
+	t.Setenv("AUTUMN_BUS_AGENT_TOKEN", "")
 	require(t, sendMessageCommand([]string{"--to", "a", "--body", "bad"}, nil, &out) != nil, "used an inherited owner token")
 }
 
 func TestMessageCLIRefusesUnsafeConnectionsAndOversizeInput(t *testing.T) {
-	t.Setenv("OCTOBER_BUS_AGENT_TOKEN", "test-only-agent-token")
+	t.Setenv("AUTUMN_BUS_AGENT_TOKEN", "test-only-agent-token")
 	for _, address := range []string{"http://example.org", "https://user:password@example.org", "https://example.org?token=bad", "file:///tmp/bus"} {
 		_, err := executionClient(address)
 		require(t, err != nil, "unsafe credential destination accepted: %s", address)

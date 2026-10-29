@@ -24,10 +24,10 @@ async function expectInternal(work) {
 
 await expectInternal(() => new AgentIntercomClient('not a url', 'token').listPeers())
 
-assert.equal(requiredEnvironmentValue({ OCTOBER_BUS_TOKEN: 'token' }, 'OCTOBER_BUS_TOKEN'), 'token')
+assert.equal(requiredEnvironmentValue({ AUTUMN_BUS_TOKEN: 'token' }, 'AUTUMN_BUS_TOKEN'), 'token')
 assert.throws(
-  () => requiredEnvironmentValue({}, 'OCTOBER_BUS_TOKEN'),
-  /OCTOBER_BUS_TOKEN is required/
+  () => requiredEnvironmentValue({}, 'AUTUMN_BUS_TOKEN'),
+  /AUTUMN_BUS_TOKEN is required/
 )
 assert.match(newIdempotencyKey(), /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
 

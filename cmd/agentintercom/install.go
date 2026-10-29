@@ -14,11 +14,11 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
-const managedBegin = "# >>> Agent Intercom managed MCP >>>\n"
-const managedEnd = "# <<< Agent Intercom managed MCP <<<\n"
+const managedBegin = "# >>> Autumn Bus managed MCP >>>\n"
+const managedEnd = "# <<< Autumn Bus managed MCP <<<\n"
 
 type installedConfig struct {
 	Path   string `json:"path"`
@@ -47,7 +47,7 @@ func writeConfigFile(path string, data []byte) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return err
 	}
-	f, err := os.CreateTemp(filepath.Dir(path), ".agent-intercom-*")
+	f, err := os.CreateTemp(filepath.Dir(path), ".autumn-bus-*")
 	if err != nil {
 		return err
 	}
@@ -229,8 +229,8 @@ func installTarget(target, binary string, selection []string, out io.Writer) err
 	if entry.Env == nil {
 		entry.Env = map[string]string{}
 	}
-	entry.Env["OCTOBER_BUS_DATA_DIR"] = paths.DataDir
-	entry.Env["OCTOBER_BUS_RUNTIME_DIR"] = paths.RuntimeDir
+	entry.Env["AUTUMN_BUS_DATA_DIR"] = paths.DataDir
+	entry.Env["AUTUMN_BUS_RUNTIME_DIR"] = paths.RuntimeDir
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -249,7 +249,7 @@ func installTarget(target, binary string, selection []string, out io.Writer) err
 		argv, _ := json.Marshal(entry.Args)
 		envData, _ := json.Marshal(paths.DataDir)
 		envRun, _ := json.Marshal(paths.RuntimeDir)
-		block := []byte(fmt.Sprintf("[mcp_servers.agent_intercom]\ncommand = %s\nargs = %s\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\ndefault_tools_approval_mode = \"prompt\"\nenv = { OCTOBER_BUS_DATA_DIR = %s, OCTOBER_BUS_RUNTIME_DIR = %s }\n", command, argv, envData, envRun))
+		block := []byte(fmt.Sprintf("[mcp_servers.agent_intercom]\ncommand = %s\nargs = %s\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\ndefault_tools_approval_mode = \"prompt\"\nenv = { AUTUMN_BUS_DATA_DIR = %s, AUTUMN_BUS_RUNTIME_DIR = %s }\n", command, argv, envData, envRun))
 		after, err := managedTOML(before, block)
 		if err != nil {
 			return err
@@ -331,7 +331,7 @@ func claudeHooks(before []byte, binary string, paths bus.DaemonPaths) ([]byte, e
 	if hooks == nil {
 		hooks = map[string]any{}
 	}
-	command := "OCTOBER_BUS_DATA_DIR=" + shellArgument(paths.DataDir) + " OCTOBER_BUS_RUNTIME_DIR=" + shellArgument(paths.RuntimeDir) + " " + shellArgument(binary) + " session hook claude"
+	command := "AUTUMN_BUS_DATA_DIR=" + shellArgument(paths.DataDir) + " AUTUMN_BUS_RUNTIME_DIR=" + shellArgument(paths.RuntimeDir) + " " + shellArgument(binary) + " session hook claude"
 	if runtime.GOOS == "windows" {
 		return nil, errors.New("automatic Claude socket hooks require macOS or Linux; use install --print for standard MCP on Windows")
 	}

@@ -96,25 +96,25 @@ workspace's member limit when accepted.
 
 Supply these through an owner-only service environment file or secret manager:
 
-- `OCTOBER_BUS_DATABASE_URL`: migrated PostgreSQL connection with verified TLS.
-- `OCTOBER_BUS_ENCRYPTION_KEY`: base64 encoding of 32 cryptographically random bytes.
-- `OCTOBER_BUS_AUTH_URL`: trusted Supabase Auth origin.
-- `OCTOBER_BUS_AUTH_PUBLIC_KEY`: that project's public API key.
-- `OCTOBER_BUS_ATTACHMENTS_DIR`: private persistent directory for file bytes.
+- `AUTUMN_BUS_DATABASE_URL`: migrated PostgreSQL connection with verified TLS.
+- `AUTUMN_BUS_ENCRYPTION_KEY`: base64 encoding of 32 cryptographically random bytes.
+- `AUTUMN_BUS_AUTH_URL`: trusted Supabase Auth origin.
+- `AUTUMN_BUS_AUTH_PUBLIC_KEY`: that project's public API key.
+- `AUTUMN_BUS_ATTACHMENTS_DIR`: private persistent directory for file bytes.
 
 ```sh
-agentintercom database migrate
-agentintercom hosted serve --public-url https://bus.example.com \
+autumn-bus database migrate
+autumn-bus hosted serve --public-url https://bus.example.com \
   --allow-origin https://www.example.com
 ```
 
 The default listener is `127.0.0.1:4780`. Preserve the public Host through the TLS
 proxy. Additional trusted Auth issuers can be declared explicitly with repeated
 `--auth-issuer` flags when migrating a project's authentication domain. A managed
-service can set one additional exact issuer through `OCTOBER_BUS_AUTH_ISSUER`.
+service can set one additional exact issuer through `AUTUMN_BUS_AUTH_ISSUER`.
 Verify that it belongs to the configured project; custom Auth domains can still
 issue tokens under the project's original Supabase URL.
-The supplied systemd unit reads `OCTOBER_BUS_PUBLIC_URL` from its private
+The supplied systemd unit reads `AUTUMN_BUS_PUBLIC_URL` from its private
 environment file and uses a separate release directory and system account. See
 the [deployment and recovery runbook](../deploy/hosted/STANDALONE.md) for schema
 roles, installation, encrypted off-host backups and isolated restore checks.
@@ -183,7 +183,7 @@ An owner can delete a workspace in **Data & recovery** by entering its exact
 name. Export first: deletion removes unfinished work as well as completed
 history, memberships, connections and file access for everyone. It immediately
 ends the workspace subscription without an automatic refund or final prorated
-invoice. This does not delete the owner's October account or other workspaces.
+invoice. This does not delete the owner's Autumn account or other workspaces.
 
 Deletion first pauses and revokes connections, then closes unfinished checkout
 sessions and confirms subscription cancellation before removing content. If the
@@ -195,7 +195,7 @@ while billing cancellation is uncertain.
 File metadata becomes inaccessible immediately; the bounded file collector
 removes the remaining bytes. Operator backups expire separately. Minimal payment
 references remain for support, and deleting a workspace does not reset the account's
-trial. To delete an October account, first leave every Intercom workspace: transfer
+trial. To delete an Autumn account, first leave every Intercom workspace: transfer
 ownership and leave, or delete the owned workspace. The shared identity service
 must install [the Supabase lifecycle integration](../deploy/hosted/supabase/README.md)
 before self-service hosted launch.

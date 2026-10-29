@@ -79,7 +79,7 @@ func validateArchivedAttachments(archive *ScopeArchive, agents map[string]bool) 
 		if err := validateAttachmentInput(&input); err != nil {
 			return err
 		}
-		if a.MediaType != input.MediaType || a.Data == nil || a.Size != int64(len(a.Data)) || a.Size > MaxAttachmentBytes || a.URI != "october-bus://attachments/"+a.ID {
+		if a.MediaType != input.MediaType || a.Data == nil || a.Size != int64(len(a.Data)) || a.Size > MaxAttachmentBytes || a.URI != "autumn-bus://attachments/"+a.ID {
 			return Errorf(CodeInvalidArgument, "Invalid archived attachment metadata")
 		}
 		sum := sha256.Sum256(a.Data)

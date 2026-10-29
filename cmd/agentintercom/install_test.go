@@ -8,12 +8,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 func TestManagedInstallPreservesConfiguration(t *testing.T) {
 	original := []byte("# My settings\nmodel = \"custom\"\n\n[mcp_servers.other]\ncommand = \"other\"\n")
-	after, err := managedTOML(original, []byte("[mcp_servers.agent_intercom]\ncommand = \"agentintercom\"\n"))
+	after, err := managedTOML(original, []byte("[mcp_servers.agent_intercom]\ncommand = \"autumn-bus\"\n"))
 	requireNoError(t, err)
 	r := installedConfig{Path: "config.toml", Before: original, After: after}
 	removed, err := removeInstalledConfig(r, after)
@@ -23,7 +23,7 @@ func TestManagedInstallPreservesConfiguration(t *testing.T) {
 	removed, err = removeInstalledConfig(r, edited)
 	requireNoError(t, err)
 	require(t, bytes.Equal(removed, append(append([]byte(nil), original...), []byte("\n[features]\nexample = true\n")...)), "unrelated TOML edits lost")
-	_, err = removeInstalledConfig(r, bytes.ReplaceAll(after, []byte("command = \"agentintercom\""), []byte("command = \"my-wrapper\"")))
+	_, err = removeInstalledConfig(r, bytes.ReplaceAll(after, []byte("command = \"autumn-bus\""), []byte("command = \"my-wrapper\"")))
 	require(t, err != nil, "removed an edited owned block")
 	for _, existing := range []string{"[mcp_servers.agent_intercom]\n", "[mcp_servers.\"agent_intercom\"]\n", "[ mcp_servers . 'agent_intercom' . env ]\n", managedBegin} {
 		_, err := managedTOML([]byte(existing), []byte("new"))
@@ -33,8 +33,8 @@ func TestManagedInstallPreservesConfiguration(t *testing.T) {
 
 func TestClaudeUninstallPreservesUnrelatedUpdates(t *testing.T) {
 	before := []byte(`{"theme":"dark","mcpServers":{"other":{"command":"other"}}}`)
-	after := []byte(`{"theme":"dark","mcpServers":{"other":{"command":"other"},"agent_intercom":{"command":"agentintercom"}}}`)
-	current := []byte(`{"theme":"light","onboarding":true,"mcpServers":{"other":{"command":"changed"},"agent_intercom":{"command":"agentintercom"}}}`)
+	after := []byte(`{"theme":"dark","mcpServers":{"other":{"command":"other"},"agent_intercom":{"command":"autumn-bus"}}}`)
+	current := []byte(`{"theme":"light","onboarding":true,"mcpServers":{"other":{"command":"changed"},"agent_intercom":{"command":"autumn-bus"}}}`)
 	got, err := removeInstalledConfig(installedConfig{".claude.json", before, after}, current)
 	requireNoError(t, err)
 	var value map[string]any
@@ -68,9 +68,9 @@ func TestClaudeHooksRestoreAndRejectChanges(t *testing.T) {
 func TestServicePathsAndConfigSymlinks(t *testing.T) {
 	root := t.TempDir()
 	paths := bus.DaemonPaths{DataDir: filepath.Join(root, "data with space"), RuntimeDir: filepath.Join(root, "run")}
-	_, linux, err := serviceFile("linux", root, filepath.Join(root, "bin", "agentintercom"), paths)
+	_, linux, err := serviceFile("linux", root, filepath.Join(root, "bin", "autumn-bus"), paths)
 	requireNoError(t, err)
-	require(t, strings.Contains(string(linux), "Restart=on-failure") && strings.Contains(string(linux), "OCTOBER_BUS_RUNTIME_DIR="), "missing lifetime/runtime settings")
+	require(t, strings.Contains(string(linux), "Restart=on-failure") && strings.Contains(string(linux), "AUTUMN_BUS_RUNTIME_DIR="), "missing lifetime/runtime settings")
 	_, mac, err := serviceFile("darwin", root, filepath.Join(root, "a&b"), paths)
 	requireNoError(t, err)
 	require(t, strings.Contains(string(mac), "a&amp;b"), "plist path was not escaped")

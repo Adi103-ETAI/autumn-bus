@@ -14,22 +14,22 @@ export function managedRuntimeManifest({ dist, runtimeVersion, sourceCommit, pro
   assert.match(runtimeVersion, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/)
   assert.match(sourceCommit, /^[a-f0-9]{40}$/)
   assert.match(protocolVersion, /^\d+\.\d+$/)
-  const temporary = mkdtempSync(join(tmpdir(), 'october-runtime-manifest-'))
+  const temporary = mkdtempSync(join(tmpdir(), 'autumn-runtime-manifest-'))
   try {
     const artifacts = {}
     for (const arch of ['amd64', 'arm64']) {
-      const directory = `agentintercom_${runtimeVersion}_linux_${arch}`
+      const directory = `autumn-bus_${runtimeVersion}_linux_${arch}`
       const archive = `${directory}.tar.gz`
       const archivePath = join(dist, archive)
-      const member = `${directory}/agentintercom`
+      const member = `${directory}/autumn-bus`
       const entries = execFileSync('tar', ['-tzf', archivePath], { encoding: 'utf8' }).trim().split('\n')
       assert.equal(entries.filter(entry => entry === member).length, 1, `Missing or duplicate helper in ${archive}`)
       const binary = execFileSync('tar', ['-xOzf', archivePath, member], { maxBuffer: 128 * 1024 * 1024 })
-      const binaryPath = join(temporary, `agentintercom-${arch}`)
+      const binaryPath = join(temporary, `autumn-bus-${arch}`)
       writeFileSync(binaryPath, binary)
       const info = JSON.parse(execFileSync('go', ['version', '-m', '-json', binaryPath], { encoding: 'utf8' }))
       const settings = Object.fromEntries(info.Settings.map(({ Key, Value }) => [Key, Value]))
-      assert.equal(info.Path, 'github.com/october-dev/october-bus/cmd/agentintercom', 'Wrong helper program')
+      assert.equal(info.Path, 'github.com/Adi103-ETAI/autumn-bus/cmd/autumn-bus', 'Wrong helper program')
       for (const [key, expected] of Object.entries({ GOOS: 'linux', GOARCH: arch, CGO_ENABLED: '0', 'vcs.revision': sourceCommit, 'vcs.modified': 'false' })) {
         assert.equal(settings[key], expected, `${archive}: unexpected ${key}`)
       }

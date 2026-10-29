@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 	"strings"
 	"testing"
 )
@@ -12,8 +12,8 @@ func TestChannelCLIUsesExecutionAndLiteralBodies(t *testing.T) {
 	ctx, owner := startWorkspaceTest(t)
 	agent, err := owner.RegisterAgent(ctx, bus.RegisterAgentInput{ID: "terminal", DisplayName: "Terminal"})
 	requireNoError(t, err)
-	t.Setenv("OCTOBER_BUS_ADDRESS", owner.Address)
-	t.Setenv("OCTOBER_BUS_AGENT_TOKEN", agent.AgentToken)
+	t.Setenv("AUTUMN_BUS_ADDRESS", owner.Address)
+	t.Setenv("AUTUMN_BUS_AGENT_TOKEN", agent.AgentToken)
 	var out bytes.Buffer
 	requireNoError(t, channelCommand([]string{"create", "--name", "shared"}, nil, &out))
 	var channel bus.Channel

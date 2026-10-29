@@ -292,7 +292,7 @@ subsequently disconnects. No filename is used as a server filesystem path.
 
 `GET /v1/admin/backup?bundle=1` streams a private tar.gz bundle containing the
 SQLite database and its retained attachment bytes. Without that query flag the
-route remains a database-only snapshot. `X-October-Bus-Backup-Includes` identifies
+route remains a database-only snapshot. `X-Autumn-Bus-Backup-Includes` identifies
 which form was returned. Both routes require the existing local admin credential
 and are blocked on the hosted account front door and pilot gateway.
 

@@ -1,4 +1,4 @@
--- Standalone Bus coordination tables. Applied transactionally with search_path=october_bus,pg_catalog.
+-- Standalone Bus coordination tables. Applied transactionally with search_path=autumn_bus,pg_catalog.
 
 CREATE TABLE scopes (
   scope_id TEXT COLLATE "C" PRIMARY KEY,

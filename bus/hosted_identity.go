@@ -79,7 +79,7 @@ func isPublicAuthKey(key string) bool {
 }
 
 func (v *SupabaseIdentity) Authenticate(ctx context.Context, token string) (HostedUser, error) {
-	refused := Errorf(CodeUnauthenticated, "Sign in to October with a verified email address")
+	refused := Errorf(CodeUnauthenticated, "Sign in to Autumn with a verified email address")
 	if len(token) < 20 || len(token) > 8192 {
 		return HostedUser{}, refused
 	}
@@ -132,14 +132,14 @@ func (v *SupabaseIdentity) Authenticate(ctx context.Context, token string) (Host
 		request.Header.Set("apikey", v.key)
 		response, err := v.client.Do(request)
 		if err != nil {
-			return HostedUser{}, Errorf(CodeInternal, "October sign-in could not be checked; try again shortly")
+			return HostedUser{}, Errorf(CodeInternal, "Autumn sign-in could not be checked; try again shortly")
 		}
 		defer response.Body.Close()
 		if response.StatusCode == 401 || response.StatusCode == 403 {
 			return HostedUser{}, refused
 		}
 		if response.StatusCode != 200 {
-			return HostedUser{}, Errorf(CodeInternal, "October sign-in could not be checked; try again shortly")
+			return HostedUser{}, Errorf(CodeInternal, "Autumn sign-in could not be checked; try again shortly")
 		}
 		var body struct {
 			ID               string `json:"id"`

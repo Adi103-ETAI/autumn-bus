@@ -54,15 +54,15 @@ Supply these in an owner-only service environment or secret manager:
 
 | Variable | Required value |
 | --- | --- |
-| `OCTOBER_BUS_STRIPE_SECRET_KEY` | Stripe secret/restricted key for the selected mode |
-| `OCTOBER_BUS_STRIPE_WEBHOOK_SECRET` | Signing secret of this service's webhook |
-| `OCTOBER_BUS_STRIPE_MONTHLY_PRICE` | Active USD recurring price, 1900 cents, monthly, quantity one |
-| `OCTOBER_BUS_STRIPE_ANNUAL_PRICE` | Active USD recurring price, 19000 cents, yearly, quantity one |
-| `OCTOBER_BUS_STRIPE_PORTAL_CONFIGURATION` | Dedicated active portal configuration in the same mode |
-| `OCTOBER_BUS_STRIPE_AUTOMATIC_TAX` | `true` only after configuring and qualifying Stripe Tax |
+| `AUTUMN_BUS_STRIPE_SECRET_KEY` | Stripe secret/restricted key for the selected mode |
+| `AUTUMN_BUS_STRIPE_WEBHOOK_SECRET` | Signing secret of this service's webhook |
+| `AUTUMN_BUS_STRIPE_MONTHLY_PRICE` | Active USD recurring price, 1900 cents, monthly, quantity one |
+| `AUTUMN_BUS_STRIPE_ANNUAL_PRICE` | Active USD recurring price, 19000 cents, yearly, quantity one |
+| `AUTUMN_BUS_STRIPE_PORTAL_CONFIGURATION` | Dedicated active portal configuration in the same mode |
+| `AUTUMN_BUS_STRIPE_AUTOMATIC_TAX` | `true` only after configuring and qualifying Stripe Tax |
 
 Prices must use per-unit licensed billing with an interval count of one. Their
-active product must have metadata `feature=october_bus`. The portal must enable
+active product must have metadata `feature=autumn_bus`. The portal must enable
 payment method updates, invoice history and cancellation with `mode=at_period_end`,
 and disable subscription updates. The service validates this configuration
 before sending a customer to checkout or the portal. Do not change a configured

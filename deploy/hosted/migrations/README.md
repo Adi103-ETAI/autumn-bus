@@ -1,19 +1,19 @@
 # Hosted Bus database migrations
 
-These migrations own the standalone runtime's `october_bus` schema. They do not
+These migrations own the standalone runtime's `autumn_bus` schema. They do not
 modify existing application schemas. Account and billing changes owned by another
 service stay in that service's migration history.
 
 ## Deploy
 
 Use PostgreSQL 17 or later with a UTF-8 database. Supply the connection URL through
-`OCTOBER_BUS_DATABASE_URL` in an owner-only service environment file or secret
+`AUTUMN_BUS_DATABASE_URL` in an owner-only service environment file or secret
 manager. Remote connections require `sslmode=verify-full` and a trusted CA.
 Never pass the URL on the command line or commit it.
 
 ```sh
-october-bus database migrate
-october-bus database check
+autumn-bus database migrate
+autumn-bus database check
 ```
 
 `migrate` takes a transaction advisory lock, verifies the recorded SHA-256 of each
@@ -33,7 +33,7 @@ performed by the Bus service; a database connection is service authority.
 Creates the runtime's scopes, agents, messages, reservations, tasks, events,
 escalations, scoped credentials, A2A correlations, output streams and indexes.
 It is additive to an existing PostgreSQL database, but expects no independently
-created tables in `october_bus`. Existing SQLite databases remain local and use
+created tables in `autumn_bus`. Existing SQLite databases remain local and use
 their own migration history. Transfer quiescent scopes through export/import.
 
 After deployment, `database check` verifies every filename and checksum. Confirm
@@ -57,8 +57,8 @@ and compatibility procedure.
 
 ## Local verification
 
-Create a disposable loopback database named `october_bus_test`, then set
-`OCTOBER_BUS_TEST_POSTGRES_URL` and run:
+Create a disposable loopback database named `autumn_bus_test`, then set
+`AUTUMN_BUS_TEST_POSTGRES_URL` and run:
 
 ```sh
 go test ./bus ./conformance -run TestPostgres -count=1
@@ -118,9 +118,9 @@ both the requested cutoff and their seven-day notification lifetime.
 
 `009_attachments.sql` adds private file metadata and monthly byte accounting.
 SQLite schema 13 adds the same tables. File bytes are stored outside PostgreSQL:
-configure `OCTOBER_BUS_ATTACHMENTS_DIR` on persistent private storage before
+configure `AUTUMN_BUS_ATTACHMENTS_DIR` on persistent private storage before
 starting the hosted service. The supplied service unit creates that directory
-under `/var/lib/october-bus-hosted`. Only one service may own its attachment
+under `/var/lib/autumn-bus-hosted`. Only one service may own its attachment
 store. Back up both the database and files; a PostgreSQL dump alone is incomplete.
 
 ## Workspace billing: 010_billing.sql
@@ -128,7 +128,7 @@ store. Back up both the database and files; a PostgreSQL dump alone is incomplet
 Adds account trial windows, isolated workspace billing customers/subscriptions,
 immutable checkout attempts, verified funded invoice periods and webhook receipts.
 Existing workspace owners seed their first trial window from existing workspaces.
-All tables remain in `october_bus`; no existing product billing schema is changed.
+All tables remain in `autumn_bus`; no existing product billing schema is changed.
 See [billing configuration](../../../docs/hosted-billing.md).
 
 ## Retained-data accounting: 011_hosted_storage.sql

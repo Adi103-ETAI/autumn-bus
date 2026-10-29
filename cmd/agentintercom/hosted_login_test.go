@@ -12,7 +12,7 @@ import (
 )
 
 func TestHostedProfileAndConnectionKeepSecretsPrivate(t *testing.T) {
-	t.Setenv("OCTOBER_BUS_DATA_DIR", t.TempDir())
+	t.Setenv("AUTUMN_BUS_DATA_DIR", t.TempDir())
 	path, err := hostedProfilePath("team", true)
 	if runtime.GOOS == "windows" {
 		require(t, err != nil && strings.Contains(err.Error(), "remote MCP connector"), "Windows must reject unsupported credential storage with a connection alternative")

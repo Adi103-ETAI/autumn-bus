@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 type noBrowserIdentity struct{}
@@ -23,12 +23,12 @@ func (noBrowserIdentity) Authenticate(context.Context, string) (bus.HostedUser, 
 }
 
 func TestHostedMCPProfilesConnectDistinctWindows(t *testing.T) {
-	dsn := os.Getenv("OCTOBER_BUS_TEST_POSTGRES_URL")
+	dsn := os.Getenv("AUTUMN_BUS_TEST_POSTGRES_URL")
 	if dsn == "" {
 		t.Skip("requires isolated local PostgreSQL")
 	}
 	u, err := url.Parse(dsn)
-	require(t, err == nil && (u.Hostname() == "127.0.0.1" || u.Hostname() == "localhost") && u.Path == "/october_bus_test", "refusing non-test database")
+	require(t, err == nil && (u.Hostname() == "127.0.0.1" || u.Hostname() == "localhost") && u.Path == "/autumn_bus_test", "refusing non-test database")
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	requireNoError(t, bus.MigratePostgres(ctx, dsn))
@@ -49,7 +49,7 @@ func TestHostedMCPProfilesConnectDistinctWindows(t *testing.T) {
 	server.Config.Handler = handler
 	server.StartTLS()
 	defer server.Close()
-	t.Setenv("OCTOBER_BUS_DATA_DIR", t.TempDir())
+	t.Setenv("AUTUMN_BUS_DATA_DIR", t.TempDir())
 	path, err := hostedProfilePath("team", true)
 	requireNoError(t, err)
 	requireNoError(t, saveHostedProfile(path, hostedProfile{Version: 1, Server: server.URL, WorkspaceID: workspace.ID, DeviceID: device.ID, Token: device.Token, ExpiresAt: device.ExpiresAt}))
@@ -59,7 +59,7 @@ func TestHostedMCPProfilesConnectDistinctWindows(t *testing.T) {
 		stderr := new(syncBuffer)
 		command := mcpBridgeCommand("", "", stderr)
 		args, _ := json.Marshal([]string{"--hosted", "team", "--new-session", "--name", "My app"})
-		command.Env = setEnvironment(command.Env, "OCTOBER_BUS_MCP_STDIO_TEST_ARGS", string(args), "OCTOBER_BUS_MCP_TEST_CA", caPath)
+		command.Env = setEnvironment(command.Env, "AUTUMN_BUS_MCP_STDIO_TEST_ARGS", string(args), "AUTUMN_BUS_MCP_TEST_CA", caPath)
 		session, err := mcp.NewClient(&mcp.Implementation{Name: "hosted-profile-test", Version: "1"}, nil).Connect(ctx, &mcp.CommandTransport{Command: command}, nil)
 		require(t, err == nil, "hosted MCP connection failed: %v; %s", err, stderr.String())
 		return session

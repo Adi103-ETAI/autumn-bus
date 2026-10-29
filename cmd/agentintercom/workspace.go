@@ -14,7 +14,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 func workspaceCommand(args []string, out io.Writer) error {
@@ -25,7 +25,7 @@ func workspaceCommand(args []string, out io.Writer) error {
 		}
 		// Owner credentials stay in the private data directory. Ordinary setup
 		// output can safely be copied into an issue or an agent conversation.
-		_, err = fmt.Fprintf(out, "Created local workspace %q.\nNext: agentintercom connect --workspace %s\n", result.ScopeID, result.ScopeID)
+		_, err = fmt.Fprintf(out, "Created local workspace %q.\nNext: autumn-bus connect --workspace %s\n", result.ScopeID, result.ScopeID)
 		return err
 	}
 	if len(args) >= 1 && args[0] == "list" {
@@ -43,7 +43,7 @@ func workspaceCommand(args []string, out io.Writer) error {
 		}
 		run, err := bus.ReadRunFile(paths.RunFile)
 		if err != nil {
-			return fmt.Errorf("local daemon is unavailable; run agentintercom start: %w", err)
+			return fmt.Errorf("local daemon is unavailable; run autumn-bus start: %w", err)
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -127,7 +127,7 @@ func connectCommand(args []string, out io.Writer) error {
 		if _, err := readHostedProfile(*hosted); err != nil {
 			return err
 		}
-		entry = stdioConfig{Command: *command, Args: []string{"mcp", "stdio", "--hosted", *hosted, "--new-session", "--name", *name}, Env: map[string]string{"OCTOBER_BUS_DATA_DIR": dataDir}}
+		entry = stdioConfig{Command: *command, Args: []string{"mcp", "stdio", "--hosted", *hosted, "--new-session", "--name", *name}, Env: map[string]string{"AUTUMN_BUS_DATA_DIR": dataDir}}
 	} else {
 		owner, err := localScopeClientAt(paths, *workspace)
 		if err != nil {
@@ -151,7 +151,7 @@ func connectCommand(args []string, out io.Writer) error {
 		data = []byte(fmt.Sprintf("[mcp_servers.agent_intercom]\ncommand = %s\nargs = %s\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\ndefault_tools_approval_mode = \"prompt\"\n", encodedCommand, encodedArgs))
 		if entry.Env != nil {
 			encodedPath, _ := json.Marshal(dataDir)
-			data = append(data, []byte(fmt.Sprintf("env = { OCTOBER_BUS_DATA_DIR = %s }\n", encodedPath))...)
+			data = append(data, []byte(fmt.Sprintf("env = { AUTUMN_BUS_DATA_DIR = %s }\n", encodedPath))...)
 		}
 	case "entry":
 		data, err = json.MarshalIndent(entry, "", "  ")
@@ -189,7 +189,7 @@ func connectCommand(args []string, out io.Writer) error {
 		return err
 	}
 	complete = true
-	_, err = fmt.Fprintf(out, "Created %q. Add the Agent Intercom entry to your app's MCP settings, then reconnect it.\n", *output)
+	_, err = fmt.Fprintf(out, "Created %q. Add the Autumn Bus entry to your app's MCP settings, then reconnect it.\n", *output)
 	return err
 }
 
@@ -218,7 +218,7 @@ func sessionsCommand(args []string, out io.Writer) error {
 		return json.NewEncoder(out).Encode(agents)
 	}
 	if len(agents) == 0 {
-		_, err = fmt.Fprintln(out, "No connected sessions. Use agentintercom connect --workspace", *workspace)
+		_, err = fmt.Fprintln(out, "No connected sessions. Use autumn-bus connect --workspace", *workspace)
 		return err
 	}
 	w := tabwriter.NewWriter(out, 0, 4, 2, ' ', 0)

@@ -3,23 +3,23 @@
 For automatic Claude Code/Codex setup, login services and attachment to existing sessions, see [installation](installation.md). The `connect` command below remains the print-only path for any MCP host.
 
 The local connection flow uses the existing Bus runtime and works without an
-October account. Build or install the current CLI first; these commands are not
+Autumn account. Build or install the current CLI first; these commands are not
 in older published packages.
 
 Start the daemon in a terminal:
 
 ```sh
-agentintercom start
+autumn-bus start
 ```
 
 In another terminal, create a workspace and generate an MCP entry:
 
 ```sh
-agentintercom workspace create my-project
-agentintercom connect --workspace my-project --name "My app"
+autumn-bus workspace create my-project
+autumn-bus connect --workspace my-project --name "My app"
 ```
 
-Add the generated `october_bus` entry to your app's MCP configuration and
+Add the generated `autumn_bus` entry to your app's MCP configuration and
 reconnect its MCP server. Merge it with any existing entries. `connect` prints
 configuration; it does not modify your app's settings or scan private chats.
 It uses an absolute executable path and keeps owner credentials in the private
@@ -28,7 +28,7 @@ Bus data directory.
 For a client using a TOML configuration, such as Codex:
 
 ```sh
-agentintercom connect --workspace my-project --name Codex --format toml
+autumn-bus connect --workspace my-project --name Codex --format toml
 ```
 
 For other configuration layouts, `--format entry` prints only the server
@@ -43,8 +43,8 @@ you want to keep.
 ## Choose a session
 
 ```sh
-agentintercom workspace list
-agentintercom sessions --workspace my-project
+autumn-bus workspace list
+autumn-bus sessions --workspace my-project
 ```
 
 Each MCP bridge process started by this configuration gets a unique identity.
@@ -77,7 +77,7 @@ hosted OAuth support is claimed by generating configuration.
 On macOS, Linux or WSL, after installing and signing in to Claude Code:
 
 ```sh
-agentintercom session start claude --workspace my-team --name "My Claude session"
+autumn-bus session start claude --workspace my-team --name "My Claude session"
 ```
 
 The launcher gives this process its own Bus identity and connects it to the
@@ -117,9 +117,9 @@ On macOS, Linux or WSL, after installing and signing in to a Codex CLI that
 supports `app-server --stdio`, `resume` and `queue`:
 
 ```sh
-agentintercom session start codex --workspace my-team --name "My Codex session"
+autumn-bus session start codex --workspace my-team --name "My Codex session"
 # On another machine with an approved hosted connection:
-agentintercom session start codex --hosted default --name "My Codex session"
+autumn-bus session start codex --hosted default --name "My Codex session"
 ```
 
 The launcher creates an empty Codex session without starting a model turn, then
@@ -140,9 +140,9 @@ execution and removes that file. It does not stop the shared Codex server.
 Wake begins only after this session's MCP client discovers its Bus tools, so
 messages arriving during startup remain queued until its own settings apply.
 
-This invocation owns the `october_bus` MCP transport table. Other app settings
+This invocation owns the `autumn_bus` MCP transport table. Other app settings
 and MCP servers remain configured normally. Explicit
-`mcp_servers.october_bus.default_tools_approval_mode` settings are accepted;
+`mcp_servers.autumn_bus.default_tools_approval_mode` settings are accepted;
 the launcher never supplies automatic approval itself. Remote-server flags,
 `--last`, `--all` and `--no-daemon` are incompatible with the owned session.
 Keep the Codex terminal open for native wake; a queued nudge does not prove a
@@ -159,10 +159,10 @@ remain available independently of this launcher.
 On each machine, use the current CLI:
 
 ```sh
-agentintercom hosted login --name "My laptop"
-agentintercom connect --hosted default --name "My app"
+autumn-bus hosted login --name "My laptop"
+autumn-bus connect --hosted default --name "My app"
 # Or start Claude Code with native wake:
-agentintercom session start claude --hosted default --name "My Claude session"
+autumn-bus session start claude --hosted default --name "My Claude session"
 ```
 
 Open the printed link in any browser, sign in, compare the displayed code with
@@ -181,7 +181,7 @@ settings, including its non-secret `env` values. Each new bridge process receive
 an independent execution, and active workspace sessions are linked automatically.
 Apps sharing a single MCP process still appear as one connector session.
 
-`agentintercom hosted logout --profile <name>` revokes that machine and its sessions,
+`autumn-bus hosted logout --profile <name>` revokes that machine and its sessions,
 then removes the saved credential. Revocation failure retains the file so you
 can retry. An owner can also revoke devices in the hosted workspace view.
 Teammates should accept their own membership invitation and connect their own
@@ -192,7 +192,7 @@ machines; do not share a device credential or an account login.
 For a lost machine credential, start another login using a fresh local profile:
 
 ```sh
-agentintercom hosted login --profile recovered --name "Replacement laptop"
+autumn-bus hosted login --profile recovered --name "Replacement laptop"
 ```
 
 In the browser approval screen, confirm the code and workspace, then choose
@@ -205,9 +205,9 @@ In the workspace's **Sessions** view, expand **Session details** and copy the
 existing session ID. For example:
 
 ```sh
-agentintercom session start claude --hosted recovered --id <existing-session-id>
+autumn-bus session start claude --hosted recovered --id <existing-session-id>
 # Or, for Codex, optionally also resume the app's existing conversation:
-agentintercom session start codex --hosted recovered --id <existing-session-id> --thread <codex-thread-uuid>
+autumn-bus session start codex --hosted recovered --id <existing-session-id> --thread <codex-thread-uuid>
 ```
 
 These commands recover the Bus inbox. They do not restore a lost model transcript
@@ -237,11 +237,11 @@ older history and searches literal text. Omit `channelId` with a search query to
 search all workspace channels. The CLI offers the same operations:
 
 ```sh
-agentintercom channel create --name project-updates
-agentintercom channel join --id <channel-id>
-agentintercom channel post --id <channel-id> --body-file update.txt --key update-1
-agentintercom channel read --id <channel-id>
-agentintercom channel read --query "release notes"
+autumn-bus channel create --name project-updates
+autumn-bus channel join --id <channel-id>
+autumn-bus channel post --id <channel-id> --body-file update.txt --key update-1
+autumn-bus channel read --id <channel-id>
+autumn-bus channel read --query "release notes"
 ```
 
 CLI channel commands use the current execution's credential, like `message send`.

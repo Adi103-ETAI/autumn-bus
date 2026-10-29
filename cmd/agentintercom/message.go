@@ -16,15 +16,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 // Execution commands use an agent credential supplied by the launcher, never a
 // workspace owner credential. They do not create or impersonate another session.
 func executionClient(address string) (bus.Client, error) {
-	token := os.Getenv("OCTOBER_BUS_AGENT_TOKEN")
+	token := os.Getenv("AUTUMN_BUS_AGENT_TOKEN")
 	if token == "" {
-		return bus.Client{}, errors.New("this command needs a connected session: OCTOBER_BUS_AGENT_TOKEN is not set")
+		return bus.Client{}, errors.New("this command needs a connected session: AUTUMN_BUS_AGENT_TOKEN is not set")
 	}
 	address, err := resolveBusAddress(address)
 	if err != nil {
@@ -163,7 +163,7 @@ func inboxCommand(args []string, out io.Writer) error {
 	if len(messages) == 0 {
 		_, err = fmt.Fprintln(out, "No messages.")
 	} else {
-		_, err = fmt.Fprintln(out, "Messages remain available until acknowledged after processing: agentintercom message ack <message-id>")
+		_, err = fmt.Fprintln(out, "Messages remain available until acknowledged after processing: autumn-bus message ack <message-id>")
 	}
 	return err
 }

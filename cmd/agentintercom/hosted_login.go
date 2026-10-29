@@ -18,7 +18,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 type hostedProfile struct {
@@ -71,7 +71,7 @@ func readHostedProfile(name string) (hostedProfile, error) {
 	var profile hostedProfile
 	path, err := hostedProfilePath(name, false)
 	if err != nil {
-		return profile, fmt.Errorf("hosted profile unavailable; run agentintercom hosted login --profile %s", name)
+		return profile, fmt.Errorf("hosted profile unavailable; run autumn-bus hosted login --profile %s", name)
 	}
 	if err := readPrivateSessionJSON(path, &profile); err != nil {
 		return profile, errors.New("hosted profile is missing or is not a private credential file")
@@ -97,7 +97,7 @@ func hostedDeviceClient(name string) (bus.Client, error) {
 
 func hostedLogin(args []string, out io.Writer) error {
 	flags := flag.NewFlagSet("hosted login", flag.ContinueOnError)
-	server := flags.String("server", "https://bus.october.dev", "hosted Bus origin")
+	server := flags.String("server", "https://bus.autumn.dev", "hosted Bus origin")
 	profileName := flags.String("profile", "default", "local connection name")
 	deviceName := flags.String("name", "", "device label shown to workspace members")
 	if err := flags.Parse(args); err != nil {
@@ -181,7 +181,7 @@ func hostedLogin(args []string, out io.Writer) error {
 			if err := saveHostedProfile(path, profile); err != nil {
 				return fmt.Errorf("could not save device credential; revoke this connection in Members & devices: %w", err)
 			}
-			fmt.Fprintf(out, "Connected profile %q.\nNext: agentintercom connect --hosted %s\n", *profileName, *profileName)
+			fmt.Fprintf(out, "Connected profile %q.\nNext: autumn-bus connect --hosted %s\n", *profileName, *profileName)
 			return nil
 		default:
 			return errors.New("hosted service returned an unknown approval status")

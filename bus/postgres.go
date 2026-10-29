@@ -16,7 +16,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/october-dev/october-bus/deploy/hosted/migrations"
+	"github.com/Adi103-ETAI/autumn-bus/deploy/hosted/migrations"
 )
 
 // OpenPostgres opens a migrated standalone Bus database. It never performs DDL
@@ -64,8 +64,8 @@ func postgresDatabase(ctx context.Context, connectionString string) (*sqlDatabas
 			return nil, err
 		}
 	}
-	config.RuntimeParams["search_path"] = "october_bus,pg_catalog"
-	config.RuntimeParams["application_name"] = "agentintercom"
+	config.RuntimeParams["search_path"] = "autumn_bus,pg_catalog"
+	config.RuntimeParams["application_name"] = "autumn-bus"
 	config.RuntimeParams["default_transaction_isolation"] = "read committed"
 	config.RuntimeParams["statement_timeout"] = "30000"
 	config.RuntimeParams["lock_timeout"] = "10000"
@@ -119,7 +119,7 @@ func migrationDigest(data []byte) string {
 func checkPostgresMigrations(ctx context.Context, db *sqlDatabase) error {
 	rows, err := db.QueryContext(ctx, "SELECT name,sha256 FROM schema_migrations ORDER BY name")
 	if err != nil {
-		return errors.New("PostgreSQL schema is unavailable; run agentintercom database migrate before starting the service")
+		return errors.New("PostgreSQL schema is unavailable; run autumn-bus database migrate before starting the service")
 	}
 	defer rows.Close()
 	names, err := migrationNames()
@@ -170,12 +170,12 @@ func MigratePostgres(ctx context.Context, connectionString string) error {
 	// A provisioned migration role owns only this schema and need not have that
 	// broader privilege; only attempt creation when it is actually missing.
 	if _, err := tx.ExecContext(ctx, `DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname='october_bus') THEN
-    CREATE SCHEMA october_bus;
+  IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname='autumn_bus') THEN
+    CREATE SCHEMA autumn_bus;
   END IF;
 END $$;
-REVOKE ALL ON SCHEMA october_bus FROM PUBLIC;
-CREATE TABLE IF NOT EXISTS october_bus.schema_migrations(name TEXT PRIMARY KEY,sha256 TEXT NOT NULL,applied_at TIMESTAMPTZ NOT NULL DEFAULT now());`); err != nil {
+REVOKE ALL ON SCHEMA autumn_bus FROM PUBLIC;
+CREATE TABLE IF NOT EXISTS autumn_bus.schema_migrations(name TEXT PRIMARY KEY,sha256 TEXT NOT NULL,applied_at TIMESTAMPTZ NOT NULL DEFAULT now());`); err != nil {
 		return errors.New("cannot initialize PostgreSQL migration ledger; verify database owner permissions")
 	}
 	names, err := migrationNames()
@@ -217,15 +217,15 @@ CREATE TABLE IF NOT EXISTS october_bus.schema_migrations(name TEXT PRIMARY KEY,s
 	}
 	// Supabase may grant API roles access by default. This service's schema is
 	// server-only: no anonymous/authenticated PostgREST access to message rows.
-	if _, err := tx.ExecContext(ctx, `REVOKE ALL ON ALL TABLES IN SCHEMA october_bus FROM PUBLIC;
+	if _, err := tx.ExecContext(ctx, `REVOKE ALL ON ALL TABLES IN SCHEMA autumn_bus FROM PUBLIC;
 DO $$ BEGIN
   IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='anon') THEN
-    REVOKE ALL ON SCHEMA october_bus FROM anon;
-    REVOKE ALL ON ALL TABLES IN SCHEMA october_bus FROM anon;
+    REVOKE ALL ON SCHEMA autumn_bus FROM anon;
+    REVOKE ALL ON ALL TABLES IN SCHEMA autumn_bus FROM anon;
   END IF;
   IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN
-    REVOKE ALL ON SCHEMA october_bus FROM authenticated;
-    REVOKE ALL ON ALL TABLES IN SCHEMA october_bus FROM authenticated;
+    REVOKE ALL ON SCHEMA autumn_bus FROM authenticated;
+    REVOKE ALL ON ALL TABLES IN SCHEMA autumn_bus FROM authenticated;
   END IF;
 END $$;`); err != nil {
 		return errors.New("cannot restrict hosted schema access; migration rolled back")

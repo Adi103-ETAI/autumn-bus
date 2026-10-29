@@ -282,8 +282,8 @@ func TestHookReportsBoundedDiagnosticsWithoutSecrets(t *testing.T) {
 <<<<<<<< HEAD:cmd/autumn-bus/hook_test.go
 			require(t, strings.Count(stderr, "autumn-bus hook: "+tc.class) == 1, "expected one %s line: %q", tc.class, stderr)
 ========
-			require(t, strings.Count(stderr, "agentintercom hook: "+tc.class) == 1, "expected one %s line: %q", tc.class, stderr)
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/hook_test.go
+			require(t, strings.Count(stderr, "autumn-bus hook: "+tc.class) == 1, "expected one %s line: %q", tc.class, stderr)
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/hook_test.go
 			require(t, !strings.Contains(stderr, connection.AgentToken) && !strings.Contains(stderr, connection.HookToken), "diagnostics leaked a credential")
 			controller.reset()
 		})
@@ -314,8 +314,8 @@ func TestHookHelper(t *testing.T) {
 <<<<<<<< HEAD:cmd/autumn-bus/hook_test.go
 	os.Args = []string{"autumn-bus", "hook", "session-start"}
 ========
-	os.Args = []string{"agentintercom", "hook", "session-start"}
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/hook_test.go
+	os.Args = []string{"autumn-bus", "hook", "session-start"}
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/hook_test.go
 	if err := run(); err != nil {
 		os.Exit(2)
 	}

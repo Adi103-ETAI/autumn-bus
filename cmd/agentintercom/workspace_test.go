@@ -11,18 +11,18 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 func startWorkspaceTest(t *testing.T) (context.Context, bus.Client) {
 	t.Helper()
 	root := t.TempDir()
-	t.Setenv("OCTOBER_BUS_DATA_DIR", filepath.Join(root, "data"))
-	t.Setenv("OCTOBER_BUS_RUNTIME_DIR", filepath.Join(root, "run"))
+	t.Setenv("AUTUMN_BUS_DATA_DIR", filepath.Join(root, "data"))
+	t.Setenv("AUTUMN_BUS_RUNTIME_DIR", filepath.Join(root, "run"))
 	// Onboarding must use local discovery, not inherited remote credentials.
-	t.Setenv("OCTOBER_BUS_ADDRESS", "http://untrusted.invalid")
-	t.Setenv("OCTOBER_BUS_ADMIN_TOKEN", "untrusted-admin")
-	t.Setenv("OCTOBER_BUS_SCOPE_TOKEN", "untrusted-owner")
+	t.Setenv("AUTUMN_BUS_ADDRESS", "http://untrusted.invalid")
+	t.Setenv("AUTUMN_BUS_ADMIN_TOKEN", "untrusted-admin")
+	t.Setenv("AUTUMN_BUS_SCOPE_TOKEN", "untrusted-owner")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
 	daemon, err := bus.StartDaemon(ctx, 0, nil)
@@ -88,7 +88,7 @@ func TestNewMCPSessionsDoNotReplaceEachOther(t *testing.T) {
 		stderr := new(syncBuffer)
 		command := mcpBridgeCommand("", "", stderr)
 		args, _ := json.Marshal([]string{"--scope", "project", "--new-session", "--name", "My app"})
-		command.Env = setEnvironment(command.Env, "OCTOBER_BUS_MCP_STDIO_TEST_ARGS", string(args))
+		command.Env = setEnvironment(command.Env, "AUTUMN_BUS_MCP_STDIO_TEST_ARGS", string(args))
 		client := mcp.NewClient(&mcp.Implementation{Name: "generic-client", Version: "1"}, nil)
 		session, err := client.Connect(ctx, &mcp.CommandTransport{Command: command}, nil)
 		require(t, err == nil, "connect new MCP session: %v; stderr: %s", err, stderr.String())

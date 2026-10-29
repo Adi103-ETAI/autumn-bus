@@ -14,12 +14,12 @@ import (
 
 func hostedTestAccounts(t *testing.T) (context.Context, *HostedAccounts) {
 	t.Helper()
-	dsn := os.Getenv("OCTOBER_BUS_TEST_POSTGRES_URL")
+	dsn := os.Getenv("AUTUMN_BUS_TEST_POSTGRES_URL")
 	if dsn == "" {
-		t.Skip("set OCTOBER_BUS_TEST_POSTGRES_URL to an isolated loopback october_bus_test database")
+		t.Skip("set AUTUMN_BUS_TEST_POSTGRES_URL to an isolated loopback autumn_bus_test database")
 	}
 	u, err := url.Parse(dsn)
-	require(t, err == nil && (u.Hostname() == "127.0.0.1" || u.Hostname() == "localhost") && u.Path == "/october_bus_test", "hosted tests require an isolated database")
+	require(t, err == nil && (u.Hostname() == "127.0.0.1" || u.Hostname() == "localhost") && u.Path == "/autumn_bus_test", "hosted tests require an isolated database")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
 	requireNoError(t, MigratePostgres(ctx, dsn))

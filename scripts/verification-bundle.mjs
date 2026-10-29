@@ -5,7 +5,7 @@ import { stripVTControlCharacters } from 'node:util'
 import { fileURLToPath } from 'node:url'
 
 const maxLogBytes = 16 * 1024 * 1024
-const defaultSecretNames = ['OCTOBER_BUS_ADMIN_TOKEN', 'OCTOBER_BUS_SCOPE_TOKEN', 'OCTOBER_BUS_AGENT_TOKEN', 'GH_TOKEN', 'GITHUB_TOKEN', 'NPM_TOKEN', 'NODE_AUTH_TOKEN', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY']
+const defaultSecretNames = ['AUTUMN_BUS_ADMIN_TOKEN', 'AUTUMN_BUS_SCOPE_TOKEN', 'AUTUMN_BUS_AGENT_TOKEN', 'GH_TOKEN', 'GITHUB_TOKEN', 'NPM_TOKEN', 'NODE_AUTH_TOKEN', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY']
 const fields = ['harnessFamily', 'harnessVersion', 'adapterId', 'adapterVersion', 'protocolVersion', 'runtimeVersion', 'operatingSystem', 'architecture', 'profile', 'repositoryCommit', 'verificationMode', 'attemptedAt', 'outcome', 'limitations']
 const optionalFields = ['launchMode', 'model']
 const check = (condition, message) => { if (!condition) throw new Error(message) }
@@ -97,7 +97,7 @@ export function createVerificationBundle({ metadataPath, logPath, outDir, redact
   check(sanitized.text.trim().length > 0, 'Sanitized log must not be empty')
   check(Buffer.byteLength(sanitized.text) <= maxLogBytes, 'Sanitized log exceeds the size limit')
   const manifest = {
-    schemaVersion: 1, kind: 'agentintercom-verification-bundle', verificationStatus: 'unreviewed',
+    schemaVersion: 1, kind: 'autumn-bus-verification-bundle', verificationStatus: 'unreviewed',
     createdAt: new Date().toISOString(), metadata,
     log: { path: 'run.log', resultDigest: digest(sanitized.text), bytes: Buffer.byteLength(sanitized.text) },
     redaction: { rules: sanitized.rules, manualReviewRequired: true }
@@ -115,7 +115,7 @@ export function createVerificationBundle({ metadataPath, logPath, outDir, redact
 export function verifyVerificationBundle(directory) {
   check(lstatSync(directory).isDirectory(), 'Bundle must be a real directory, not a symbolic link')
   const bundle = readJSON(join(directory, 'bundle.json'))
-  check(bundle?.schemaVersion === 1 && bundle.kind === 'agentintercom-verification-bundle' && bundle.verificationStatus === 'unreviewed' && bundle.redaction?.manualReviewRequired === true, 'Invalid unreviewed bundle manifest')
+  check(bundle?.schemaVersion === 1 && bundle.kind === 'autumn-bus-verification-bundle' && bundle.verificationStatus === 'unreviewed' && bundle.redaction?.manualReviewRequired === true, 'Invalid unreviewed bundle manifest')
   validateAttempt(bundle.metadata)
   check(bundle.log?.path === 'run.log', 'Invalid bundle log path')
   const log = readLimited(join(directory, 'run.log'), maxLogBytes)

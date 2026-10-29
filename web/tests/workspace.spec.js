@@ -13,7 +13,7 @@ async function fixture(page, signedIn = true, options = {}) {
   let answered = false;
   if (signedIn) await page.addInitScript(user => {
     const claims = btoa(JSON.stringify({ sub: user.id, aud: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 }));
-    localStorage.setItem('agentintercom-auth', JSON.stringify({ access_token: 'e30.' + claims + '.fixture', refresh_token: 'fixture-refresh', expires_at: Math.floor(Date.now() / 1000) + 3600, expires_in: 3600, token_type: 'bearer', user }));
+    localStorage.setItem('autumn-bus-auth', JSON.stringify({ access_token: 'e30.' + claims + '.fixture', refresh_token: 'fixture-refresh', expires_at: Math.floor(Date.now() / 1000) + 3600, expires_in: 3600, token_type: 'bearer', user }));
   }, user);
   await page.route('https://auth.example.test/**', async route => {
     if (route.request().url().endsWith('/otp?redirect_to=http%3A%2F%2F127.0.0.1%3A4794%2Fapp')) events.push('email-requested');
@@ -29,7 +29,7 @@ async function fixture(page, signedIn = true, options = {}) {
     else if (path === '/api/workspaces') result = [{ id: 'workspace-1', name: 'My workspace', role: 'owner', memberLimit: 5 }];
     else if (path.endsWith('/sessions')) result = { sessions: [{ id: 'session-1', displayName: '<img src=x onerror=alert(1)>', deviceId: 'device-1', deviceName: 'Laptop', reachable: true, deliveryMode: 'poll', updatedAt: '2026-10-24T12:00:00Z' }] };
     else if (path.endsWith('/attachments')) {
-      if (method === 'POST') { const data = route.request().postDataBuffer(); const id = 'att_' + String(files.length + 1).padStart(32, '0'); const file = { id, name: url.searchParams.get('name'), mediaType: url.searchParams.get('mediaType'), size: data.length, sha256: createHash('sha256').update(data).digest('hex'), authorKind: 'human', authorId: user.id, uri: 'october-bus://attachments/' + id, createdAt: new Date().toISOString(), data }; files.push(file); result = file; } else result = { attachments: files };
+      if (method === 'POST') { const data = route.request().postDataBuffer(); const id = 'att_' + String(files.length + 1).padStart(32, '0'); const file = { id, name: url.searchParams.get('name'), mediaType: url.searchParams.get('mediaType'), size: data.length, sha256: createHash('sha256').update(data).digest('hex'), authorKind: 'human', authorId: user.id, uri: 'autumn-bus://attachments/' + id, createdAt: new Date().toISOString(), data }; files.push(file); result = file; } else result = { attachments: files };
     }
     else if (path.includes('/attachments/')) {
       const id = path.split('/attachments/')[1].split('/')[0]; const file = files.find(f => f.id === id);
@@ -89,7 +89,7 @@ test('OAuth requires explicit workspace consent and preserves the app callback',
   await page.route('**/callback?*', route => route.fulfill({ contentType: 'text/html', body: '<p>Connection completed</p>' }));
   await page.goto('/app?authorization_id=request-1');
   await expect(page.getByRole('heading', { name: 'Connected app' })).toBeVisible();
-  await expect(page.getByText(/October has not verified/)).toBeVisible();
+  await expect(page.getByText(/Autumn has not verified/)).toBeVisible();
   expect(events).toHaveLength(0);
   await page.getByRole('button', { name: 'Allow connection', exact: true }).click();
   await expect(page).toHaveURL(/\/callback\?code=fixture&state=state/);
@@ -108,16 +108,16 @@ test('mobile onboarding and teammate invitation stay usable without overflow', a
   await expect(page.getByText('http://127.0.0.1:4794/app#invite=secret-invitation', { exact: true })).toBeVisible();
   expect(events.at(-1).body).toEqual({ email: 'teammate@example.test', role: 'member' });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
-  await page.screenshot({ path: '/tmp/agentintercom-workspace-mobile.png', fullPage: true });
+  await page.screenshot({ path: '/tmp/autumn-bus-workspace-mobile.png', fullPage: true });
 });
 
 test('signed-out page presents account login without sending an email on load', async ({ page }) => {
   const events = await fixture(page, false);
   await page.goto('/app');
-  await expect(page.getByRole('heading', { name: 'Sign in to October' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign in to Autumn' })).toBeVisible();
   await expect(page.getByLabel('Email address', { exact: true }).first()).toBeVisible();
   expect(events).toHaveLength(0);
-  await page.screenshot({ path: '/tmp/agentintercom-signin.png', fullPage: true });
+  await page.screenshot({ path: '/tmp/autumn-bus-signin.png', fullPage: true });
 });
 
 
@@ -157,7 +157,7 @@ test('device pairing waits for explicit code confirmation and workspace consent'
   expect(events).toEqual([{ path: '/api/device/authorizations/ABCD-EFGH', method: 'POST', body: { approve: true, workspaceId: 'workspace-1' } }]);
   await page.getByRole('button', { name: 'Open workspace', exact: true }).click();
   await page.getByRole('navigation', { name: 'Workspace' }).getByRole('button', { name: 'Connect an app', exact: true }).click();
-  await expect(page.getByText(/agentintercom hosted login --server/)).toBeVisible();
+  await expect(page.getByText(/autumn-bus hosted login --server/)).toBeVisible();
 });
 
 test('device recovery is an explicit choice among only the account’s machines', async ({ page }) => {
@@ -249,7 +249,7 @@ test('files upload, download, attach to conversations and require confirmation t
   await page.getByText('Attach a file', { exact: true }).first().click();
   await page.getByLabel('Attach a file', { exact: true }).setInputFiles({ name: 'review.txt', mimeType: 'text/plain', buffer: Buffer.from('Review content') });
   await page.getByRole('button', { name: 'Upload and attach', exact: true }).click();
-  await expect(page.getByLabel('Your message', { exact: true })).toHaveValue(/Please review this\.[\s\S]*october-bus:\/\/attachments\/att_/);
+  await expect(page.getByLabel('Your message', { exact: true })).toHaveValue(/Please review this\.[\s\S]*autumn-bus:\/\/attachments\/att_/);
   await page.getByRole('button', { name: 'Send request', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Download shared file', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Files', exact: true }).click();
@@ -293,7 +293,7 @@ test('data controls confirm pauses and cleanup, then download a portable archive
     if (path.endsWith('/storage')) result = { records: [{ recordType: 'message', state: 'acknowledged', count: 2 }] };
     if (path.endsWith('/pause')) paused = route.request().postDataJSON().paused;
     if (path.endsWith('/prune')) { cleanups.push(route.request().postDataJSON()); result = { records: { messages: 2, tasks: 0, events: 4 }, dryRun: !cleanups.at(-1).execute }; }
-    if (path.endsWith('/export')) return route.fulfill({ contentType: 'application/json', headers: { 'Content-Disposition': 'attachment; filename="agentintercom-workspace.json"' }, body: JSON.stringify({ format: 'october-bus.scope', version: 3 }) });
+    if (path.endsWith('/export')) return route.fulfill({ contentType: 'application/json', headers: { 'Content-Disposition': 'attachment; filename="autumn-bus-workspace.json"' }, body: JSON.stringify({ format: 'autumn-bus.scope', version: 3 }) });
     await route.fulfill({ json: { ok: true, result } });
   });
   await page.goto('/app');
@@ -304,7 +304,7 @@ test('data controls confirm pauses and cleanup, then download a portable archive
   await expect(page.getByRole('heading', { name: 'Sessions paused', exact: true })).toBeVisible();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download workspace archive', exact: true }).click();
-  expect((await download).suggestedFilename()).toBe('agentintercom-workspace.json');
+  expect((await download).suggestedFilename()).toBe('autumn-bus-workspace.json');
   await page.getByRole('button', { name: 'Preview cleanup', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Delete eligible history?', exact: true })).toBeVisible();
   expect(cleanups.map(c => c.execute)).toEqual([false]);

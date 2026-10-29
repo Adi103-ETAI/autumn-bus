@@ -220,7 +220,7 @@ func writeFailure(response http.ResponseWriter, err error) {
 	failure := AsBusError(err)
 	if failure.Code == CodeInternal {
 		if state := databaseErrorState(err); state != "" {
-			log.Printf("Agent Intercom database operation failed (SQLSTATE %s)", state)
+			log.Printf("Autumn Bus database operation failed (SQLSTATE %s)", state)
 		}
 	}
 	writeJSON(response, ErrorStatus(failure), map[string]any{
@@ -251,7 +251,7 @@ func (s *Server) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 type emptyInput struct{}
 
 func (s *Server) newMCPServer(token string) *mcp.Server {
-	server := mcp.NewServer(&mcp.Implementation{Name: "agentintercom", Version: Version}, nil)
+	server := mcp.NewServer(&mcp.Implementation{Name: "autumn-bus", Version: Version}, nil)
 	mcp.AddTool(server, busTool("list_peers", "Find a recipient before sending work. Reads linked agents, display names and capabilities without changing their state. Returns exact IDs for unambiguous addressing."),
 		func(ctx context.Context, _ *mcp.CallToolRequest, _ emptyInput) (*mcp.CallToolResult, any, error) {
 			peers, err := s.runtime.ListPeers(ctx, token)

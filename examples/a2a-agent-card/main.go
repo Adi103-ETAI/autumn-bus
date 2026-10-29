@@ -17,7 +17,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/october-dev/october-bus/a2abridge"
+	"github.com/Adi103-ETAI/autumn-bus/a2abridge"
 )
 
 const defaultPort = "8080"
@@ -29,7 +29,7 @@ func main() {
 	}
 
 	card, err := a2abridge.NewAgentCard(a2abridge.AgentProfile{
-		DisplayName: "Agent Intercom Example Agent",
+		DisplayName: "Autumn Bus Example Agent",
 		Capabilities: []a2abridge.Capability{
 			{Name: "chat", Description: "Conversational chat capability."},
 			{Name: "code_review", Description: "Reviews code changes for correctness and style."},

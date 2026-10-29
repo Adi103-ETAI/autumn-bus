@@ -1,4 +1,4 @@
-# Agent Intercom 0.2.0 — draft
+# Autumn Bus 0.2.0 — draft
 
 This version is being prepared. These notes describe the implementation in this
 branch; they do not announce a published package, verified harness coverage or
@@ -27,7 +27,7 @@ agent questions, use channels and share files. Remote Streamable HTTP MCP suppor
 OAuth consent and per-app keys. Connection replacement preserves session inboxes
 while revoking the old credential.
 
-The public hosted product is Agent Intercom; technical command, module and package
+The public hosted product is Autumn Bus; technical command, module and package
 names remain unchanged. Workspace hosting is planned at $19/month or $190/year
 for five people, 50 concurrent sessions, 100,000 new deliveries per calendar month,
 5 GiB of files and 25 GiB in each file-transfer direction. Models and agent compute
@@ -39,7 +39,7 @@ See [billing](hosted-billing.md) for trial allowances and entitlement behavior.
 Owners can pause sessions, export a portable archive, prune eligible completed
 history and permanently delete a workspace. Deletion records its intent, revokes
 connections and confirms billing cancellation before removing content. Shared
-October account deletion is guarded until workspace membership is resolved.
+Autumn account deletion is guarded until workspace membership is resolved.
 
 Deployment source includes isolated database roles, migrations, systemd services,
 encrypted database/file backups, recovery fencing and coexistence with the older
@@ -57,7 +57,7 @@ same artifacts after qualification.
 
 Back up local state before upgrading. Hosted operators run all checksum-pinned
 migrations through 014 with the migration role, then apply runtime grants before
-starting the matching daemon. October's shared Supabase identity requires the
+starting the matching daemon. Autumn's shared Supabase identity requires the
 separate [lifecycle integration](../deploy/hosted/supabase/README.md). Test a
 quarantined restore before production use. Do not downgrade a migrated database
 by starting an older executable against it.

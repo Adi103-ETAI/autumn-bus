@@ -1,6 +1,6 @@
 # Adapter contract
 
-An adapter connects one harness execution to Agent Intercom without changing protocol semantics.
+An adapter connects one harness execution to Autumn Bus without changing protocol semantics.
 
 ## Required lifecycle
 

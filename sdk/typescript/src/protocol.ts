@@ -1,4 +1,4 @@
-export const OCTOBER_BUS_PROTOCOL_VERSION = '0.1' as const
+export const AUTUMN_BUS_PROTOCOL_VERSION = '0.1' as const
 
 export type ScopeId = string
 export type AgentId = string
@@ -405,7 +405,7 @@ export interface ScopeArchive {
   channels?: Array<Omit<Channel, 'subscribers' | 'subscribed'>>
   channelSubscriptions?: Array<{ channelId: string; agentId: string; createdAt: string }>
   channelPosts?: Array<ChannelPost & { idempotencyKey?: string }>
-  format: 'october-bus.scope'
+  format: 'autumn-bus.scope'
   version: 2 | 3
   exportedAt: string
   scope: ArchivedScope
@@ -550,7 +550,7 @@ export interface BusRunFile {
 }
 
 export interface BusHealth {
-  name: 'october-bus'
+  name: 'autumn-bus'
   protocolVersion: string
   runtimeVersion: string
   /** Missing on older daemons; unknown feature identifiers may be ignored. */
@@ -564,7 +564,7 @@ export interface BusHealth {
 }
 
 export interface BusLiveness {
-  name: 'october-bus'
+  name: 'autumn-bus'
   status: 'alive'
   startedAt: string
 }

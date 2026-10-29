@@ -1,6 +1,6 @@
-# Agent Intercom Roadmap
+# Autumn Bus Roadmap
 
-Agent Intercom is an open communication and coordination layer for AI agents and harnesses.
+Autumn Bus is an open communication and coordination layer for AI agents and harnesses.
 
 This document describes the path to a stable, portable interoperability runtime.
 It is a technical plan, not a release promise. The phases below describe capability
@@ -24,26 +24,26 @@ Before offering the hosted service or publishing the next release:
 - Record named-client compatibility without inferring it from a generic MCP test.
 - Complete code-owner review and all required release checks.
 
-October Desktop convergence is deferred until the standalone release has been
+Autumn Desktop convergence is deferred until the standalone release has been
 used and validated in production. Its current implementation and backend ledger
 remain independent. Larger self-service exports (currently bounded at 64 MiB)
 and native wake for additional apps remain follow-up work.
 
 ## Goals
 
-Agent Intercom should:
+Autumn Bus should:
 
 - run on Windows, macOS, and Linux;
-- work without October Desktop;
+- work without Autumn Desktop;
 - be simple to install as one native command;
 - let agents discover, message, delegate, coordinate tasks, and ask a human;
 - preserve durable delivery and execution-scoped authority;
 - support local, cross-machine, and server-to-server operation;
 - support self-hosted and managed remote endpoints through the same protocol;
 - provide a clear path for any harness to become compatible;
-- be directly usable by October without maintaining a separate Bus core.
+- be directly usable by Autumn without maintaining a separate Bus core.
 
-Agent Intercom will not decide which agents to create, which models to use, how to staff a team, or how to judge an operation. Those decisions belong to products built above the protocol.
+Autumn Bus will not decide which agents to create, which models to use, how to staff a team, or how to judge an operation. Those decisions belong to products built above the protocol.
 
 ## Runtime architecture
 
@@ -52,7 +52,7 @@ The architecture is:
 - a native Go daemon and reference runtime;
 - a versioned, language-neutral protocol;
 - an official MCP integration in the daemon;
-- a TypeScript SDK for harnesses and October Desktop;
+- a TypeScript SDK for harnesses and Autumn Desktop;
 - additional SDKs based on contributor demand;
 - SQLite for local durable state;
 - PostgreSQL for hosted durable state, using the same runtime operations;
@@ -64,7 +64,7 @@ Harness or agent
        |
 Client SDK or MCP adapter
        |
-Agent Intercom protocol
+Autumn Bus protocol
        |
 Local daemon and SQLite
        |
@@ -77,9 +77,9 @@ The daemon is the compatibility boundary. Desktop applications, terminal harness
 
 ### Why Go
 
-Agent Intercom is infrastructure that should run quietly on developer machines and servers. Go is a strong fit because it can produce native binaries for the target platforms, has a small operational surface, supports long-running services well, and has an official MCP SDK.
+Autumn Bus is infrastructure that should run quietly on developer machines and servers. Go is a strong fit because it can produce native binaries for the target platforms, has a small operational surface, supports long-running services well, and has an official MCP SDK.
 
-A native daemon also prevents the Bus from inheriting the Node.js version of every harness or desktop application. TypeScript remains useful at the edges, where most harness integrations and October Desktop already live.
+A native daemon also prevents the Bus from inheriting the Node.js version of every harness or desktop application. TypeScript remains useful at the edges, where most harness integrations and Autumn Desktop already live.
 
 ## Protocol principles
 
@@ -123,7 +123,7 @@ The foundation is complete when it proves:
 - a practical SQLite build without fragile platform setup;
 - clean MCP support;
 - predictable service lifecycle and local authentication;
-- straightforward use from October Desktop and external harnesses;
+- straightforward use from Autumn Desktop and external harnesses;
 - a simpler installation story than requiring a separate runtime.
 
 Keep one reference runtime. Do not maintain competing Go and TypeScript daemons.
@@ -182,7 +182,7 @@ Implement the complete local core in the selected runtime.
 
 ## Phase 3: SDKs, MCP, and adapters
 
-Make the Bus easy to adopt without depending on October Desktop.
+Make the Bus easy to adopt without depending on Autumn Desktop.
 
 ### Deliverables
 
@@ -204,7 +204,7 @@ Make the Bus easy to adopt without depending on October Desktop.
 
 ## Phase 4: Packaging and platform support
 
-Ship Agent Intercom as normal developer infrastructure.
+Ship Autumn Bus as normal developer infrastructure.
 
 ### Deliverables
 
@@ -224,27 +224,27 @@ Ship Agent Intercom as normal developer infrastructure.
 - The user does not need to install a language runtime.
 - Runtime credentials are not exposed through logs, process arguments, or shared files.
 
-## Phase 5: Direct October integration (deferred)
+## Phase 5: Direct Autumn integration (deferred)
 
-Use the standalone Bus as October's communication substrate after the standalone
+Use the standalone Bus as Autumn's communication substrate after the standalone
 service has launched and demonstrated production behavior. This is not a
 prerequisite for the current release, and does not authorize deleting Desktop's
 existing implementation or backend data.
 
 ### Deliverables
 
-- October Desktop supervises the same public daemon shipped to everyone.
+- Autumn Desktop supervises the same public daemon shipped to everyone.
 - Desktop uses the public client SDK and protocol.
 - Harness-specific behavior lives behind adapter interfaces.
 - Product capabilities are injected above the Bus rather than added to its core.
 - Migration tooling preserves accepted messages and active task state where safe.
-- Parity tests compare standalone and October-managed agent behavior.
+- Parity tests compare standalone and Autumn-managed agent behavior.
 
 ### Exit criteria
 
-- October does not maintain a separate message, task, or identity core.
-- Standalone harnesses and October-managed harnesses pass the same conformance profile.
-- Removing October Desktop does not make the local Bus state invalid.
+- Autumn does not maintain a separate message, task, or identity core.
+- Standalone harnesses and Autumn-managed harnesses pass the same conformance profile.
+- Removing Autumn Desktop does not make the local Bus state invalid.
 
 ## Phase 6: Remote and self-hosted operation
 
@@ -333,7 +333,7 @@ Turn compatibility into a claim that can be proven.
 
 ### Exit criteria
 
-- A new harness developer can prove compatibility without October Desktop.
+- A new harness developer can prove compatibility without Autumn Desktop.
 - Every compatibility claim maps to a passing profile.
 - The protocol can evolve through version negotiation without breaking stable clients.
 

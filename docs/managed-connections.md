@@ -1,17 +1,17 @@
 # Host-managed MCP connections
 
-October Desktop and other host controllers can run the native Bus helper against
+Autumn Desktop and other host controllers can run the native Bus helper against
 their existing MCP authority. The helper does not start another daemon, create a
 scope, or require a copy of the controller's administrator credential. One binary
 provides the MCP bridge, the lifecycle hook and a setup check:
 
 ```sh
-agentintercom mcp stdio --connection-file /absolute/private/connection.json
-agentintercom hook [--connection-file <path>] <event> [<flavor>]
-agentintercom mcp check [--connection-file <path>] [--json]
+autumn-bus mcp stdio --connection-file /absolute/private/connection.json
+autumn-bus hook [--connection-file <path>] <event> [<flavor>]
+autumn-bus mcp check [--connection-file <path>] [--json]
 ```
 
-`--connection-file` may be omitted when `OCTOBER_BUS_CONNECTION_FILE` names the
+`--connection-file` may be omitted when `AUTUMN_BUS_CONNECTION_FILE` names the
 file. A managed launcher exports that variable into the execution's environment
 for harnesses whose configuration is shared between executions (Codex reads one
 `hooks.json`/`config.toml`; Claude can take per-launch settings). The variable
@@ -47,7 +47,7 @@ the connection. The file has this shape (placeholders are not usable credentials
 | `httpHost` | no | Loopback-only HTTP `Host` override: same literal IP as `endpoint`, different port. A TCP/SSH forward does not rewrite `Host`, so this carries the authority's real port across a tunnel port. Never for HTTPS, never another name. |
 | `scopeId`, `agentId`, `executionId` | yes | Pin the execution this file belongs to. For Desktop Core they are the canvas, node and terminal epoch (`launch`). They fence renewal; the authority still authenticates every request. |
 | `agentToken` | yes | The execution's MCP credential: 32 random bytes, unpadded base64url (43 characters). Sent as `Authorization: Bearer`. |
-| `hookToken` | no | The execution's lifecycle credential in the same format, used only by `agentintercom hook` as `X-October-Bus-Token`. When absent, hooks report nothing. Requires this helper version or newer; older helpers refuse a file containing it. |
+| `hookToken` | no | The execution's lifecycle credential in the same format, used only by `autumn-bus hook` as `X-Autumn-Bus-Token`. When absent, hooks report nothing. Requires this helper version or newer; older helpers refuse a file containing it. |
 | `expiresAt` | yes | Controller-chosen expiry. An expired file refuses every request until renewed. |
 
 Both credentials leave the controller only as per-execution grants. Never write a
@@ -130,12 +130,12 @@ endpoint, labels, expiry and whether a hook credential is present, never tokens.
 
 ## Lifecycle hook
 
-`agentintercom hook <event> [<flavor>]` is a Node-free port of Desktop's
+`autumn-bus hook <event> [<flavor>]` is a Node-free port of Desktop's
 `bus-hook.mjs` for the `claude` (default) and `codex` flavors. It reads the
 harness event JSON on stdin and reports to the controller's `/hook/*` routes on
-the endpoint's origin, with `X-October-Bus-Token: <hookToken>`,
-`X-October-MCP-Capability: <agentToken>` and the optional `httpHost` override.
-Neither MCP nor hook requests send `Origin` or `X-October-Caller-Pid`: a remote
+the endpoint's origin, with `X-Autumn-Bus-Token: <hookToken>`,
+`X-Autumn-MCP-Capability: <agentToken>` and the optional `httpHost` override.
+Neither MCP nor hook requests send `Origin` or `X-Autumn-Caller-Pid`: a remote
 process ID is not a local Desktop identity, and its remote listener rejects it.
 Bodies carry `canvas`=`scopeId`, `node`=`agentId` and
 `launch`=`executionId`. The mapping is Desktop-specific by design; it does not

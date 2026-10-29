@@ -1,6 +1,6 @@
 # Portable scope archives
 
-Portable scope archives move durable collaboration state between compatible Agent Intercom implementations. The archive format is JSON and is defined by [scope-archive.schema.json](schemas/scope-archive.schema.json).
+Portable scope archives move durable collaboration state between compatible Autumn Bus implementations. The archive format is JSON and is defined by [scope-archive.schema.json](schemas/scope-archive.schema.json).
 
 An archive preserves:
 
@@ -36,7 +36,7 @@ The reference runtime retains the metadata-only import marker so retries remain 
 The initial archive identifier is:
 
 ```text
-format: october-bus.scope
+format: autumn-bus.scope
 version: 2
 ```
 

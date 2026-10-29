@@ -14,10 +14,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
-const userServiceName = "dev.october.agent-intercom"
+const userServiceName = "dev.autumn.autumn-bus"
 
 func stableExecutable() (string, error) {
 	source, err := os.Executable()
@@ -35,7 +35,7 @@ func stableExecutable() (string, error) {
 	if err := nativePrivateDirectory(dir); err != nil {
 		return "", err
 	}
-	name := "agentintercom"
+	name := "autumn-bus"
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
@@ -81,23 +81,23 @@ func serviceFile(platform, home, binary string, paths bus.DaemonPaths) (string, 
 	switch platform {
 	case "linux":
 		quote := func(s string) string { return strconv.Quote(strings.ReplaceAll(s, "%", "%%")) }
-		body := "# Managed by Agent Intercom\n[Unit]\nDescription=Agent Intercom local daemon\n\n[Service]\nExecStart=" + quote(strings.ReplaceAll(binary, "$", "$$")) + " start\nEnvironment=" + quote("OCTOBER_BUS_DATA_DIR="+paths.DataDir) + "\nEnvironment=" + quote("OCTOBER_BUS_RUNTIME_DIR="+paths.RuntimeDir) + "\nRestart=on-failure\nRestartSec=3\nUMask=0077\n\n[Install]\nWantedBy=default.target\n"
+		body := "# Managed by Autumn Bus\n[Unit]\nDescription=Autumn Bus local daemon\n\n[Service]\nExecStart=" + quote(strings.ReplaceAll(binary, "$", "$$")) + " start\nEnvironment=" + quote("AUTUMN_BUS_DATA_DIR="+paths.DataDir) + "\nEnvironment=" + quote("AUTUMN_BUS_RUNTIME_DIR="+paths.RuntimeDir) + "\nRestart=on-failure\nRestartSec=3\nUMask=0077\n\n[Install]\nWantedBy=default.target\n"
 		return filepath.Join(home, ".config", "systemd", "user", userServiceName+".service"), []byte(body), nil
 	case "darwin":
 		escape := func(s string) string { var b bytes.Buffer; _ = xml.EscapeText(&b, []byte(s)); return b.String() }
 		body := `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Managed by Agent Intercom -->
+<!-- Managed by Autumn Bus -->
 <plist version="1.0"><dict><key>Label</key><string>` + userServiceName + `</string>
 <key>ProgramArguments</key><array><string>` + escape(binary) + `</string><string>start</string></array>
-<key>EnvironmentVariables</key><dict><key>OCTOBER_BUS_DATA_DIR</key><string>` + escape(paths.DataDir) + `</string><key>OCTOBER_BUS_RUNTIME_DIR</key><string>` + escape(paths.RuntimeDir) + `</string></dict>
+<key>EnvironmentVariables</key><dict><key>AUTUMN_BUS_DATA_DIR</key><string>` + escape(paths.DataDir) + `</string><key>AUTUMN_BUS_RUNTIME_DIR</key><string>` + escape(paths.RuntimeDir) + `</string></dict>
 <key>RunAtLoad</key><true/><key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
 <key>StandardOutPath</key><string>` + escape(filepath.Join(paths.DataDir, "service.log")) + `</string><key>StandardErrorPath</key><string>` + escape(filepath.Join(paths.DataDir, "service.log")) + `</string>
 </dict></plist>
 `
 		return filepath.Join(home, "Library", "LaunchAgents", userServiceName+".plist"), []byte(body), nil
 	default:
-		return "", nil, errors.New("automatic login services are available on Linux and macOS; on Windows run agentintercom start in your chosen startup task")
+		return "", nil, errors.New("automatic login services are available on Linux and macOS; on Windows run autumn-bus start in your chosen startup task")
 	}
 }
 
@@ -143,7 +143,7 @@ func manageService(action string, out io.Writer) error {
 		return nil
 	}
 	if _, err := exec.LookPath(manager); err != nil {
-		return fmt.Errorf("%s is unavailable; run agentintercom start", manager)
+		return fmt.Errorf("%s is unavailable; run autumn-bus start", manager)
 	}
 	run := func(args ...string) error {
 		c := exec.Command(manager, args...)
@@ -158,8 +158,8 @@ func manageService(action string, out io.Writer) error {
 		}
 		return run("print", domain+"/"+userServiceName)
 	}
-	if len(old) > 0 && !bytes.Contains(old, []byte("Managed by Agent Intercom")) {
-		return errors.New("service file is not managed by Agent Intercom; left unchanged")
+	if len(old) > 0 && !bytes.Contains(old, []byte("Managed by Autumn Bus")) {
+		return errors.New("service file is not managed by Autumn Bus; left unchanged")
 	}
 	if action == "uninstall" {
 		if len(old) == 0 {
@@ -212,7 +212,7 @@ func ensureInstallWorkspace(workspace string) error {
 			break
 		}
 		if time.Now().After(deadline) {
-			return errors.New("local daemon is unavailable; run agentintercom start, then install again")
+			return errors.New("local daemon is unavailable; run autumn-bus start, then install again")
 		}
 		time.Sleep(100 * time.Millisecond)
 	}

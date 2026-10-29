@@ -20,13 +20,13 @@
   ],
   "testedVersions": [],
   "platforms": [],
-  "maintainer": "October",
-  "repository": "https://github.com/october-dev/october-bus",
+  "maintainer": "Autumn",
+  "repository": "https://github.com/Adi103-ETAI/autumn-bus",
   "limitations": [
     "Experimental configuration, not named-harness certification.",
-    "OMP can discover other hosts’ configurations; disable duplicate Agent Intercom entries to avoid replacing your own execution. The intended identity is can1357/oh-my-pi; confirm this matches issue #42."
+    "OMP can discover other hosts’ configurations; disable duplicate Autumn Bus entries to avoid replacing your own execution. The intended identity is can1357/oh-my-pi; confirm this matches issue #42."
   ],
-  "conformanceCommand": "agentintercom-conformance --profile mcp-adapter --start-runtime --adapter-command agentintercom --adapter-arg mcp --adapter-arg stdio --check-self-registration",
+  "conformanceCommand": "autumn-bus-conformance --profile mcp-adapter --start-runtime --adapter-command autumn-bus --adapter-arg mcp --adapter-arg stdio --check-self-registration",
   "configuration": {
     "file": "mcp.json.example",
     "format": "json",

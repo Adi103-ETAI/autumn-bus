@@ -121,7 +121,7 @@ func normalizedEmail(value string) (string, error) {
 
 func validateHostedUser(user HostedUser) error {
 	if err := validateIdentity(user.ID, "account", false); err != nil {
-		return Errorf(CodeUnauthenticated, "Sign in to October")
+		return Errorf(CodeUnauthenticated, "Sign in to Autumn")
 	}
 	if _, err := normalizedEmail(user.Email); err != nil {
 		return Errorf(CodeUnauthenticated, "A verified account email is required")

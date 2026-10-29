@@ -33,8 +33,8 @@ func startIsolatedRuntime(ctx context.Context) (*isolatedRuntime, error) {
 <<<<<<<< HEAD:cmd/autumn-bus-conformance/main.go
 	root, err := os.MkdirTemp("", "autumn-bus-conformance-")
 ========
-	root, err := os.MkdirTemp("", "agentintercom-conformance-")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom-conformance/main.go
+	root, err := os.MkdirTemp("", "autumn-bus-conformance-")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus-conformance/main.go
 	if err != nil {
 		return nil, err
 	}
@@ -66,11 +66,11 @@ func run() error {
 	address := flags.String("address", os.Getenv("AUTUMN_BUS_ADDRESS"), "Autumn Bus address")
 	adminTokenEnv := flags.String("admin-token-env", "AUTUMN_BUS_ADMIN_TOKEN", "environment variable containing the admin token")
 ========
-	flags := flag.NewFlagSet("agentintercom-conformance", flag.ContinueOnError)
+	flags := flag.NewFlagSet("autumn-bus-conformance", flag.ContinueOnError)
 	profile := flags.String("profile", conformance.ProfileLocalRuntime, "conformance profile: local-runtime or mcp-adapter")
-	address := flags.String("address", os.Getenv("OCTOBER_BUS_ADDRESS"), "Agent Intercom address")
-	adminTokenEnv := flags.String("admin-token-env", "OCTOBER_BUS_ADMIN_TOKEN", "environment variable containing the admin token")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom-conformance/main.go
+	address := flags.String("address", os.Getenv("AUTUMN_BUS_ADDRESS"), "Autumn Bus address")
+	adminTokenEnv := flags.String("admin-token-env", "AUTUMN_BUS_ADMIN_TOKEN", "environment variable containing the admin token")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus-conformance/main.go
 	startRuntime := flags.Bool("start-runtime", false, "start an isolated runtime for this run")
 	selfRegistration := flags.Bool("check-self-registration", false, "also verify reference bridge self-registration; requires mcp-adapter and start-runtime")
 	adapterCommand := flags.String("adapter-command", "", "executable for the mcp-adapter profile")
@@ -161,8 +161,8 @@ func run() error {
 <<<<<<<< HEAD:cmd/autumn-bus-conformance/main.go
 		fmt.Printf("Autumn Bus %s conformance\n", result.Profile)
 ========
-		fmt.Printf("Agent Intercom %s conformance\n", result.Profile)
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom-conformance/main.go
+		fmt.Printf("Autumn Bus %s conformance\n", result.Profile)
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus-conformance/main.go
 		for _, name := range result.Passed {
 			fmt.Printf("PASS %s\n", name)
 		}

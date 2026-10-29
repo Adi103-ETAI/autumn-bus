@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 const testCodexThread = "11111111-2222-4333-8444-555555555555"
@@ -41,7 +41,7 @@ func testCodexConnectionPath(args []string) string {
 func codexTestExecutable(t *testing.T) (string, string) {
 	t.Helper()
 	dir := t.TempDir()
-	t.Setenv("OCTOBER_BUS_CODEX_TEST", dir)
+	t.Setenv("AUTUMN_BUS_CODEX_TEST", dir)
 	path := filepath.Join(dir, "codex")
 	requireNoError(t, os.WriteFile(path, []byte("#!/bin/sh\nexec "+shellArgument(os.Args[0])+" -test.run=^TestCodexNativeChild$ -- \"$@\"\n"), 0700))
 	return path, dir
@@ -49,7 +49,7 @@ func codexTestExecutable(t *testing.T) (string, string) {
 
 // The subprocess speaks the app-server protocol without credentials or a model.
 func TestCodexNativeChild(t *testing.T) {
-	dir := os.Getenv("OCTOBER_BUS_CODEX_TEST")
+	dir := os.Getenv("AUTUMN_BUS_CODEX_TEST")
 	if dir == "" {
 		return
 	}
@@ -88,7 +88,7 @@ func TestCodexNativeChild(t *testing.T) {
 		if len(args) < 2 || args[1] != testCodexThread {
 			os.Exit(5)
 		}
-		for _, key := range []string{"OCTOBER_BUS_AGENT_TOKEN", "OCTOBER_BUS_SCOPE_TOKEN", "OCTOBER_BUS_ADMIN_TOKEN", "OCTOBER_BUS_DATABASE_URL", "OCTOBER_BUS_STRIPE_SECRET_KEY"} {
+		for _, key := range []string{"AUTUMN_BUS_AGENT_TOKEN", "AUTUMN_BUS_SCOPE_TOKEN", "AUTUMN_BUS_ADMIN_TOKEN", "AUTUMN_BUS_DATABASE_URL", "AUTUMN_BUS_STRIPE_SECRET_KEY"} {
 			if os.Getenv(key) != "" {
 				os.Exit(6)
 			}
@@ -124,7 +124,7 @@ func TestCodexNativeChild(t *testing.T) {
 		if os.WriteFile(filepath.Join(dir, "queue.json"), data, 0600) != nil {
 			os.Exit(9)
 		}
-		if os.Getenv("OCTOBER_BUS_CODEX_TEST_QUEUE_FAIL") != "" {
+		if os.Getenv("AUTUMN_BUS_CODEX_TEST_QUEUE_FAIL") != "" {
 			os.Exit(10)
 		}
 	default:
@@ -136,8 +136,8 @@ func TestCodexNativeChild(t *testing.T) {
 func TestCodexNativeLaunchQueuesOnlyOwnedSessionAndRetires(t *testing.T) {
 	ctx, owner := startWorkspaceTest(t)
 	binary, dir := codexTestExecutable(t)
-	t.Setenv("OCTOBER_BUS_AGENT_TOKEN", "inherited-other-execution")
-	t.Setenv("OCTOBER_BUS_STRIPE_SECRET_KEY", "must-not-reach-agent")
+	t.Setenv("AUTUMN_BUS_AGENT_TOKEN", "inherited-other-execution")
+	t.Setenv("AUTUMN_BUS_STRIPE_SECRET_KEY", "must-not-reach-agent")
 	sender, err := owner.RegisterAgent(ctx, bus.RegisterAgentInput{ID: "sender", DisplayName: "Sender"})
 	requireNoError(t, err)
 	done := make(chan error, 1)
@@ -201,7 +201,7 @@ func TestNativeBridgeAnnouncesInitializationAndWithdrawsOnExit(t *testing.T) {
 	requireNoError(t, writeSessionConnection(connectionPath, session))
 	command := mcpBridgeCommand("", "", os.Stderr)
 	args, _ := json.Marshal([]string{"--connection-file", connectionPath, "--ready-file", readyPath})
-	command.Env = setEnvironment(command.Env, "OCTOBER_BUS_MCP_STDIO_TEST_ARGS", string(args))
+	command.Env = setEnvironment(command.Env, "AUTUMN_BUS_MCP_STDIO_TEST_ARGS", string(args))
 	client := mcp.NewClient(&mcp.Implementation{Name: "readiness-test", Version: "1"}, nil)
 	bridge, err := client.Connect(ctx, &mcp.CommandTransport{Command: command}, nil)
 	requireNoError(t, err)
@@ -232,7 +232,7 @@ func TestNativeBridgeAnnouncesInitializationAndWithdrawsOnExit(t *testing.T) {
 
 func TestCodexQueueFailureIsUncertainAndDestinationCannotBeOverridden(t *testing.T) {
 	binary, _ := codexTestExecutable(t)
-	t.Setenv("OCTOBER_BUS_CODEX_TEST_QUEUE_FAIL", "1")
+	t.Setenv("AUTUMN_BUS_CODEX_TEST_QUEUE_FAIL", "1")
 	outcome, err := postCodexQueue(context.Background(), binary, testCodexThread, os.Environ(), "static nudge")
 	require(t, err != nil && outcome == "uncertain", "post-start error may have delivered: %s %v", outcome, err)
 	outcome, err = postCodexQueue(context.Background(), "/missing/codex", testCodexThread, os.Environ(), "static nudge")

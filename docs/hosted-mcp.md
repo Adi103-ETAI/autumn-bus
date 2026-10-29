@@ -1,7 +1,7 @@
 # Connect a hosted workspace through MCP
 
 The hosted service exposes Streamable HTTP at `<public-origin>/mcp`. Add this URL
-in your app's remote MCP settings. It will open October sign-in, ask you to choose
+in your app's remote MCP settings. It will open Autumn sign-in, ask you to choose
 a workspace, and request permission to connect. Each grant creates a separate
 revocable connection. You can review or revoke it in **Members & devices** at
 `<public-origin>/app`.
@@ -53,7 +53,7 @@ another member's connector, even for a workspace owner.
   `client_secret_post`). Omitted registration method defaults to Basic. The client
   must use the registered method for both exchange and refresh.
 - Scope `bus:connect` permits coordination in the workspace selected at consent.
-  The grant cannot select another workspace, manage membership, read October
+  The grant cannot select another workspace, manage membership, read Autumn
   account data, or access the underlying Supabase APIs as the user.
 - The `resource` is the exact public `/mcp` URL. If omitted, it defaults to this
   sole resource; a different resource is rejected.
@@ -81,7 +81,7 @@ HTTPS. There is no account token in the MCP grant or consent callback.
 
 Allow the hosted `/app` callback (including its `authorization_id` query) in the
 existing Supabase redirect allowlist before enabling email-link sign-in. Do not
-replace other October callback URLs. Existing password accounts can sign in
+replace other Autumn callback URLs. Existing password accounts can sign in
 without a redirect. Email delivery uses the project's existing Auth mail settings.
 The application sends an email only after the user submits the sign-in form.
 Invitations currently produce a link for the inviter to share; the service does

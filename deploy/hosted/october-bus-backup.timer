@@ -1,11 +1,11 @@
 [Unit]
-Description=Back up hosted Agent Intercom every six hours
+Description=Back up hosted Autumn Bus every six hours
 
 [Timer]
 OnCalendar=*-*-* 00,06,12,18:20:00 UTC
 RandomizedDelaySec=5min
 Persistent=true
-Unit=october-bus-backup.service
+Unit=autumn-bus-backup.service
 
 [Install]
 WantedBy=timers.target

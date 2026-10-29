@@ -51,13 +51,13 @@ def run():
         setting(name)
     if os.environ["PGHOST"] not in ("127.0.0.1", "::1", "localhost") and os.environ.get("PGSSLMODE") != "verify-full":
         raise RuntimeError("Remote backups require PGSSLMODE=verify-full")
-    attachments = private_path(setting("OCTOBER_BUS_ATTACHMENTS_DIR"), directory=True)
-    service_env = private_path(setting("OCTOBER_BUS_SERVICE_ENV"))
-    binary = pathlib.Path(setting("OCTOBER_BUS_BINARY")).resolve(strict=True)
+    attachments = private_path(setting("AUTUMN_BUS_ATTACHMENTS_DIR"), directory=True)
+    service_env = private_path(setting("AUTUMN_BUS_SERVICE_ENV"))
+    binary = pathlib.Path(setting("AUTUMN_BUS_BINARY")).resolve(strict=True)
     if not binary.is_file():
         raise RuntimeError("Configured runtime binary is not a file")
-    cache = private_path(setting("OCTOBER_BUS_BACKUP_CACHE"), directory=True)
-    state = private_path(setting("OCTOBER_BUS_BACKUP_STATE"), directory=True)
+    cache = private_path(setting("AUTUMN_BUS_BACKUP_CACHE"), directory=True)
+    state = private_path(setting("AUTUMN_BUS_BACKUP_STATE"), directory=True)
     lock_path = private_path(str(attachments / ".backup.lock"))
     # The daemon creates the persistent lock with its own UID at startup.
     # O_NOFOLLOW closes the final-component symlink race after validation.
@@ -75,22 +75,22 @@ def run():
         started = datetime.datetime.now(datetime.timezone.utc).isoformat()
         # Estimate scratch capacity before writing an uncompressed custom dump.
         size = int(command(["psql", "-XAt", "-v", "ON_ERROR_STOP=1", "-c",
-            "SELECT COALESCE(SUM(pg_total_relation_size(c.oid)),0) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='october_bus' AND c.relkind IN ('r','m')"]).strip())
+            "SELECT COALESCE(SUM(pg_total_relation_size(c.oid)),0) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='autumn_bus' AND c.relkind IN ('r','m')"]).strip())
         if shutil.disk_usage(cache).free < size * 2 + 1024**3:
             raise RuntimeError("Backup scratch space would consume the recovery reserve")
         with tempfile.TemporaryDirectory(prefix="snapshot-", dir=cache) as temporary:
             stage = pathlib.Path(temporary)
-            command(["pg_dump", "--schema=october_bus", "--format=custom", "--compress=0",
+            command(["pg_dump", "--schema=autumn_bus", "--format=custom", "--compress=0",
                      "--no-owner", "--no-privileges", "--lock-wait-timeout=10s", "--file=" + str(stage / "bus.dump")])
-            shutil.copy2(binary, stage / "october-bus")
+            shutil.copy2(binary, stage / "autumn-bus")
             shutil.copyfile(service_env, stage / "hosted.env")
-            with open(stage / "october-bus", "rb") as executable:
+            with open(stage / "autumn-bus", "rb") as executable:
                 runtime_digest = hashlib.file_digest(executable, "sha256").hexdigest()
-            manifest = {"format": "october-bus.hosted-backup", "version": 1, "startedAt": started,
+            manifest = {"format": "autumn-bus.hosted-backup", "version": 1, "startedAt": started,
                         "database": "bus.dump", "attachmentsPath": str(attachments),
                         "runtimeSHA256": runtime_digest}
             (stage / "manifest.json").write_text(json.dumps(manifest) + "\n")
-            output = command(["restic", "backup", "--json", "--tag", "october-bus-hosted",
+            output = command(["restic", "backup", "--json", "--tag", "autumn-bus-hosted",
                               "--exclude", str(attachments / ".lock"), "--exclude", str(lock_path),
                               str(stage), str(attachments)], timeout=1500)
             summaries = [json.loads(line) for line in output.splitlines() if line.strip()]

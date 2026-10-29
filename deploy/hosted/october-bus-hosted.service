@@ -1,19 +1,19 @@
 [Unit]
-Description=Agent Intercom hosted workspaces
+Description=Autumn Bus hosted workspaces
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=october-bus-hosted
-Group=october-bus-hosted
-EnvironmentFile=/etc/october-bus/hosted.env
-Environment=OCTOBER_BUS_ATTACHMENTS_DIR=/var/lib/october-bus-hosted/attachments
+User=autumn-bus-hosted
+Group=autumn-bus-hosted
+EnvironmentFile=/etc/autumn-bus/hosted.env
+Environment=AUTUMN_BUS_ATTACHMENTS_DIR=/var/lib/autumn-bus-hosted/attachments
 Environment=GOMEMLIMIT=512MiB
 Environment=GOMAXPROCS=2
-StateDirectory=october-bus-hosted
+StateDirectory=autumn-bus-hosted
 StateDirectoryMode=0700
-ExecStart=/opt/october-bus-hosted/current/october-bus hosted serve --public-url ${OCTOBER_BUS_PUBLIC_URL}
+ExecStart=/opt/autumn-bus-hosted/current/autumn-bus hosted serve --public-url ${AUTUMN_BUS_PUBLIC_URL}
 Restart=on-failure
 RestartSec=3
 TimeoutStopSec=20

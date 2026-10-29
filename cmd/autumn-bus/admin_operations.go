@@ -18,8 +18,8 @@ func scopeAdmin(operation string, args []string) error {
 <<<<<<<< HEAD:cmd/autumn-bus/admin_operations.go
 	address := flags.String("address", "", "Autumn Bus address")
 ========
-	address := flags.String("address", "", "Agent Intercom address")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/admin_operations.go
+	address := flags.String("address", "", "Autumn Bus address")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/admin_operations.go
 	id := flags.String("id", "", "scope ID")
 	confirm := flags.String("confirm", "", "confirm the exact scope ID for deletion")
 	if err := flags.Parse(args); err != nil {
@@ -129,8 +129,8 @@ func localScopeClientAt(paths bus.DaemonPaths, scopeID string) (bus.Client, erro
 <<<<<<<< HEAD:cmd/autumn-bus/admin_operations.go
 		return bus.Client{}, fmt.Errorf("local daemon is unavailable; run autumn-bus start: %w", err)
 ========
-		return bus.Client{}, fmt.Errorf("local daemon is unavailable; run agentintercom start: %w", err)
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/admin_operations.go
+		return bus.Client{}, fmt.Errorf("local daemon is unavailable; run autumn-bus start: %w", err)
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/admin_operations.go
 	}
 	token, err := bus.ReadScopeToken(paths.DataDir, scopeID)
 	if err != nil {
@@ -167,8 +167,8 @@ func backupDatabase(args []string) error {
 	address := flags.String("address", "", "Autumn Bus address")
 ========
 	bundle := flags.Bool("bundle", false, "include attachment bytes with the SQLite snapshot in a tar.gz bundle")
-	address := flags.String("address", "", "Agent Intercom address")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/admin_operations.go
+	address := flags.String("address", "", "Autumn Bus address")
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/admin_operations.go
 	output := flags.String("output", "", "new private SQLite backup path")
 	if err := flags.Parse(args); err != nil {
 		return err

@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 func TestAttachmentCLIUploadDownloadAndNoOverwrite(t *testing.T) {
@@ -29,7 +29,7 @@ func TestAttachmentCLIUploadDownloadAndNoOverwrite(t *testing.T) {
 	}
 	server := httptest.NewServer(bus.NewServer(r, bus.ServerOptions{}))
 	defer server.Close()
-	t.Setenv("OCTOBER_BUS_AGENT_TOKEN", agent.AgentToken)
+	t.Setenv("AUTUMN_BUS_AGENT_TOKEN", agent.AgentToken)
 	var out bytes.Buffer
 	data := []byte{0, 255, 27, 91, 65}
 	err = attachmentCommand([]string{"upload", "--address", server.URL, "--file", "-", "--name", "payload.bin", "--key", "once"}, bytes.NewReader(data), &out)

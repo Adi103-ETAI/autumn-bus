@@ -18,11 +18,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/october-dev/october-bus/bus"
-	"github.com/october-dev/october-bus/internal/nativewake"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/internal/nativewake"
 )
 
-const nativeBindingFileEnv = "OCTOBER_BUS_NATIVE_BINDING_FILE"
+const nativeBindingFileEnv = "AUTUMN_BUS_NATIVE_BINDING_FILE"
 
 func sessionCommand(args []string) error {
 	if len(args) > 0 && args[0] == "attach" {
@@ -33,7 +33,7 @@ func sessionCommand(args []string) error {
 	}
 	if len(args) > 0 && args[0] == "bind" {
 		if err := bindNativeSession(args[1:]); err != nil {
-			fmt.Fprintln(os.Stderr, "Agent Intercom: native inbox binding unavailable; standard MCP remains connected")
+			fmt.Fprintln(os.Stderr, "Autumn Bus: native inbox binding unavailable; standard MCP remains connected")
 		}
 		return nil
 	}
@@ -277,8 +277,8 @@ func startNativeSession(provider string, args []string) error {
 	childCtx, stopChild := context.WithCancel(ctx)
 	defer stopChild()
 	providerArgs := append([]string{"--settings", filepath.Join(dir, "settings.json"), "--mcp-config", filepath.Join(dir, "mcp.json")}, flags.Args()...)
-	childEnv := removeEnvironment(os.Environ(), "OCTOBER_BUS_SCOPE_TOKEN", "OCTOBER_BUS_ADMIN_TOKEN", "OCTOBER_BUS_DATABASE_URL", "OCTOBER_BUS_ENCRYPTION_KEY", "OCTOBER_BUS_BILLING_SECRET", managedConnectionFileEnv, "CLAUDE_CODE_MESSAGING_SOCKET", "CLAUDE_CODE_MESSAGING_TOKEN", "OCTOBER_BUS_ADDRESS", "OCTOBER_BUS_MCP_URL", "OCTOBER_BUS_AGENT_TOKEN", "OCTOBER_BUS_AGENT_ID", "OCTOBER_BUS_EXECUTION_ID", nativeBindingFileEnv)
-	listener := nativewake.ListenerOptions{Client: session.Client, Binding: func() (nativewake.Binding, error) { return readNativeBinding(filepath.Join(dir, "binding.json")) }, Diagnostic: func(message string) { fmt.Fprintln(os.Stderr, "Agent Intercom:", message) }}
+	childEnv := removeEnvironment(os.Environ(), "AUTUMN_BUS_SCOPE_TOKEN", "AUTUMN_BUS_ADMIN_TOKEN", "AUTUMN_BUS_DATABASE_URL", "AUTUMN_BUS_ENCRYPTION_KEY", "AUTUMN_BUS_BILLING_SECRET", managedConnectionFileEnv, "CLAUDE_CODE_MESSAGING_SOCKET", "CLAUDE_CODE_MESSAGING_TOKEN", "AUTUMN_BUS_ADDRESS", "AUTUMN_BUS_MCP_URL", "AUTUMN_BUS_AGENT_TOKEN", "AUTUMN_BUS_AGENT_ID", "AUTUMN_BUS_EXECUTION_ID", nativeBindingFileEnv)
+	listener := nativewake.ListenerOptions{Client: session.Client, Binding: func() (nativewake.Binding, error) { return readNativeBinding(filepath.Join(dir, "binding.json")) }, Diagnostic: func(message string) { fmt.Fprintln(os.Stderr, "Autumn Bus:", message) }}
 	var renewalDone <-chan error
 	if provider == "codex" {
 		connectionPath := filepath.Join(dir, "connection.json")
@@ -322,7 +322,7 @@ func startNativeSession(provider string, args []string) error {
 		defer func() { stopRenewal(); <-done }()
 		fmt.Fprintf(os.Stderr, "Codex session: %s. Native wake uses the experimental app-server integration.\n", *thread)
 	} else {
-		childEnv = setEnvironment(childEnv, "OCTOBER_BUS_ADDRESS", owner.Address, "OCTOBER_BUS_MCP_URL", owner.Address+"/mcp", "OCTOBER_BUS_AGENT_TOKEN", session.Registration.AgentToken, "OCTOBER_BUS_AGENT_ID", session.Registration.AgentID, "OCTOBER_BUS_EXECUTION_ID", session.Registration.ExecutionID, nativeBindingFileEnv, filepath.Join(dir, "binding.json"))
+		childEnv = setEnvironment(childEnv, "AUTUMN_BUS_ADDRESS", owner.Address, "AUTUMN_BUS_MCP_URL", owner.Address+"/mcp", "AUTUMN_BUS_AGENT_TOKEN", session.Registration.AgentToken, "AUTUMN_BUS_AGENT_ID", session.Registration.AgentID, "AUTUMN_BUS_EXECUTION_ID", session.Registration.ExecutionID, nativeBindingFileEnv, filepath.Join(dir, "binding.json"))
 	}
 	command := exec.CommandContext(childCtx, *binary, providerArgs...)
 	command.Stdin, command.Stdout, command.Stderr = os.Stdin, os.Stdout, os.Stderr
@@ -386,5 +386,5 @@ func guardNativeSession(input io.Reader, output io.Writer) error {
 	if err != nil || status.Pending == 0 {
 		return nil
 	}
-	return json.NewEncoder(output).Encode(map[string]string{"decision": "block", "reason": "Agent Intercom still has pending messages. Check the agent_intercom inbox, acknowledge work you accept, and reply to requests. Keep your normal permissions. If you cannot act, explain that to the sender; do not bypass a permission prompt."})
+	return json.NewEncoder(output).Encode(map[string]string{"decision": "block", "reason": "Autumn Bus still has pending messages. Check the agent_intercom inbox, acknowledge work you accept, and reply to requests. Keep your normal permissions. If you cannot act, explain that to the sender; do not bypass a permission prompt."})
 }

@@ -76,7 +76,7 @@ func NewAgentCard(agent AgentProfile, options CardOptions) (*a2a.AgentCard, erro
 		options.Version = "dev"
 	}
 	if options.Description == "" {
-		options.Description = "AI agent connected through Agent Intercom."
+		options.Description = "AI agent connected through Autumn Bus."
 	}
 
 	skills := make([]a2a.AgentSkill, 0, len(agent.Capabilities))
@@ -107,7 +107,7 @@ func NewAgentCard(agent AgentProfile, options CardOptions) (*a2a.AgentCard, erro
 		SecuritySchemes: a2a.NamedSecuritySchemes{
 			bearerSchemeName: a2a.HTTPAuthSecurityScheme{
 				Scheme:      "Bearer",
-				Description: "Agent Intercom A2A credential.",
+				Description: "Autumn Bus A2A credential.",
 			},
 		},
 		SecurityRequirements: a2a.SecurityRequirementsOptions{

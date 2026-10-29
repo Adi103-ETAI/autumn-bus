@@ -10,7 +10,7 @@ const deferred = () => {
   const promise = new Promise((done) => { resolve = done })
   return { promise, resolve }
 }
-const healthy = { name: 'october-bus', protocolVersion: '0.1', status: 'ready', features: ['session-retirement'] }
+const healthy = { name: 'autumn-bus', protocolVersion: '0.1', status: 'ready', features: ['session-retirement'] }
 const mockRuntime = (t, handler) => t.mock.method(globalThis, 'fetch', async (url, request) =>
   url.endsWith('/health') ? ok(healthy) : handler(url, request))
 

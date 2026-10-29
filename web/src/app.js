@@ -8,7 +8,7 @@ const viewCleanups = [];
 function clearView() { for (const cleanup of viewCleanups.splice(0)) cleanup(); }
 const params = new URLSearchParams(location.search);
 if (params.has('billing')) state.tab = 'billing';
-const pendingKey = 'agentintercom-pending';
+const pendingKey = 'autumn-bus-pending';
 let pending = {};
 try { const saved = JSON.parse(sessionStorage.getItem(pendingKey) || '{}'); if (saved.until > Date.now()) pending = saved; } catch {}
 if (params.get('authorization_id')) pending.authorization = params.get('authorization_id');
@@ -103,8 +103,8 @@ function attachmentPicker(scopePath, textInput) {
 }
 function attachmentLinks(scopePath, text, context = []) {
   const ids = new Map();
-  for (const match of String(text).matchAll(/october-bus:\/\/attachments\/(att_[0-9a-f]{32})(?![0-9a-f])/g)) ids.set(match[1], '');
-  for (const item of context || []) { const id = item.uri?.match(/^october-bus:\/\/attachments\/(att_[0-9a-f]{32})$/)?.[1]; if (id) ids.set(id, item.title); }
+  for (const match of String(text).matchAll(/autumn-bus:\/\/attachments\/(att_[0-9a-f]{32})(?![0-9a-f])/g)) ids.set(match[1], '');
+  for (const item of context || []) { const id = item.uri?.match(/^autumn-bus:\/\/attachments\/(att_[0-9a-f]{32})$/)?.[1]; if (id) ids.set(id, item.title); }
   return el('div', { class: 'actions' }, [...ids].map(([id, name]) => button(name ? `Download ${name}` : 'Download shared file', () => downloadFile(scopePath, id, name))));
 }
 async function filesView() {
@@ -140,7 +140,7 @@ function signIn() {
   const emailForm = form([email.node], 'Continue with email', async data => {
     const { error } = await state.auth.signInWithOtp({ email: data.get('email'), options: { emailRedirectTo: location.origin + '/app' + (pending.authorization ? '?authorization_id=' + encodeURIComponent(pending.authorization) : pending.device ? '?device_code=' + encodeURIComponent(pending.device) : ''), shouldCreateUser: true } });
     if (error) throw error;
-    inform('Check your email for an October sign-in link. Open it in this browser.');
+    inform('Check your email for an Autumn sign-in link. Open it in this browser.');
     emailForm.append(el('p', { class: 'notice-inline' }, 'Check your email for a sign-in link. Keep this tab open so you can return to your connection request.'));
   });
   const passwordEmail = field('Email address', { name: 'email', type: 'email', autocomplete: 'username', required: true });
@@ -152,13 +152,13 @@ function signIn() {
   });
   root.replaceChildren(el('main', { id: 'main', class: 'auth-wrap' }, brand(), el('div', { class: 'auth-layout' },
     el('div', { class: 'auth-copy' }, el('div', { class: 'eyebrow' }, 'One place to work together'), el('h1', {}, 'Your agents.\nA shared conversation.'), el('p', {}, 'Connect your AI apps, bring in another machine, and keep the work moving with your team.')),
-    el('section', { class: 'card auth-card', 'aria-labelledby': 'signin-title' }, el('h2', { id: 'signin-title' }, 'Sign in to October'), el('p', { class: 'help' }, 'Use your existing October account, or create one with your email.'), emailForm, el('details', {}, el('summary', {}, 'Use an existing password'), passwordForm), el('p', { class: 'help' }, 'Your AI subscriptions stay with your apps. Agent Intercom connects the work.')))));
+    el('section', { class: 'card auth-card', 'aria-labelledby': 'signin-title' }, el('h2', { id: 'signin-title' }, 'Sign in to Autumn'), el('p', { class: 'help' }, 'Use your existing Autumn account, or create one with your email.'), emailForm, el('details', {}, el('summary', {}, 'Use an existing password'), passwordForm), el('p', { class: 'help' }, 'Your AI subscriptions stay with your apps. Autumn Bus connects the work.')))));
 }
 
 async function signedIn() {
   state.user = await api('/api/me');
   state.workspaces = await api('/api/workspaces');
-  const wanted = (params.has('billing') && params.get('workspace')) || localStorage.getItem('agentintercom-workspace');
+  const wanted = (params.has('billing') && params.get('workspace')) || localStorage.getItem('autumn-bus-workspace');
   state.workspace = state.workspaces.find(w => w.id === wanted) || state.workspaces[0] || null;
   if (pending.invite) return invitation();
   if (pending.authorization) return consent();
@@ -170,7 +170,7 @@ function createWorkspace(onCreated) {
   const name = field('Workspace name', { name: 'name', placeholder: 'My team', maxlength: 100, required: true });
   return form([name.node, el('p', { class: 'help' }, 'Your first workspace starts a 14-day trial. Additional workspaces share its end date. Up to 5 people; no payment details needed.')], 'Create workspace', async data => {
     const workspace = await api('/api/workspaces', { method: 'POST', body: { name: data.get('name') } });
-    state.workspaces.push(workspace); state.workspace = workspace; localStorage.setItem('agentintercom-workspace', workspace.id); await onCreated();
+    state.workspaces.push(workspace); state.workspace = workspace; localStorage.setItem('autumn-bus-workspace', workspace.id); await onCreated();
   });
 }
 function firstWorkspace() {
@@ -178,7 +178,7 @@ function firstWorkspace() {
 }
 async function signOut() { const { error } = await state.auth.signOut({ scope: 'local' }); if (error) throw error; state.generation++; signIn(); }
 function workspaceSelect(onChange) {
-  const select = el('select', { 'aria-label': 'Workspace', onchange: e => { state.workspace = state.workspaces.find(w => w.id === e.target.value); localStorage.setItem('agentintercom-workspace', state.workspace.id); action(null, onChange); } }, state.workspaces.map(w => el('option', { value: w.id, selected: w.id === state.workspace?.id }, w.name)));
+  const select = el('select', { 'aria-label': 'Workspace', onchange: e => { state.workspace = state.workspaces.find(w => w.id === e.target.value); localStorage.setItem('autumn-bus-workspace', state.workspace.id); action(null, onChange); } }, state.workspaces.map(w => el('option', { value: w.id, selected: w.id === state.workspace?.id }, w.name)));
   return select;
 }
 async function consent() {
@@ -195,7 +195,7 @@ async function consent() {
     closePending('authorization'); location.assign(result.redirectUrl);
   };
   const choice = state.workspaces.length ? el('div', {}, el('label', {}, 'Connect to workspace', workspaceSelect(consent)), ownApps.length ? el('label', {}, 'App connection', replacement) : null, warning, el('div', { class: 'actions' }, button('Allow connection', () => approve(true), 'primary'), button('Cancel', () => approve(false)))) : createWorkspace(consent);
-  root.replaceChildren(el('main', { id: 'main', class: 'consent' }, brand(), el('section', { class: 'card' }, el('div', { class: 'eyebrow' }, 'Connect an app'), el('h1', {}, request.clientName), el('p', {}, 'wants to connect to your Agent Intercom workspace.'), el('p', { class: 'help' }, 'This app registered itself. October has not verified its publisher. Only continue if you started this connection in an app you trust.'), el('ul', { class: 'permission-list' }, el('li', {}, 'Read and share messages, files and channels in the selected workspace.'), el('li', {}, 'Discover connected sessions and coordinate shared tasks.'), el('li', {}, 'Remain connected until you revoke access or the connection expires.')), el('p', { class: 'help' }, 'You can revoke access at any time in Members & devices.'), el('p', { class: 'help' }, 'Returns to: ', el('code', {}, new URL(request.redirectUri).origin)), choice)));
+  root.replaceChildren(el('main', { id: 'main', class: 'consent' }, brand(), el('section', { class: 'card' }, el('div', { class: 'eyebrow' }, 'Connect an app'), el('h1', {}, request.clientName), el('p', {}, 'wants to connect to your Autumn Bus workspace.'), el('p', { class: 'help' }, 'This app registered itself. Autumn has not verified its publisher. Only continue if you started this connection in an app you trust.'), el('ul', { class: 'permission-list' }, el('li', {}, 'Read and share messages, files and channels in the selected workspace.'), el('li', {}, 'Discover connected sessions and coordinate shared tasks.'), el('li', {}, 'Remain connected until you revoke access or the connection expires.')), el('p', { class: 'help' }, 'You can revoke access at any time in Members & devices.'), el('p', { class: 'help' }, 'Returns to: ', el('code', {}, new URL(request.redirectUri).origin)), choice)));
 }
 async function deviceConsent() {
   const request = await api(`/api/device/authorizations/${encodeURIComponent(pending.device)}`);
@@ -217,7 +217,7 @@ async function deviceConsent() {
 function invitation() {
   root.replaceChildren(el('main', { id: 'main', class: 'consent' }, brand(), el('section', { class: 'card' }, el('h1', {}, 'Join a workspace'), el('p', {}, `You are signed in as ${state.user.email}. The invitation must match this address.`), el('div', { class: 'actions' }, button('Accept invitation', async () => {
     const result = await api('/api/invites/accept', { method: 'POST', body: { token: pending.invite } });
-    localStorage.setItem('agentintercom-workspace', result.workspaceId); closePending('invite'); await signedIn();
+    localStorage.setItem('autumn-bus-workspace', result.workspaceId); closePending('invite'); await signedIn();
   }, 'primary'), button('Use another account', signOut), button('Cancel', async () => { closePending('invite'); await signedIn(); })))));
 }
 
@@ -252,17 +252,17 @@ async function sessionsView() {
   if (!page.sessions.length) return el('section', { class: 'card empty' }, el('h2', {}, 'Your first connection starts here.'), el('p', { class: 'muted' }, 'Connect an AI app or terminal session. It will appear here under its own name, ready for shared work.'), button('Connect an app', async () => { state.tab = 'connect'; await render(); }, 'primary'));
   append(page); container.append(list);
   if (page.nextCursor) { let cursor = page.nextCursor; const more = button('Show more sessions', async () => { const next = await api(path('/sessions') + '?after=' + encodeURIComponent(cursor)); append(next); cursor = next.nextCursor; if (!cursor) more.remove(); }); container.append(more); }
-  container.append(el('p', { class: 'help' }, 'Connected means the app contacted Agent Intercom recently. It does not mean the model is currently working.'), button('Refresh sessions', render)); return container;
+  container.append(el('p', { class: 'help' }, 'Connected means the app contacted Autumn Bus recently. It does not mean the model is currently working.'), button('Refresh sessions', render)); return container;
 }
 function connectView() {
   const url = state.config.mcpUrl;
   const scopePath = path('');
-  return el('div', { class: 'grid' }, el('section', { class: 'card' }, el('h2', {}, 'An app with remote MCP'), el('p', {}, 'In your app’s connectors or MCP settings, add Agent Intercom using this address.'), el('pre', {}, url), button('Copy connector URL', () => copy(url)), el('ol', {}, el('li', {}, 'Add the connector in your app.'), el('li', {}, 'Sign in to October and choose this workspace.'), el('li', {}, 'Ask your app to check its Bus inbox or find connected sessions.')), el('p', { class: 'help' }, 'Works with compatible Streamable HTTP MCP clients. Your app controls which conversations can use tools and whether an idle conversation can resume.')),
+  return el('div', { class: 'grid' }, el('section', { class: 'card' }, el('h2', {}, 'An app with remote MCP'), el('p', {}, 'In your app’s connectors or MCP settings, add Autumn Bus using this address.'), el('pre', {}, url), button('Copy connector URL', () => copy(url)), el('ol', {}, el('li', {}, 'Add the connector in your app.'), el('li', {}, 'Sign in to Autumn and choose this workspace.'), el('li', {}, 'Ask your app to check its Bus inbox or find connected sessions.')), el('p', { class: 'help' }, 'Works with compatible Streamable HTTP MCP clients. Your app controls which conversations can use tools and whether an idle conversation can resume.')),
     el('section', { class: 'card' }, el('h2', {}, 'An app that asks for an API key'), el('p', {}, 'Use the same remote MCP URL. Create a separate key for each app so you can revoke it independently.'), form([field('App connection name', { name: 'name', required: true, maxlength: 100, placeholder: 'My AI app' }).node, el('p', { class: 'help' }, 'The app can read and share workspace messages, files, channels and tasks. A key expires after 90 days and cannot manage your account or members.')], 'Create MCP key', async data => {
       const connection = await api(scopePath + '/mcp-keys', { method: 'POST', body: { name: data.get('name') } });
       secretDialog('MCP connection key', connection.token, `Paste this into your app’s secret/API key field, or use Authorization: Bearer <key>. It is shown once and expires ${date(connection.expiresAt)}. Keep it out of chat, URLs and source control.`);
     }), el('p', { class: 'help' }, 'Choose OAuth instead if your app offers it. Neither connection method can make an unsupported app resume an idle conversation.')),
-    el('section', { class: 'card' }, el('h2', {}, 'Another machine or automation'), el('p', {}, 'Install the Agent Intercom CLI on that machine, then run:'), el('pre', {}, 'agentintercom hosted login --server ' + location.origin), el('p', {}, 'Open the link it prints, confirm the code and choose this workspace. For any app with a local MCP connection, run:'), el('pre', {}, 'agentintercom connect --hosted default'), el('p', {}, 'Or start a terminal session with native message wake:'), el('pre', {}, 'agentintercom session start claude --hosted default\nagentintercom session start codex --hosted default'), el('p', { class: 'help' }, 'Choose the app you use. Keep its terminal open; normal app permissions apply. Codex native wake is experimental.'), el('details', {}, el('summary', {}, 'Create a credential for custom automation'), form([field('Device name', { name: 'name', required: true, maxlength: 100, placeholder: 'My laptop' }).node], 'Create device credential', async data => {
+    el('section', { class: 'card' }, el('h2', {}, 'Another machine or automation'), el('p', {}, 'Install the Autumn Bus CLI on that machine, then run:'), el('pre', {}, 'autumn-bus hosted login --server ' + location.origin), el('p', {}, 'Open the link it prints, confirm the code and choose this workspace. For any app with a local MCP connection, run:'), el('pre', {}, 'autumn-bus connect --hosted default'), el('p', {}, 'Or start a terminal session with native message wake:'), el('pre', {}, 'autumn-bus session start claude --hosted default\nautumn-bus session start codex --hosted default'), el('p', { class: 'help' }, 'Choose the app you use. Keep its terminal open; normal app permissions apply. Codex native wake is experimental.'), el('details', {}, el('summary', {}, 'Create a credential for custom automation'), form([field('Device name', { name: 'name', required: true, maxlength: 100, placeholder: 'My laptop' }).node], 'Create device credential', async data => {
       const device = await api(path('/devices'), { method: 'POST', body: { name: data.get('name') } });
       secretDialog('Device credential', device.token, 'Save this in your device’s secret store. It is shown only once. Anyone with it can join sessions to this workspace as you.');
     }), el('p', { class: 'help' }, 'Keep credentials out of chat messages, shell history and source control.'))));
@@ -298,7 +298,7 @@ async function membersView() {
     const email = field('Teammate’s email', { name: 'email', type: 'email', required: true });
     const invitationForm = form([email.node], 'Create invitation', async data => {
       const result = await api(path('/invites'), { method: 'POST', body: { email: data.get('email'), role: 'member' } });
-      secretDialog('Share this invitation', `${location.origin}/app#invite=${encodeURIComponent(result.token)}`, `Share this link with ${result.email}. It expires ${date(result.expiresAt)} and can be accepted once by that address. October has not sent an email.`);
+      secretDialog('Share this invitation', `${location.origin}/app#invite=${encodeURIComponent(result.token)}`, `Share this link with ${result.email}. It expires ${date(result.expiresAt)} and can be accepted once by that address. Autumn has not sent an email.`);
     });
     const invites = await api(path('/invites'));
     const section = el('section', { class: 'card' }, el('h2', {}, 'Invite a teammate'), invitationForm);
@@ -311,7 +311,7 @@ async function membersView() {
 async function start() {
   state.config = await api('/api/config');
   if (!state.config.authUrl || !state.config.authPublicKey) throw new Error('Sign-in is not configured on this server. Contact its operator.');
-  state.auth = new AuthClient({ url: state.config.authUrl + '/auth/v1', headers: { apikey: state.config.authPublicKey, Authorization: `Bearer ${state.config.authPublicKey}` }, storageKey: 'agentintercom-auth', flowType: 'pkce', autoRefreshToken: true, persistSession: true, detectSessionInUrl: true });
+  state.auth = new AuthClient({ url: state.config.authUrl + '/auth/v1', headers: { apikey: state.config.authPublicKey, Authorization: `Bearer ${state.config.authPublicKey}` }, storageKey: 'autumn-bus-auth', flowType: 'pkce', autoRefreshToken: true, persistSession: true, detectSessionInUrl: true });
   const { data, error } = await state.auth.getSession();
   if (error) throw error;
   if (data.session) await signedIn(); else signIn();
@@ -544,7 +544,7 @@ async function dataView() {
   result.append(el('section', { class: 'card' }, el('h2', {}, 'Download a portable archive'),
     el('p', {}, 'Includes retained messages, tasks, questions, channels, output values and file bytes. Does not contain account credentials or payment details. Pause sessions first so the archive is consistent.'),
     el('p', { class: 'help' }, 'Portable archives are limited to 64 MiB, including encoded files. Larger workspaces need an operator-assisted database and file export. File bytes in an archive count toward download allowance. Store the download privately.'),
-    button('Download workspace archive', async () => { const response = await fileRequest(scopePath + '/export'); const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = el('a', { href: url, download: 'agentintercom-workspace.json' }); document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000); })));
+    button('Download workspace archive', async () => { const response = await fileRequest(scopePath + '/export'); const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = el('a', { href: url, download: 'autumn-bus-workspace.json' }); document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000); })));
   const cutoff = field('Remove eligible history completed before', { name: 'before', type: 'date', required: true, value: new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10), max: new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10) });
   result.append(el('section', { class: 'card' }, el('h2', {}, 'Prune completed history'), el('p', {}, 'Review a preview before deleting anything. Export first if you need to retain a copy. This does not remove unfinished work, files or your subscription.'),
     form([cutoff.node], 'Preview cleanup', async data => {
@@ -555,7 +555,7 @@ async function dataView() {
   result.append(el('section', { class: 'card' }, el('h2', {}, 'Retained records'), el('p', { class: 'help' }, 'Payload estimates below exclude database indexes and some record overhead; billing usage includes a per-record estimate.'), (storage.records || []).map(record => el('div', { class: 'row' }, el('span', {}, `${record.recordType} · ${record.state}`), el('span', {}, Number(record.count).toLocaleString())))));
   result.append(el('section', { class: 'card' }, el('h2', {}, 'Delete workspace'),
     el('p', {}, 'Permanently removes this workspace for everyone, including messages, unfinished work, files and connections. Its hosting subscription ends immediately; unused time is not automatically refunded. Export first if you need a copy.'),
-    el('p', { class: 'help' }, 'Your October account and other workspaces remain. Minimal payment references are retained for support. Private backups expire on the operator’s retention schedule.'),
+    el('p', { class: 'help' }, 'Your Autumn account and other workspaces remain. Minimal payment references are retained for support. Private backups expire on the operator’s retention schedule.'),
     button(workspace.deleting ? 'Retry workspace deletion' : 'Delete workspace', () => modal('Permanently delete this workspace?', close => {
       const confirmation = field('Type the workspace name to confirm', { name: 'confirmation', required: true, autocomplete: 'off' });
       return el('div', {}, el('p', {}, `This cannot be undone. Enter ${workspace.name} to confirm. Once requested, deletion continues even if this page closes.`),

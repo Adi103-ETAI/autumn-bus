@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 func TestNativeStopGuardIsBoundedAndFailSoft(t *testing.T) {
@@ -19,8 +19,8 @@ func TestNativeStopGuardIsBoundedAndFailSoft(t *testing.T) {
 	client := bus.Client{Address: owner.Address, Token: sender.AgentToken}
 	_, err = client.SendMessage(ctx, bus.SendMessageInput{To: "receiver", Body: "Pending"})
 	requireNoError(t, err)
-	t.Setenv("OCTOBER_BUS_ADDRESS", owner.Address)
-	t.Setenv("OCTOBER_BUS_AGENT_TOKEN", receiver.AgentToken)
+	t.Setenv("AUTUMN_BUS_ADDRESS", owner.Address)
+	t.Setenv("AUTUMN_BUS_AGENT_TOKEN", receiver.AgentToken)
 	t.Setenv(nativeBindingFileEnv, filepath.Join(t.TempDir(), "binding.json"))
 	var out bytes.Buffer
 	requireNoError(t, guardNativeSession(strings.NewReader(`{"stop_hook_active":false}`), &out))

@@ -228,8 +228,8 @@ func TestManagedMCPBridgeCancellationAndConcurrencyKeepSession(t *testing.T) {
 <<<<<<<< HEAD:cmd/autumn-bus/mcp_upstream_test.go
 	require(t, !strings.Contains(stderr.String(), "autumn-bus mcp stdio:"), "healthy session produced diagnostics: %s", stderr.String())
 ========
-	require(t, !strings.Contains(stderr.String(), "agentintercom mcp stdio:"), "healthy session produced diagnostics: %s", stderr.String())
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/agentintercom/mcp_upstream_test.go
+	require(t, !strings.Contains(stderr.String(), "autumn-bus mcp stdio:"), "healthy session produced diagnostics: %s", stderr.String())
+>>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/mcp_upstream_test.go
 }
 
 func TestManagedMCPBridgeRecoversAfterRefusalWithoutReplay(t *testing.T) {

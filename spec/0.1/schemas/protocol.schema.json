@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/october-dev/october-bus/spec/0.1/schemas/protocol.schema.json",
-  "title": "Agent Intercom protocol 0.1",
+  "$id": "https://github.com/Adi103-ETAI/autumn-bus/spec/0.1/schemas/protocol.schema.json",
+  "title": "Autumn Bus protocol 0.1",
   "$defs": {
   "attachment": {
     "type": "object",
@@ -43,7 +43,7 @@
       },
       "uri": {
         "type": "string",
-        "pattern": "^october-bus://attachments/att_[0-9a-f]{32}$"
+        "pattern": "^autumn-bus://attachments/att_[0-9a-f]{32}$"
       }
     },
     "required": [
@@ -162,7 +162,7 @@
       "additionalProperties": false,
       "required": ["name", "protocolVersion", "runtimeVersion", "status", "startedAt", "storage"],
       "properties": {
-        "name": { "const": "october-bus" },
+        "name": { "const": "autumn-bus" },
         "protocolVersion": { "const": "0.1" },
         "runtimeVersion": { "type": "string", "minLength": 1 },
         "features": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
@@ -185,7 +185,7 @@
       "additionalProperties": false,
       "required": ["name", "status", "startedAt"],
       "properties": {
-        "name": { "const": "october-bus" },
+        "name": { "const": "autumn-bus" },
         "status": { "const": "alive" },
         "startedAt": { "$ref": "#/$defs/instant" }
       }

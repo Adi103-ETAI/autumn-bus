@@ -95,7 +95,7 @@ async function request<T>(
   if (options.signal?.aborted) onAbort()
   else options.signal?.addEventListener('abort', onAbort, { once: true })
   const timeout = setTimeout(
-    () => controller.abort(new Error(`Agent Intercom request timed out after ${timeoutMs}ms`)),
+    () => controller.abort(new Error(`Autumn Bus request timed out after ${timeoutMs}ms`)),
     timeoutMs
   )
   let response: Response
@@ -116,7 +116,7 @@ async function request<T>(
   } catch (error) {
     const cause = controller.signal.aborted ? controller.signal.reason : error
     const message = cause instanceof Error ? cause.message : 'Network request failed'
-    throw new BusError('INTERNAL', `Agent Intercom request failed: ${message}`)
+    throw new BusError('INTERNAL', `Autumn Bus request failed: ${message}`)
   } finally {
     clearTimeout(timeout)
     options.signal?.removeEventListener('abort', onAbort)
@@ -125,7 +125,7 @@ async function request<T>(
   try {
     payload = JSON.parse(text) as Success<T> | Failure | T
   } catch {
-    throw new BusError('INTERNAL', `Agent Intercom returned a non-JSON response with HTTP ${response.status}`)
+    throw new BusError('INTERNAL', `Autumn Bus returned a non-JSON response with HTTP ${response.status}`)
   }
   if (response.ok) {
     if (payload && typeof payload === 'object' && 'ok' in payload && payload.ok === true)
@@ -146,7 +146,7 @@ async function request<T>(
     const failure = payload as Failure
     throw new BusError(failure.error.code, failure.error.message, failure.error.details)
   }
-  throw new BusError('INTERNAL', `Agent Intercom request failed with HTTP ${response.status}`)
+  throw new BusError('INTERNAL', `Autumn Bus request failed with HTTP ${response.status}`)
 }
 
 export class AgentIntercomAdminClient {

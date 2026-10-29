@@ -1,6 +1,6 @@
 # Storage backend contract
 
-Agent Intercom keeps protocol behavior above its storage implementation. The runtime depends on a domain-level storage contract instead of issuing database queries from HTTP, MCP, or A2A handlers.
+Autumn Bus keeps protocol behavior above its storage implementation. The runtime depends on a domain-level storage contract instead of issuing database queries from HTTP, MCP, or A2A handlers.
 
 SQLite is the default local backend. It requires no external service. Hosted services can use PostgreSQL with the same domain transactions and public HTTP/MCP contract.
 
@@ -37,7 +37,7 @@ PostgreSQL uses [versioned migrations](../../deploy/hosted/migrations/README.md)
 
 A transaction advisory lock serializes each scope across server processes. Different scopes can progress concurrently. Statements use READ COMMITTED snapshots after acquiring the lock, so token rotation, execution replacement, deduplication and task claims see preceding committed changes. Cross-process inbox/event waits check the database at most once per second while waiting; in-process commits also signal immediately. This works with transaction poolers without a separate notification service.
 
-Tests cover concurrent independent runtimes and the same public conformance profile as SQLite. Set `OCTOBER_BUS_TEST_POSTGRES_URL` to run them against an isolated loopback database. Capacity still needs qualification for each deployment and workload.
+Tests cover concurrent independent runtimes and the same public conformance profile as SQLite. Set `AUTUMN_BUS_TEST_POSTGRES_URL` to run them against an isolated loopback database. Capacity still needs qualification for each deployment and workload.
 
 Shared deployments may run several stateless Bus server instances over one PostgreSQL database. Independent databases are not replicas of one scope, and storage support does not grant a server authority over processes running on another host.
 

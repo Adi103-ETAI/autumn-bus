@@ -87,7 +87,7 @@ export class AgentIntercomAgentSession {
     const health = await new AgentIntercomAdminClient(options.address, '').health(
       options.signal === undefined ? {} : { signal: options.signal }
     )
-    if (health.name !== 'october-bus' || health.protocolVersion !== '0.1' ||
+    if (health.name !== 'autumn-bus' || health.protocolVersion !== '0.1' ||
         health.status !== 'ready' || !Array.isArray(health.features) || !health.features.includes('session-retirement')) {
       throw new BusError('CONFLICT', 'Managed sessions require a ready protocol 0.1 runtime advertising session-retirement; upgrade the daemon before registering')
     }

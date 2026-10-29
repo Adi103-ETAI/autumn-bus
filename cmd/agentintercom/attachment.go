@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 func attachmentCommand(args []string, in io.Reader, out io.Writer) error {

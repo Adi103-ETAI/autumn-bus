@@ -50,16 +50,16 @@ def request(path, token='', method='GET', body=None):
         return json.load(response)
 
 
-with tempfile.TemporaryDirectory(prefix='agentintercom-proxy-') as directory:
+with tempfile.TemporaryDirectory(prefix='autumn-bus-proxy-') as directory:
     try:
         standalone, legacy, marketing = backend('standalone'), backend('legacy'), backend('marketing')
         with socket.socket() as reservation:
             reservation.bind(('127.0.0.1', 0))
             port = reservation.getsockname()[1]
         origin = f'http://127.0.0.1:{port}'
-        config = '{\n admin off\n auto_https off\n}\n'+source.replace('bus.october.dev {', origin+' {')
+        config = '{\n admin off\n auto_https off\n}\n'+source.replace('bus.autumn.dev {', origin+' {')
         config = config.replace('127.0.0.1:4780', f'127.0.0.1:{standalone}').replace('127.0.0.1:8787', f'127.0.0.1:{legacy}')
-        config = config.replace('https://october-products.vercel.app', f'http://127.0.0.1:{marketing}')
+        config = config.replace('https://autumn-products.vercel.app', f'http://127.0.0.1:{marketing}')
         config = '\n'.join(line for line in config.splitlines() if 'tls_server_name' not in line)
         path = pathlib.Path(directory)/'Caddyfile'
         path.write_text(config)

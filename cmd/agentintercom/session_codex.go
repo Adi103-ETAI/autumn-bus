@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/october-dev/october-bus/bus"
+	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
 var codexThreadID = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
@@ -26,7 +26,7 @@ func codexConnectionConfig(binary, path string) []string {
 	args, _ := json.Marshal([]string{"mcp", "stdio", "--connection-file", path, "--ready-file", filepath.Join(filepath.Dir(path), "ready.json")})
 	// Replace this invocation's complete transport table so an older remote URL
 	// or execution-token environment cannot be merged into the managed bridge.
-	return []string{"-c", "mcp_servers.agent_intercom={enabled=true,command=" + string(command) + ",args=" + string(args) + ",env={OCTOBER_BUS_AGENT_TOKEN=\"\",OCTOBER_BUS_SCOPE_TOKEN=\"\",OCTOBER_BUS_ADMIN_TOKEN=\"\",OCTOBER_BUS_CONNECTION_FILE=\"\",OCTOBER_BUS_ADDRESS=\"\",OCTOBER_BUS_MCP_URL=\"\"},startup_timeout_sec=20,tool_timeout_sec=60}"}
+	return []string{"-c", "mcp_servers.agent_intercom={enabled=true,command=" + string(command) + ",args=" + string(args) + ",env={AUTUMN_BUS_AGENT_TOKEN=\"\",AUTUMN_BUS_SCOPE_TOKEN=\"\",AUTUMN_BUS_ADMIN_TOKEN=\"\",AUTUMN_BUS_CONNECTION_FILE=\"\",AUTUMN_BUS_ADDRESS=\"\",AUTUMN_BUS_MCP_URL=\"\"},startup_timeout_sec=20,tool_timeout_sec=60}"}
 }
 func validateCodexNativeArgs(args []string) error {
 	for i, arg := range args {

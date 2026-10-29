@@ -13,18 +13,18 @@ import {
   withClaimedTask
 } from '../dist/index.js'
 
-const binary = process.env.OCTOBER_BUS_BINARY
-if (!binary) throw new Error('OCTOBER_BUS_BINARY is required')
+const binary = process.env.AUTUMN_BUS_BINARY
+if (!binary) throw new Error('AUTUMN_BUS_BINARY is required')
 
-const root = await mkdtemp(join(tmpdir(), 'agentintercom-sdk-'))
+const root = await mkdtemp(join(tmpdir(), 'autumn-bus-sdk-'))
 const dataDir = join(root, 'data')
 const runtimeDir = join(root, 'run')
 const runFile = join(runtimeDir, 'bus.json')
 const child = spawn(binary, ['start'], {
   env: {
     ...process.env,
-    OCTOBER_BUS_DATA_DIR: dataDir,
-    OCTOBER_BUS_RUNTIME_DIR: runtimeDir
+    AUTUMN_BUS_DATA_DIR: dataDir,
+    AUTUMN_BUS_RUNTIME_DIR: runtimeDir
   },
   stdio: ['ignore', 'pipe', 'pipe']
 })
@@ -40,19 +40,19 @@ child.stderr.on('data', (value) => {
 async function readRunFile() {
   const deadline = Date.now() + 10_000
   while (Date.now() < deadline) {
-    if (child.exitCode !== null) throw new Error(`Agent Intercom exited early: ${stderr}`)
+    if (child.exitCode !== null) throw new Error(`Autumn Bus exited early: ${stderr}`)
     try {
       return JSON.parse(await readFile(runFile, 'utf8'))
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 50))
     }
   }
-  throw new Error(`Agent Intercom did not start: ${stderr}`)
+  throw new Error(`Autumn Bus did not start: ${stderr}`)
 }
 
 try {
   const run = await readRunFile()
-  await checkHarnessSetup(binary, run, { ...process.env, OCTOBER_BUS_DATA_DIR: dataDir, OCTOBER_BUS_RUNTIME_DIR: runtimeDir }, root)
+  await checkHarnessSetup(binary, run, { ...process.env, AUTUMN_BUS_DATA_DIR: dataDir, AUTUMN_BUS_RUNTIME_DIR: runtimeDir }, root)
   const admin = new AgentIntercomAdminClient(run.address, run.adminToken)
   const health = await admin.health()
   assert.equal(health.protocolVersion, '0.1')

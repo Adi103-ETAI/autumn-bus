@@ -19,7 +19,7 @@ UPDATE a2a_message_correlations c SET scope_id=t.scope_id FROM a2a_tasks t WHERE
 ALTER TABLE a2a_message_correlations ALTER COLUMN scope_id SET NOT NULL;
 ALTER TABLE a2a_message_correlations ADD FOREIGN KEY(scope_id) REFERENCES scopes(scope_id) ON DELETE CASCADE;
 
-CREATE FUNCTION hosted_child_scope() RETURNS TRIGGER LANGUAGE plpgsql SET search_path=october_bus,pg_temp AS $$
+CREATE FUNCTION hosted_child_scope() RETURNS TRIGGER LANGUAGE plpgsql SET search_path=autumn_bus,pg_temp AS $$
 BEGIN
  IF TG_TABLE_NAME='output_values' THEN
   SELECT scope_id INTO NEW.scope_id FROM output_streams WHERE stream_id=NEW.stream_id;
@@ -31,7 +31,7 @@ END $$;
 CREATE TRIGGER hosted_child_scope BEFORE INSERT OR UPDATE ON output_values FOR EACH ROW EXECUTE FUNCTION hosted_child_scope();
 CREATE TRIGGER hosted_child_scope BEFORE INSERT OR UPDATE ON a2a_message_correlations FOR EACH ROW EXECUTE FUNCTION hosted_child_scope();
 
-CREATE FUNCTION hosted_storage_change() RETURNS TRIGGER LANGUAGE plpgsql SET search_path=october_bus,pg_temp AS $$
+CREATE FUNCTION hosted_storage_change() RETURNS TRIGGER LANGUAGE plpgsql SET search_path=autumn_bus,pg_temp AS $$
 DECLARE workspace TEXT; delta BIGINT:=0;
 BEGIN
  IF TG_OP!='DELETE' THEN

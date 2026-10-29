@@ -7,13 +7,13 @@ bin/
 coverage/
 *.log
 *.test
-/agentintercom
-/agentintercom.exe
-/agentintercom-conformance
-/agentintercom-conformance.exe
+/autumn-bus
+/autumn-bus.exe
+/autumn-bus-conformance
+/autumn-bus-conformance.exe
 .DS_Store
 
-/october-bus
-/october-bus.exe
-/october-bus-conformance
-/october-bus-conformance.exe
+/autumn-bus
+/autumn-bus.exe
+/autumn-bus-conformance
+/autumn-bus-conformance.exe

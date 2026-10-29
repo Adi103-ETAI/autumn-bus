@@ -11,7 +11,7 @@ export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 export const sdk = join(root, 'sdk/typescript')
 export const artifacts = join(root, 'dist/npm')
 export const manifest = JSON.parse(readFileSync(join(sdk, 'package.json'), 'utf8'))
-export const { targets, platformPackage } = require('../sdk/typescript/cli/agentintercom.cjs')
+export const { targets, platformPackage } = require('../sdk/typescript/cli/autumn-bus.cjs')
 
 export function npm(args, options = {}) {
   // Invoked through npm run: this also avoids a shell or npm.cmd on Windows.
@@ -34,7 +34,7 @@ export function validateDistribution() {
   const part = '(?:0|[1-9][0-9]*)'
   const pre = '(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)'
   assert.match(manifest.version, new RegExp(`^${part}\\.${part}\\.${part}(?:-${pre}(?:\\.${pre})*)?$`))
-  assert.equal(manifest.bin['agentintercom'], 'cli/agentintercom.cjs')
+  assert.equal(manifest.bin['autumn-bus'], 'cli/autumn-bus.cjs')
   const lock = JSON.parse(readFileSync(join(sdk, 'package-lock.json'), 'utf8'))
   assert.equal(lock.version, manifest.version, 'Update the source lockfile version')
   assert.equal(lock.packages[''].version, manifest.version, 'Update the root lockfile package version')
@@ -49,7 +49,7 @@ export function distributionManifest() {
 }
 
 export function requiredPath(name) {
-  if (name === manifest.name) return manifest.bin['agentintercom']
+  if (name === manifest.name) return manifest.bin['autumn-bus']
   const platform = targets.map(packageFor).find(platform => platform.name === name)
   assert.ok(platform, `Unexpected distribution package: ${name}`)
   return `bin/${platform.binary}`
@@ -66,12 +66,12 @@ function build(target, source) {
   const directory = join(artifacts, target)
   mkdirSync(join(directory, 'bin'), { recursive: true })
   const binary = join(directory, 'bin', platform.binary)
-  execFileSync('go', ['build', '-trimpath', '-ldflags', `-s -w -X github.com/october-dev/october-bus/bus.Version=${manifest.version}`, '-o', binary, './cmd/agentintercom'], {
+  execFileSync('go', ['build', '-trimpath', '-ldflags', `-s -w -X github.com/Adi103-ETAI/autumn-bus/bus.Version=${manifest.version}`, '-o', binary, './cmd/autumn-bus'], {
     cwd: root, stdio: 'inherit', env: { ...process.env, CGO_ENABLED: '0', GOOS: platform.goos, GOARCH: platform.goarch }
   })
   chmodSync(binary, 0o755)
   const pkg = {
-    name: platform.name, version: manifest.version, description: `Agent Intercom native Go binary for ${target}.`,
+    name: platform.name, version: manifest.version, description: `Autumn Bus native Go binary for ${target}.`,
     license: manifest.license, os: [platform.os], cpu: [platform.cpu],
     repository: manifest.repository, homepage: manifest.homepage,
     files: ['bin', 'LICENSE', 'README.md'], publishConfig: manifest.publishConfig,
@@ -79,7 +79,7 @@ function build(target, source) {
   }
   writeFileSync(join(directory, 'package.json'), `${JSON.stringify(pkg, null, 2)}\n`)
   copyFileSync(join(root, 'LICENSE'), join(directory, 'LICENSE'))
-  writeFileSync(join(directory, 'README.md'), `# ${platform.name}\n\nNative Go executable for Agent Intercom on ${target}. Installed automatically by \`${manifest.name}@${manifest.version}\`; use that package rather than installing this internal platform package directly.\n`)
+  writeFileSync(join(directory, 'README.md'), `# ${platform.name}\n\nNative Go executable for Autumn Bus on ${target}. Installed automatically by \`${manifest.name}@${manifest.version}\`; use that package rather than installing this internal platform package directly.\n`)
   console.log(`Built ${platform.name}@${manifest.version}`)
 }
 
@@ -133,7 +133,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       }
       mkdirSync(join(stagedSDK, 'extensions/pi'), { recursive: true })
       for (const file of ['index.mjs', 'bridge.mjs']) copyFileSync(join(root, 'adapters/pi', file), join(stagedSDK, 'extensions/pi', file))
-      writeFileSync(join(stagedSDK, 'extensions/pi/README.md'), `# Pi extension\n\nExperimental native session adapter. Generate configuration with agentintercom harness config pi and set OCTOBER_BUS_PI_CONFIG to its reviewed absolute path. No host certification is implied.\n\n[Setup and limitations](https://github.com/october-dev/october-bus/blob/${source.commit}/adapters/pi/README.md)\n`)
+      writeFileSync(join(stagedSDK, 'extensions/pi/README.md'), `# Pi extension\n\nExperimental native session adapter. Generate configuration with autumn-bus harness config pi and set AUTUMN_BUS_PI_CONFIG to its reviewed absolute path. No host certification is implied.\n\n[Setup and limitations](https://github.com/Adi103-ETAI/autumn-bus/blob/${source.commit}/adapters/pi/README.md)\n`)
       writeFileSync(join(stagedSDK, 'package.json'), `${JSON.stringify(distributionManifest(), null, 2)}\n`)
       pack(stagedSDK, manifest.name, source)
     } finally {
