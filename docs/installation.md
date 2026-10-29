@@ -3,21 +3,21 @@
 Install the full CLI candidate with Node.js 20 or later:
 
 ```sh
-npm install -g agentintercom-cli@0.2.0
+npm install -g @autumn-dev/autumn-bus@0.1.0-next.15
 ```
 
 Keep optional dependencies enabled to install the native binary. Version `0.2.0`
 is published under `candidate`; the `latest` tag still points to the links-only
-`0.0.1` placeholder. The `@october-dev/agentintercom-*` packages are the matching
+`0.0.1` placeholder. The `@autumn-dev/autumn-bus-*` packages are the matching
 macOS, Linux and Windows binaries, installed automatically. The package you
-install is `agentintercom-cli`; the command you run is `agentintercom`.
+install is `@autumn-dev/autumn-bus`; the command you run is `autumn-bus`.
 
 For a source build, see [Build from source](#build-from-source) below.
 
 For Claude Code and Codex:
 
 ```sh
-agentintercom install --workspace default
+autumn-bus install --workspace default
 ```
 
 The command detects installed CLIs, saves a stable private copy of the executable,
@@ -27,15 +27,15 @@ gets its own execution. Each app keeps control of its models and tool permission
 
 Use `--only claude` or `--only codex` to select one app. Use `--no-service` with an
 already running daemon. On a machine without a usable user service manager, run
-`agentintercom start` in another terminal first. On Windows, use `install --print`
+`autumn-bus start` in another terminal first. On Windows, use `install --print`
 and your app's MCP settings; automatic Claude socket hooks require macOS/Linux.
 
 For a hosted device already signed in with `hosted login`, use
-`agentintercom install --hosted default`. The local daemon is not needed for that
+`autumn-bus install --hosted default`. The local daemon is not needed for that
 connection. All credentials stay in private files; app settings contain only
 paths and the saved profile name.
 
-For other MCP apps, use `agentintercom install --workspace default --print`.
+For other MCP apps, use `autumn-bus install --workspace default --print`.
 `connect` remains the configuration-generation command and supports JSON, TOML
 and entry-only formats. This does not claim every host can wake an idle model.
 
@@ -49,7 +49,7 @@ Original configuration is backed up privately beside the daemon data.
 An existing installation is reused; uninstall it before choosing a different
 workspace or hosted profile.
 
-`agentintercom uninstall [--only claude|codex]` removes managed entries and hooks,
+`autumn-bus uninstall [--only claude|codex]` removes managed entries and hooks,
 preserving unrelated settings. If the managed entry itself was edited, uninstall
 refuses to overwrite that edit and gives the backup location. Uninstall without
 `--only` also removes the login service; it keeps workspaces and attachments.
@@ -63,7 +63,7 @@ execution when it closes. Neither Claude's session registry nor key files are
 scanned. Socket tokens are never model-visible.
 
 For a running Claude session with the installed MCP connection, have that
-session run `agentintercom session attach claude` through its own shell tool.
+session run `autumn-bus session attach claude` through its own shell tool.
 Installing a hook cannot retroactively run SessionStart. On `/clear` or an
 implicit resume, Claude can retain the old MCP subprocess session ID: reconnect
 MCP if attachment is unavailable. Socket inbound controls still apply; a blocked
@@ -73,7 +73,7 @@ For an existing Codex thread, ask its `get_node_status` tool for the agent ID,
 then run:
 
 ```sh
-agentintercom session attach codex --thread EXACT_UUID_OR_NAME --agent AGENT_ID
+autumn-bus session attach codex --thread EXACT_UUID_OR_NAME --agent AGENT_ID
 ```
 
 This attaches the existing installed MCP execution, not a new agent with an
@@ -89,7 +89,7 @@ continues to support inbox reads.
 
 ## Login service
 
-`agentintercom service install|status|uninstall` uses systemd user services on
+`autumn-bus service install|status|uninstall` uses systemd user services on
 Linux or launchd on macOS. A stable executable avoids dependence on an npx cache.
 The service uses explicit data/runtime directories and owner-only files.
 Linux startup before login additionally requires administrator-enabled linger;
@@ -98,7 +98,7 @@ system-wide login policy or install a root service.
 
 ## Monitor without consuming messages
 
-Inside an execution with agent credentials, `agentintercom inbox --follow`
+Inside an execution with agent credentials, `autumn-bus inbox --follow`
 prints a quoted sender, message ID and bounded first-line preview when a pending
 message is observed. `--json` emits JSON lines. It polls every two seconds and
 observes up to the newest 100 pending messages per poll; it is not an event
@@ -110,8 +110,8 @@ Use the normal inbox tools to process work. Ctrl-C stops the monitor.
 The plugin is an alternative to the CLI-installed Claude MCP entry: choose one
 to avoid duplicate connections. Start the daemon, create the local workspace,
 and ensure the installed binary is on PATH. Add marketplace
-`october-dev/agentintercom` with `/plugin marketplace add`, then install
-`agent-intercom@october`. Configure its workspace and binary when prompted.
+`autumn-dev/autumn-bus` with `/plugin marketplace add`, then install
+`autumn-bus@autumn`. Configure its workspace and binary when prompted.
 
 `server.json` prepares a registry listing for the corresponding npm release.
 Registry users must first start the daemon and create the selected workspace.
@@ -120,17 +120,17 @@ checks have passed; this repository does not claim a published registry listing.
 
 ## Existing installations
 
-The npm package is `agentintercom-cli`, and the terminal command is `agentintercom`.
-The Go module is `github.com/october-dev/agentintercom`, and the MCP key is `agent_intercom`.
-The repository moved from `october-dev/october-bus`. GitHub redirects old links
+The npm package is `@autumn-dev/autumn-bus`, and the terminal command is `autumn-bus`.
+The Go module is `github.com/Adi103-ETAI/autumn-bus`, and the MCP key is `agent_intercom`.
+The repository moved from `autumn-dev/autumn-bus`. GitHub redirects old links
 and Git operations; update an existing clone with
-`git remote set-url origin https://github.com/october-dev/agentintercom.git`.
+`git remote set-url origin https://github.com/Adi103-ETAI/autumn-bus.git`.
 Earlier Go release tags retain their original module path; use the new import
 path with a release that declares it. The protocol 0.1 schema IDs remain stable.
-Earlier `@october-dev/october-bus` npm releases are a separate package; install
-`agentintercom-cli@0.2.0` explicitly and reconnect the app with its new configuration.
+Earlier `@autumn-dev/autumn-bus` npm releases are a separate package; install
+`@autumn-dev/autumn-bus@0.1.0-next.15` explicitly and reconnect the app with its new configuration.
 
-Existing `OCTOBER_BUS_*` settings, data directories, database namespaces and
+Existing `AUTUMN_BUS_*` settings, data directories, database namespaces and
 protocol 0.1 health/archive identifiers remain valid. The rename does not move
 an open SQLite database, rewrite migration checksums or modify Desktop's own
 Bus implementation. Hosted operators may keep existing systemd unit and binary
@@ -141,10 +141,10 @@ installation paths while deploying the newly named executable into them.
 With Go 1.27:
 
 ```sh
-git clone https://github.com/october-dev/agentintercom.git
-cd agentintercom
-go build -o ./bin/agentintercom ./cmd/agentintercom
-./bin/agentintercom demo
+git clone https://github.com/Adi103-ETAI/autumn-bus.git
+cd autumn-bus
+go build -o ./bin/autumn-bus ./cmd/autumn-bus
+./bin/autumn-bus demo
 ```
 
 Put the binary on your `PATH` for saved app configurations. Building the native
