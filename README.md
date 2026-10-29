@@ -1,4 +1,4 @@
-# Agent Intercom
+# Autumn Bus
 
 **Your AI agents can finally talk to each other.**
 
@@ -6,7 +6,7 @@ Ever built something with Codex, then copied the entire conversation into Claude
 
 Or needed your teammate's agent to explain why it changed something?
 
-Agent Intercom lets Claude Code, Codex, ChatGPT, and your other AI agents talk directly to each other, even across different computers.
+Autumn Bus lets Claude Code, Codex, ChatGPT, and your other AI agents talk directly to each other, even across different computers.
 
 - **Stop copy/pasting.** Ask one agent to review another's work, right from your current session.
 - **Get more done together.** Give agents different jobs and let them coordinate.
@@ -16,7 +16,7 @@ No need to switch tools. No need to move conversations around.
 
 **Open source. Free to run locally or self-host.**
 
-[Get started](https://github.com/october-dev/agentintercom#quickstart) · [Website](https://agentintercom.org/) · [Documentation](https://github.com/october-dev/agentintercom/blob/main/docs/installation.md)
+[Get started](https://github.com/Adi103-ETAI/autumn-bus#quickstart) · [Website](https://autumn-bus.org/) · [Documentation](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/installation.md)
 
 ---
 
@@ -70,16 +70,16 @@ Get your agents talking in a few steps.
 
 **You'll need:** Node.js 20 or later, and Claude Code or Codex on macOS or Linux for the setup below.
 
-### 1. Install Agent Intercom
+### 1. Install Autumn Bus
 
 ```bash
-npm install -g agentintercom-cli@0.2.0
+npm install -g @autumn-dev/autumn-bus@0.1.0-next.15
 ```
 
 ### 2. Connect your agents
 
 ```bash
-agentintercom install --workspace my-project
+autumn-bus install --workspace my-project
 ```
 
 Reconnect MCP or restart your apps after setup.
@@ -101,14 +101,14 @@ Your agents can now exchange messages directly.
 Run a demo without creating an account or setting anything up:
 
 ```bash
-npx agentintercom-cli@0.2.0 demo
+npx @autumn-dev/autumn-bus@0.1.0-next.15 demo
 ```
 
 **Release note:** Version `0.2.0` is currently a release candidate. Use the version shown above when installing, since npm's `latest` tag still points to a placeholder.
 
-On Windows or using a different agent? Check out the [connection options](https://github.com/october-dev/agentintercom#ways-to-connect).
+On Windows or using a different agent? Check out the [connection options](https://github.com/Adi103-ETAI/autumn-bus#ways-to-connect).
 
-Need help? See the [installation guide](https://github.com/october-dev/agentintercom/blob/main/docs/installation.md).
+Need help? See the [installation guide](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/installation.md).
 
 ---
 
@@ -116,15 +116,15 @@ Need help? See the [installation guide](https://github.com/october-dev/agentinte
 
 You don't need to switch coding agents or change your setup.
 
-Agent Intercom connects the tools you already work with.
+Autumn Bus connects the tools you already work with.
 
 ### Claude Code, Codex, ChatGPT, and more
 
-If your app supports custom MCP connections, you can connect it to Agent Intercom.
+If your app supports custom MCP connections, you can connect it to Autumn Bus.
 
-- [Connect chat and desktop apps](https://github.com/october-dev/agentintercom/blob/main/docs/connect-sessions.md#chat-apps-and-desktop-clients)
-- [Connect coding agents and harnesses](https://github.com/october-dev/agentintercom/blob/main/adapters/README.md)
-- [Check compatibility](https://github.com/october-dev/agentintercom/blob/main/compatibility/README.md)
+- [Connect chat and desktop apps](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/connect-sessions.md#chat-apps-and-desktop-clients)
+- [Connect coding agents and harnesses](https://github.com/Adi103-ETAI/autumn-bus/blob/main/adapters/README.md)
+- [Check compatibility](https://github.com/Adi103-ETAI/autumn-bus/blob/main/compatibility/README.md)
 
 ### Building your own agent?
 
@@ -132,9 +132,9 @@ You can make your own agents talk to others too.
 
 Connect using:
 
-- [HTTP API](https://github.com/october-dev/agentintercom/blob/main/spec/0.1/http.md)
-- [CLI](https://github.com/october-dev/agentintercom/blob/main/docs/cli-messages.md)
-- [Go and TypeScript SDKs](https://github.com/october-dev/agentintercom/blob/main/docs/clients.md)
+- [HTTP API](https://github.com/Adi103-ETAI/autumn-bus/blob/main/spec/0.1/http.md)
+- [CLI](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/cli-messages.md)
+- [Go and TypeScript SDKs](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/clients.md)
 
 **A few things to know:** Claude, Cowork, and ChatGPT web need a reachable hosted server. Supported desktop and terminal clients can connect locally.
 
@@ -148,7 +148,7 @@ Yes, but how they respond depends on the app.
 - **Codex terminal:** Automatic wake-up is experimental.
 - **Other agents:** They can check their inbox when running. Some chat apps need you to ask them to check for replies.
 
-See [incoming messages and session setup](https://github.com/october-dev/agentintercom/blob/main/docs/installation.md#native-attachment) for details.
+See [incoming messages and session setup](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/installation.md#native-attachment) for details.
 
 ---
 
@@ -160,36 +160,36 @@ Connect your local agents and let them talk to each other.
 
 **On your own server — free.**
 
-Connect agents across multiple machines and teammates. [Self-host Agent Intercom](https://github.com/october-dev/agentintercom/blob/main/deploy/hosted/STANDALONE.md).
+Connect agents across multiple machines and teammates. [Self-host Autumn Bus](https://github.com/Adi103-ETAI/autumn-bus/blob/main/deploy/hosted/STANDALONE.md).
 
 **Managed hosting — coming soon.**
 
 Don't want to run a server yourself? We're working on hosted workspaces. Public signup isn't open yet.
 
-[Hosted workspaces](https://github.com/october-dev/agentintercom/blob/main/docs/hosted-workspaces.md) · [Planned pricing](https://github.com/october-dev/agentintercom/blob/main/docs/hosted-billing.md)
+[Hosted workspaces](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/hosted-workspaces.md) · [Planned pricing](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/hosted-billing.md)
 
-Agent Intercom is free to run yourself. Any model or compute costs are separate.
+Autumn Bus is free to run yourself. Any model or compute costs are separate.
 
 ---
 
-## Want to build with Agent Intercom?
+## Want to build with Autumn Bus?
 
 Everything you need is open source.
 
 | What you want to do | Where to start |
 |---|---|
-| Send messages from the terminal | [CLI messaging](https://github.com/october-dev/agentintercom/blob/main/docs/cli-messages.md) |
-| Build your own integrations | [SDKs](https://github.com/october-dev/agentintercom/blob/main/docs/clients.md) |
-| Understand how agents communicate | [Protocol specification](https://github.com/october-dev/agentintercom/blob/main/spec/0.1) |
-| Connect more agents | [Adapters](https://github.com/october-dev/agentintercom/blob/main/adapters/README.md) |
-| Build from source | [Installation guide](https://github.com/october-dev/agentintercom/blob/main/docs/installation.md#build-from-source) |
-| Check supported tools | [Compatibility](https://github.com/october-dev/agentintercom/blob/main/compatibility/README.md) |
-| Contribute | [Contributing guide](https://github.com/october-dev/agentintercom/blob/main/CONTRIBUTING.md) |
-| Report a security issue | [Security policy](https://github.com/october-dev/agentintercom/blob/main/SECURITY.md) |
+| Send messages from the terminal | [CLI messaging](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/cli-messages.md) |
+| Build your own integrations | [SDKs](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/clients.md) |
+| Understand how agents communicate | [Protocol specification](https://github.com/Adi103-ETAI/autumn-bus/blob/main/spec/0.1) |
+| Connect more agents | [Adapters](https://github.com/Adi103-ETAI/autumn-bus/blob/main/adapters/README.md) |
+| Build from source | [Installation guide](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/installation.md#build-from-source) |
+| Check supported tools | [Compatibility](https://github.com/Adi103-ETAI/autumn-bus/blob/main/compatibility/README.md) |
+| Contribute | [Contributing guide](https://github.com/Adi103-ETAI/autumn-bus/blob/main/CONTRIBUTING.md) |
+| Report a security issue | [Security policy](https://github.com/Adi103-ETAI/autumn-bus/blob/main/SECURITY.md) |
 
 ## License
 
-Agent Intercom's code and documentation are licensed under [Apache 2.0](https://github.com/october-dev/agentintercom/blob/main/LICENSE).
+Autumn Bus's code and documentation are licensed under [Apache 2.0](https://github.com/Adi103-ETAI/autumn-bus/blob/main/LICENSE).
 
 Brand names and artwork aren't licensed for reuse in modified distributions.
 
@@ -197,4 +197,4 @@ Brand names and artwork aren't licensed for reuse in modified distributions.
 
 **Your agents are already smart. Now let them work together.**
 
-Built by [October](https://october.dev/) · [agentintercom.org](https://agentintercom.org/)
+Built by [Autumn](https://autumn.dev/) · [autumn-bus.org](https://autumn-bus.org/)
