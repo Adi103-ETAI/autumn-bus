@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="assets/agent-intercom-banner.png" alt="Separate workstations connected through an intercom" width="900">
+<img src="assets/autumn-bus-banner.png" alt="Separate workstations connected through an intercom" width="900">
 
-# Agent Intercom
+# Autumn Bus
 
 ### Your AI apps, working together.
 
-[Website](https://agentintercom.org/) · [Quickstart](#quickstart) · [Connect your apps](#connect-your-apps) · [Documentation](docs/installation.md)
+[Website](https://autumn-bus.org/) · [Quickstart](#quickstart) · [Connect your apps](#connect-your-apps) · [Documentation](docs/installation.md)
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-7C6CF0.svg)](LICENSE)
 
@@ -18,11 +18,11 @@ Ask one connected app to send work to another, share a file, or check on a task.
 Replies stay in the workspace, so you can stop copying messages between windows.
 Each app keeps its own models, tools and permissions.
 
-Agent Intercom connects through **MCP**, the standard that lets AI apps use
+Autumn Bus connects through **MCP**, the standard that lets AI apps use
 external tools. You choose which apps connect and what they share. Their private
 chat histories are not automatically copied into the workspace.
 
-> **Release candidate:** Install `agentintercom-cli@0.2.0` explicitly. The full CLI
+> **Release candidate:** Install `@autumn-dev/autumn-bus@0.1.0-next.15` explicitly. The full CLI
 > is published under `candidate`; `latest` still points to the links-only `0.0.1`
 > placeholder. Local use is available. Public hosted signup is coming soon.
 
@@ -34,7 +34,7 @@ on the project. Connect them to the same workspace, then ask:
 > “Send the implementation plan to my Codex session and ask it to flag anything
 > missing. Include its reply here.”
 
-The apps use Agent Intercom to send the request and retrieve the reply. You can
+The apps use Autumn Bus to send the request and retrieve the reply. You can
 also give the work a task, attach a file, or bring a teammate into the workspace.
 Choose connected sessions by name; no fixed agent roles are required.
 
@@ -55,7 +55,7 @@ also wake a session when work arrives; see [incoming messages](#incoming-message
 
 Your app's account and workspace settings must allow custom MCP connections.
 Remote connections need a reachable hosted server; you can self-host now or use
-October's hosted service when it opens. A local install alone does not provide a
+Autumn's hosted service when it opens. A local install alone does not provide a
 public server URL.
 
 See the [app setup guide](docs/connect-sessions.md#chat-apps-and-desktop-clients)
@@ -67,7 +67,7 @@ for Claude and ChatGPT instructions, authentication choices and provider docs.
 With **Node.js 20 or later**, try a small demo:
 
 ```sh
-npx agentintercom-cli@0.2.0 demo
+npx @autumn-dev/autumn-bus@0.1.0-next.15 demo
 ```
 
 The demo shows a request, task and reply using isolated local state. It needs
@@ -76,39 +76,39 @@ no account or model subscription.
 Install the CLI to connect your own apps:
 
 ```sh
-npm install -g agentintercom-cli@0.2.0
+npm install -g @autumn-dev/autumn-bus@0.1.0-next.15
 ```
 
 On macOS or Linux, connect installed Claude Code and Codex CLIs:
 
 ```sh
-agentintercom install --workspace my-project
+autumn-bus install --workspace my-project
 ```
 
 Reconnect MCP or restart the apps, then ask one to **“List the sessions in my
-Agent Intercom workspace.”** Use a session's name when sending it a request.
+Autumn Bus workspace.”** Use a session's name when sending it a request.
 The installer creates the workspace, sets up the connection and starts a local
 service where supported. Use `--only claude` or `--only codex` to choose one app.
 
 For Windows or another local MCP app, start the server in one terminal:
 
 ```sh
-agentintercom start
+autumn-bus start
 ```
 
 In another terminal:
 
 ```sh
-agentintercom workspace create my-project
-agentintercom connect --workspace my-project --name "My app"
+autumn-bus workspace create my-project
+autumn-bus connect --workspace my-project --name "My app"
 ```
 
 Add the printed entry to the app's MCP settings and reconnect. For remote-only
 apps, follow the [hosted connection guide](docs/hosted-mcp.md).
 See [installation](docs/installation.md) for platform details and uninstalling.
 
-**Package name:** `agentintercom-cli`. **Command:** `agentintercom`.
-The `@october-dev/agentintercom-*` packages are its macOS, Linux and Windows
+**Package name:** `@autumn-dev/autumn-bus`. **Command:** `autumn-bus`.
+The `@autumn-dev/autumn-bus-*` packages are its macOS, Linux and Windows
 binaries, installed automatically. You do not install them separately. Keep npm
 optional dependencies enabled; both x64 and arm64 are provided.
 
@@ -130,7 +130,7 @@ Messages remain in a durable inbox until processed. MCP gives an app tools to
 read that inbox; the app controls when its model runs.
 
 Claude Code has native wake support, and Codex terminal wake is experimental.
-You can attach an existing supported session or launch one through Agent Intercom.
+You can attach an existing supported session or launch one through Autumn Bus.
 Other MCP apps can check their inbox when prompted. A shared app connector may
 appear as one session across several chats.
 
@@ -146,11 +146,11 @@ and [connection details](docs/connect-sessions.md).
 | --- | --- |
 | **Local — free** | A workspace on your machine. No cloud account required. |
 | **Self-hosted — free software** | Run the included server and browser workspace on your infrastructure. |
-| **Hosted — coming soon** | Sign in, create a workspace, connect apps and invite teammates. October operates the server. |
+| **Hosted — coming soon** | Sign in, create a workspace, connect apps and invite teammates. Autumn operates the server. |
 
 The browser workspace lets you see connected sessions, read replies, track tasks,
 share files and answer agent questions. It is served at your server's `/app`
-address and works independently of October Desktop.
+address and works independently of Autumn Desktop.
 
 ### Planned hosted pricing
 
@@ -182,10 +182,10 @@ SDKs, adapters and deployment source are included in this repository.
 With Go 1.27:
 
 ```sh
-git clone https://github.com/october-dev/agentintercom.git
-cd agentintercom
-go build -o ./bin/agentintercom ./cmd/agentintercom
-./bin/agentintercom demo
+git clone https://github.com/Adi103-ETAI/autumn-bus.git
+cd autumn-bus
+go build -o ./bin/autumn-bus ./cmd/autumn-bus
+./bin/autumn-bus demo
 ```
 
 Put the binary on your `PATH` for saved app configurations. Building the native
@@ -193,8 +193,8 @@ binary does not require Node.js.
 
 ### Use the SDKs
 
-Use `agentintercom-cli@0.2.0` for TypeScript, or the Go module
-`github.com/october-dev/agentintercom`. See [client SDKs](docs/clients.md) for
+Use `@autumn-dev/autumn-bus@0.1.0-next.15` for TypeScript, or the Go module
+`github.com/Adi103-ETAI/autumn-bus`. See [client SDKs](docs/clients.md) for
 examples and version requirements.
 
 ### Protocol
@@ -216,8 +216,8 @@ not by itself qualify every feature in every app version.
 
 ### Open-source boundary
 
-Agent Intercom handles communication and shared work. Model selection and agent
-supervision stay with the apps that run them. October Desktop's current Bus
+Autumn Bus handles communication and shared work. Model selection and agent
+supervision stay with the apps that run them. Autumn Desktop's current Bus
 implementation is separate. See the [roadmap](ROADMAP.md).
 
 ## Contributing
@@ -228,7 +228,7 @@ compatibility fixes and clearer examples are welcome.
 ## License and trademark
 
 Code and documentation are licensed under [Apache 2.0](LICENSE). Brand names and
-artwork are not licensed for use in modified distributions. “Agent Intercom
+artwork are not licensed for use in modified distributions. “Autumn Bus
 compatible” describes implementations that pass the applicable conformance profile.
 
-Built by [October](https://october.dev) · [agentintercom.org](https://agentintercom.org/)
+Built by [Autumn](https://autumn.dev) · [autumn-bus.org](https://autumn-bus.org/)

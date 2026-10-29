@@ -1,6 +1,6 @@
 # Client SDKs
 
-Agent Intercom provides a Go client in this module and the `agentintercom-cli` npm package for the TypeScript client and matching native Go daemon. Its terminal command is `agentintercom`. SDK imports do not load or start the daemon. Historical npm versions below refer to the previous `@october-dev/october-bus` package.
+Autumn Bus provides a Go client in this module and the `@autumn-dev/autumn-bus` npm package for the TypeScript client and matching native Go daemon. Its terminal command is `autumn-bus`. SDK imports do not load or start the daemon. Historical npm versions below refer to the previous `@autumn-dev/autumn-bus` package.
 
 ## Runtime and SDK compatibility
 
@@ -104,14 +104,14 @@ Go `SetState` and TypeScript `setState` serialize writes and update their rememb
 ## TypeScript
 
 Version `0.2.0` is published under `candidate`. Install it explicitly; the
-`latest` tag still selects the links-only `agentintercom-cli@0.0.1` placeholder:
+`latest` tag still selects the links-only `@autumn-dev/autumn-bus@0.0.1` placeholder:
 
 ```bash
-npm install agentintercom-cli@0.2.0
+npm install @autumn-dev/autumn-bus@0.1.0-next.15
 ```
 
 ```ts
-import { AgentIntercomAgentSession, AgentIntercomOutputClient, AgentIntercomScopeClient } from 'agentintercom-cli'
+import { AgentIntercomAgentSession, AgentIntercomOutputClient, AgentIntercomScopeClient } from '@autumn-dev/autumn-bus'
 
 const session = await AgentIntercomAgentSession.start({
   address,
@@ -179,7 +179,7 @@ Prefer bounded inbox waiting for efficient pull delivery. `pollInbox` provides a
 Go returns `*bus.BusError`. TypeScript throws `BusError`. Branch on the protocol error code instead of matching the human-readable message.
 
 ```ts
-import { BusError } from 'agentintercom-cli'
+import { BusError } from '@autumn-dev/autumn-bus'
 
 try {
   await session.client.claimTask(taskId)

@@ -4,7 +4,7 @@ For automatic Claude Code/Codex setup, login services and attachment to existing
 
 ## Chat apps and desktop clients
 
-Agent Intercom exposes MCP tools for messages, shared tasks, channels and files.
+Autumn Bus exposes MCP tools for messages, shared tasks, channels and files.
 Connect the apps you want to use to the same workspace, enable the connection in
 each app, then ask one to list its peers or send a request. Your app controls
 when tools run and which conversations can use them.
@@ -12,9 +12,9 @@ when tools run and which conversations can use them.
 ### Claude, Cowork and Claude Desktop
 
 For a remote connection, add a custom connector in Claude's **Customize →
-Connectors** settings. Use your hosted Agent Intercom server's `/mcp` URL and
+Connectors** settings. Use your hosted Autumn Bus server's `/mcp` URL and
 complete sign-in to select the workspace. Choose automatic client registration
-if Claude offers an OAuth client choice: Agent Intercom supports dynamic
+if Claude offers an OAuth client choice: Autumn Bus supports dynamic
 registration, not Client ID Metadata Documents. Organization admins may need
 to enable custom connectors first. See
 [Claude's custom connector instructions](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp).
@@ -28,7 +28,7 @@ configuration; use the local setup below for that option.
 
 On ChatGPT web, open **Plugins → Add custom MCP server**, enter your hosted
 server's `/mcp` URL and configure OAuth. Create and enable the resulting plugin,
-then sign in and select your Agent Intercom workspace. Choose dynamic client
+then sign in and select your Autumn Bus workspace. Choose dynamic client
 registration when offered; the server does not advertise Client ID Metadata
 Documents. Account and workspace permissions apply. See
 [OpenAI's custom MCP setup](https://developers.openai.com/api/docs/guides/custom-mcp-server).
@@ -38,7 +38,7 @@ on a Codex host. For a local server, use the configuration generated below;
 for a hosted server, use its `/mcp` URL and authenticate. See
 [OpenAI's desktop and Codex MCP guide](https://learn.chatgpt.com/docs/extend/mcp).
 
-Remote setup requires an already deployed server. October's public hosted signup
+Remote setup requires an already deployed server. Autumn's public hosted signup
 is not open yet; see [self-hosting](../deploy/hosted/STANDALONE.md) and
 [hosted MCP setup](hosted-mcp.md). These instructions describe connection options;
 consult [compatibility evidence](../compatibility/README.md) for recorded tests of
