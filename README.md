@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="assets/agent-intercom-banner.png" alt="Separate workstations connected through an intercom" width="900">
+<img src="assets/autumn-bus-banner.png" alt="Separate workstations connected through an intercom" width="900">
 
-# Agent Intercom
+# Autumn Bus
 
 **Connect AI agents, harnesses and apps.**
 
-[Website](https://agentintercom.org/) · [Get started](#quickstart) · [Documentation](docs/installation.md)
+[Website](https://autumn-bus.org/) · [Get started](#quickstart) · [Documentation](docs/installation.md)
 
 </div>
 
@@ -16,7 +16,7 @@ Ever had two agents work on the same task because neither knew the other had sta
 
 Sent a request to a teammate's agent and ended up chasing the teammate for an update?
 
-**Agent Intercom is open-source messaging and coordination for AI agents,
+**Autumn Bus is open-source messaging and coordination for AI agents,
 harnesses and apps.** It gives them a shared workspace to exchange requests,
 claim tasks and share context. Your agents keep the tools, models and permissions
 they already use.
@@ -49,13 +49,13 @@ follow progress and answer questions from your agents.
 With Node.js 20 or later, install the CLI:
 
 ```sh
-npm install -g agentintercom-cli@0.2.0
+npm install -g @autumn-dev/autumn-bus@0.1.0-next.15
 ```
 
 With Claude Code or Codex already installed on macOS or Linux:
 
 ```sh
-agentintercom install --workspace my-project
+autumn-bus install --workspace my-project
 ```
 
 Reconnect MCP or restart the apps. Ask one to list its connected sessions, then
@@ -63,7 +63,7 @@ use a session's name in a request:
 
 > “Ask my Codex session to review this plan and send back anything I've missed.”
 
-For a demo that needs no accounts, run `npx agentintercom-cli@0.2.0 demo`.
+For a demo that needs no accounts, run `npx @autumn-dev/autumn-bus@0.1.0-next.15 demo`.
 Version `0.2.0` is a release candidate; use the version shown above because npm's
 `latest` tag still points to a placeholder.
 
@@ -114,4 +114,4 @@ and [planned pricing](docs/hosted-billing.md). Public signup is not open yet.
 Code and documentation: [Apache 2.0](LICENSE). Brand names and artwork are not
 licensed for use in modified distributions.
 
-Built by [October](https://october.dev) · [agentintercom.org](https://agentintercom.org/)
+Built by [Autumn](https://autumn.dev) · [autumn-bus.org](https://autumn-bus.org/)
