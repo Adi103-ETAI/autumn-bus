@@ -22,6 +22,34 @@ import (
 const usage = `Autumn Bus
 
 Usage:
+  autumn-bus install [--only claude|codex] [--workspace <name> | --hosted <profile>] [--print] [--no-service]
+  autumn-bus uninstall [--only claude|codex]
+  autumn-bus service install|uninstall|status
+  autumn-bus session attach claude
+  autumn-bus session attach codex --thread <UUID|name> --agent <connected-agent-id>
+  autumn-bus channel list
+  autumn-bus attachment list
+  autumn-bus attachment upload --file <path> [--key <retry-key>]
+  autumn-bus attachment download --id <attachment-id> --file <new-path>
+  autumn-bus attachment delete --id <attachment-id>
+  autumn-bus channel create --name <name> [--description <text>]
+  autumn-bus channel join|leave --id <channel-id>
+  autumn-bus channel post --id <channel-id> --body <text> [--thread <root-post-id>] [--key <retry-key>]
+  autumn-bus channel read [--id <channel-id>] [--thread <root-post-id>] [--query <text>] [--before <cursor>]
+  autumn-bus session start <claude|codex> --workspace <name> [--name <label>] -- [app arguments]
+  autumn-bus session status
+  autumn-bus session retry <message-id>
+  autumn-bus hosted login [--server <https-origin>] [--profile <name>] [--name <device-label>]
+  autumn-bus hosted logout [--profile <name>]
+  autumn-bus connect --hosted <profile> [--name <session-label>] [--format json|toml|entry]
+  autumn-bus session start <claude|codex> --hosted <profile> [--name <label>] -- [app arguments]
+  autumn-bus hosted serve --public-url <https-origin> [--listen 127.0.0.1:4780]
+  autumn-bus database migrate [--url-env AUTUMN_BUS_DATABASE_URL]
+  autumn-bus database check [--url-env AUTUMN_BUS_DATABASE_URL]
+  autumn-bus workspace create <name>
+  autumn-bus workspace list [--json]
+  autumn-bus connect --workspace <name> [--name <session-label>] [--format json|toml|entry] [--output <new-file>]
+  autumn-bus sessions --workspace <name> [--json]
   autumn-bus start [--port <port>]
   autumn-bus stop
   autumn-bus status
@@ -38,6 +66,9 @@ Usage:
   autumn-bus scope import --input <path> [--address <addr>]
   autumn-bus scope storage [--json] [--address <addr>]
   autumn-bus scope prune --before <timestamp> [--yes] [--json] [--address <addr>]
+  autumn-bus message send --to <session-id> --body <text> [--mode request] [--reply-to <message-id>] [--key <retry-key>] [--json]
+  autumn-bus inbox [--follow] [--limit <count>] [--wait 25s] [--json]
+  autumn-bus message ack <message-id> [--json]
   autumn-bus message receipt <message-id> [--json] [--address <addr>]
   autumn-bus agent list [--json] [--address <addr>]
   autumn-bus link --scope <scope-id> <agent-a> <agent-b>
@@ -45,6 +76,7 @@ Usage:
   autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
   autumn-bus task list [--ready] [--json] [--limit <1-500>] [--after <cursor>] [--address <addr>]
   autumn-bus mcp stdio [--scope <scope-id> --agent <id> --name <display>]
+  autumn-bus mcp stdio --scope <scope-id> --new-session [--name <display>]
   autumn-bus mcp stdio --connection-file </absolute/private/connection.json>
   autumn-bus mcp stdio --remote <https-base-url> --scope-token-file <file> --agent <id> [--connect-to <peer>]
   autumn-bus mcp check [--connection-file <path>] [--json]
@@ -255,27 +287,9 @@ func status() error {
 }
 
 func createScope(id string) error {
-	paths, err := bus.DefaultDaemonPaths()
+	result, err := createLocalScope(id)
 	if err != nil {
 		return err
-	}
-	run, err := bus.ReadRunFile(paths.RunFile)
-	if err != nil {
-		return err
-	}
-	lock, err := bus.LockScopeCredentials(paths.DataDir)
-	if err != nil {
-		return err
-	}
-	defer lock.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	result, err := (bus.Client{Address: run.Address, Token: run.AdminToken}).CreateScope(ctx, bus.CreateScopeInput{ID: id})
-	if err != nil {
-		return err
-	}
-	if err := bus.SaveScopeToken(paths.DataDir, result.ScopeID, result.ScopeToken); err != nil {
-		return fmt.Errorf("scope was created but its local credential could not be saved; fix the data directory and rotate the scope token: %w", err)
 	}
 	encoded, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
@@ -283,6 +297,34 @@ func createScope(id string) error {
 	}
 	fmt.Println(string(encoded))
 	return nil
+}
+
+// Keep the legacy scope command's output while letting onboarding reuse the
+// same credential transaction without printing the workspace owner secret.
+func createLocalScope(id string) (bus.CreateScopeResult, error) {
+	paths, err := bus.DefaultDaemonPaths()
+	if err != nil {
+		return bus.CreateScopeResult{}, err
+	}
+	run, err := bus.ReadRunFile(paths.RunFile)
+	if err != nil {
+		return bus.CreateScopeResult{}, fmt.Errorf("local daemon is unavailable; run autumn-bus start: %w", err)
+	}
+	lock, err := bus.LockScopeCredentials(paths.DataDir)
+	if err != nil {
+		return bus.CreateScopeResult{}, err
+	}
+	defer lock.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	result, err := (bus.Client{Address: run.Address, Token: run.AdminToken}).CreateScope(ctx, bus.CreateScopeInput{ID: id})
+	if err != nil {
+		return bus.CreateScopeResult{}, err
+	}
+	if err := bus.SaveScopeToken(paths.DataDir, result.ScopeID, result.ScopeToken); err != nil {
+		return bus.CreateScopeResult{}, fmt.Errorf("scope was created but its local credential could not be saved; fix the data directory and rotate the scope token: %w", err)
+	}
+	return result, nil
 }
 
 func adminClient(explicitAddress string) (bus.Client, error) {
@@ -855,6 +897,8 @@ func setEnvironment(base []string, values ...string) []string {
 }
 
 func removeEnvironment(base []string, names ...string) []string {
+	// Service credentials must never reach an agent subprocess, including future
+	// Stripe settings added to the hosted service environment.
 	removed := map[string]bool{}
 	for _, name := range names {
 		removed[strings.ToUpper(name)] = true
@@ -862,7 +906,7 @@ func removeEnvironment(base []string, names ...string) []string {
 	result := make([]string, 0, len(base))
 	for _, entry := range base {
 		key, _, _ := strings.Cut(entry, "=")
-		if !removed[strings.ToUpper(key)] {
+		if !removed[strings.ToUpper(key)] && !strings.HasPrefix(strings.ToUpper(key), "AUTUMN_BUS_STRIPE_") {
 			result = append(result, entry)
 		}
 	}
@@ -949,7 +993,7 @@ func runAgent(args []string) error {
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-	command.Env = setEnvironment(removeEnvironment(os.Environ(), *scopeTokenEnv, "AUTUMN_BUS_SCOPE_TOKEN", "AUTUMN_BUS_ADMIN_TOKEN"),
+	command.Env = setEnvironment(removeEnvironment(os.Environ(), *scopeTokenEnv, "AUTUMN_BUS_SCOPE_TOKEN", "AUTUMN_BUS_ADMIN_TOKEN", "AUTUMN_BUS_DATABASE_URL", "AUTUMN_BUS_ENCRYPTION_KEY", "AUTUMN_BUS_BILLING_SECRET"),
 		"AUTUMN_BUS_ADDRESS", resolvedAddress,
 		"AUTUMN_BUS_MCP_URL", resolvedAddress+"/mcp",
 		"AUTUMN_BUS_AGENT_ID", session.Registration.AgentID,
@@ -992,6 +1036,28 @@ func run() error {
 		return nil
 	}
 	switch args[0] {
+	case "install":
+		return installCommand(args[1:], os.Stdout)
+	case "uninstall":
+		return uninstallCommand(args[1:], os.Stdout)
+	case "service":
+		return serviceCommand(args[1:], os.Stdout)
+	case "session":
+		return sessionCommand(args[1:])
+	case "channel":
+		return channelCommand(args[1:], os.Stdin, os.Stdout)
+	case "attachment":
+		return attachmentCommand(args[1:], os.Stdin, os.Stdout)
+	case "hosted":
+		return hostedCommand(args[1:])
+	case "database":
+		return databaseCommand(args[1:], os.Stdout)
+	case "workspace":
+		return workspaceCommand(args[1:], os.Stdout)
+	case "connect":
+		return connectCommand(args[1:], os.Stdout)
+	case "sessions":
+		return sessionsCommand(args[1:], os.Stdout)
 	case "start":
 		return start(args[1:])
 	case "gateway":
@@ -1034,7 +1100,15 @@ func run() error {
 		}
 	case "backup":
 		return backupDatabase(args[1:])
+	case "inbox":
+		return inboxCommand(args[1:], os.Stdout)
 	case "message":
+		if len(args) >= 2 && args[1] == "send" {
+			return sendMessageCommand(args[2:], os.Stdin, os.Stdout)
+		}
+		if len(args) >= 2 && args[1] == "ack" {
+			return acknowledgeCommand(args[2:], os.Stdout)
+		}
 		if len(args) >= 2 && args[1] == "receipt" {
 			return inspectReceipt(args[2:])
 		}

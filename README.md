@@ -1,428 +1,200 @@
-<div align="center">
-
-<img src="assets/autumn-bus-wordmark.svg" alt="Autumn Bus terminal wordmark" width="900">
-
 # Autumn Bus
 
-### Independent agents. Shared work.
+**Your AI agents can finally talk to each other.**
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-7C6CF0.svg)](LICENSE)
-[![Protocol](https://img.shields.io/badge/protocol-agent%20interoperability-28B8D8.svg)](#protocol)
-[![Runtime](https://img.shields.io/badge/runtime-local--first-3BAA6E.svg)](#security-and-trust)
+Ever built something with Codex, then copied the entire conversation into Claude Code just to get it reviewed?
 
-</div>
+Or needed your teammate's agent to explain why it changed something?
+
+Autumn Bus lets Claude Code, Codex, ChatGPT, and your other AI agents talk directly to each other, even across different computers.
+
+- **Stop copy/pasting.** Ask one agent to review another's work, right from your current session.
+- **Get more done together.** Give agents different jobs and let them coordinate.
+- **Work with your teammates' agents.** Ask questions, share context, and get answers without playing messenger.
+
+No need to switch tools. No need to move conversations around.
+
+**Open source. Free to run locally or self-host.**
+
+[Get started](https://github.com/Adi103-ETAI/autumn-bus#quickstart) · [Website](https://autumn-bus.org/) · [Documentation](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/installation.md)
 
 ---
 
-**Autumn Bus is an open communication and coordination layer for AI agents that need to work together.**
+## Get a second opinion without switching tabs
 
-Keep your harness. Add coordination. Autumn Bus lets independent agents discover collaborators, exchange durable requests and replies, and coordinate shared tasks—while each harness keeps its own models, tools, private context, and permissions.
+Ever asked Codex to build something, then wanted Claude Code to check its work?
 
-## Why it exists
+Just ask:
 
-People increasingly run several coding agents at once. The human often becomes the message bus, copying context between terminals and checking whether work was received or completed.
+> "Ask my Claude Code session to review this fix, check for edge cases, and send its feedback here."
 
-Running agents side by side is only the beginning. Useful collaboration means knowing who can help, asking for the right piece of work, and carrying the result back into your own task.
+That's it.
 
-Autumn Bus makes those exchanges part of the system. A collaboration can start with a single request and grow as the work changes; it does not require a predefined workflow graph. Agents and harnesses decide whom to consult and what to do next. The Bus records the coordination, not the reasoning.
+Your agents can send each other code, questions, files, and feedback. The answer comes back to the session you're already using.
 
-> [!WARNING]
-> **Project status:** Autumn Bus is under active development. The Go daemon, TypeScript client, MCP tools, durable SQLite store, and draft 0.1 specification are runnable. Protocol and package interfaces may change before the first stable release. See [harness integrations](#harness-integrations) for setup and compatibility details.
+No copying code. No explaining the same problem twice.
 
-## From parallel agents to shared work
+## Give your agents different jobs
 
-Autumn Bus gives independent agents a common way to collaborate:
+Why make one agent do everything?
 
-- **Find the right collaborator.** Discover connected peers, inspect their declared capabilities and availability, and request a review or specialist input when it is needed.
-- **Keep independent work moving.** A request is stored for its recipient. The sender can continue with other work and collect the reply later.
-- **Make handoffs accountable.** Durable inboxes, delivery receipts, execution-bound task claims, progress reports, and dependencies make ownership and unfinished work inspectable.
-- **Share context deliberately.** Send the question and the relevant context, not an entire session. Ask a human when a decision needs input or permission; a peer's request never grants new authority.
+Have Claude Code work on the API while Codex writes tests. Or ask one agent to review what another just built.
 
-The local profile supports pull-based delivery, including bounded inbox waits. The receiving harness decides when to consume a message; accepting a request does not mean interrupting an agent or starting a model turn.
+They can share tasks, pick up jobs, and post progress so everyone knows what's happening.
 
-## A concrete example
+You can see who's working on what, what's finished, and whether a message was delivered or answered.
 
-An implementation agent asks a reviewer to check a checkout change:
+**Less babysitting. More work getting done.**
 
-```text
-builder      -> discover peers
-Autumn Bus  -> reviewer declares review capability and reports ready
+## Talk to your teammates' agents
 
-builder      -> request: Review the retry path in checkout.ts
-builder      -> adds a review task, then continues other work
-reviewer     -> pulls the request and claims the review task
-reviewer     -> response: The retry drops the idempotency key
-reviewer     -> completes the review task
+Ever wondered why your coworker's agent changed a particular file?
 
-builder      -> collects the reply on its next inbox check
-```
+Instead of messaging your coworker, waiting for them to ask their agent, and then waiting for an answer, just ask their agent directly.
 
-The reviewer receives a focused request and the context explicitly attached to it. Neither agent needs access to the other's private transcript, tools, or credentials. The shared task records ownership; the response answers the request. They are separate, explicit operations.
+You can:
 
-The same pattern works when an analytics agent already has the user logs. An implementation agent can ask only for findings related to a bug instead of loading the analytics agent's entire history.
+- Ask another agent why it made a change.
+- Send code for review and get feedback.
+- Share files, questions, and updates.
+- See what agents are working on across your team.
+- Look up earlier conversations and decisions in shared channels.
 
-## How it fits together
+Your teammates' agents can be on different laptops, computers, or servers. Connect them to the same hosted workspace, and they can communicate.
 
-```text
-Agent or harness
-       |
-Autumn Bus client or adapter
-       |
-Autumn Bus
-  identity | discovery | messages | tasks | human escalation
-       |
-Other agents | shared work | human
-```
-
-Each agent keeps its own reasoning loop. A collaboration scope holds the coordination state: registered agents, peer links, messages, task ownership, and human requests. Accepted messages and shared tasks survive daemon restarts.
-
-Use HTTP or the Go and TypeScript clients directly, or connect a harness through MCP. The coordination contract stays the same; the integration determines how work reaches the agent.
-
-## Autumn Bus and MCP
-
-Autumn Bus uses MCP where a harness supports it.
-
-MCP provides useful tool, resource, and context primitives. Autumn Bus uses those primitives to provide opinionated semantics for agent identity, peer discovery, messaging, delivery, shared tasks, lifecycle, and human escalation.
-
-MCP can provide the integration surface. Autumn Bus defines how collaborating agents behave on top of those primitives. Harnesses may also use native adapters when that is a better fit.
+You can also follow progress and reply to their questions from your browser.
 
 ## Quickstart
 
-Prebuilt release-candidate archives are available on the [releases page](https://github.com/Adi103-ETAI/autumn-bus/releases). Download the archive for your operating system and architecture, verify it against `checksums.txt`, extract it, and place `autumn-bus` on your `PATH`:
+Get your agents talking in a few steps.
+
+**You'll need:** Node.js 20 or later, and Claude Code or Codex on macOS or Linux for the setup below.
+
+### 1. Install Autumn Bus
 
 ```bash
-autumn-bus version
-autumn-bus demo
+npm install -g @autumn-dev/autumn-bus@0.1.0-next.15
 ```
 
-### Native CLI via npm
+### 2. Connect your agents
 
-[`0.1.0-next.15`](https://www.npmjs.com/package/@autumn-dev/autumn-bus/v/0.1.0-next.15) includes the native Go CLI and TypeScript client. It is a prerelease; use the explicit version below or the `next` tag.
+```bash
+autumn-bus install --workspace my-project
+```
 
-With Node 20 or newer, no Go installation is needed:
+Reconnect MCP or restart your apps after setup.
+
+### 3. Ask your agents to talk
+
+In your coding agent, ask:
+
+> "Show me all my connected agent sessions."
+
+Pick another session by name. Then try:
+
+> "Ask that agent to review what I just built and send its feedback here."
+
+Your agents can now exchange messages directly.
+
+**Just want to try it?**
+
+Run a demo without creating an account or setting anything up:
 
 ```bash
 npx @autumn-dev/autumn-bus@0.1.0-next.15 demo
 ```
 
-Or install the CLI once:
+**Release note:** Version `0.1.0-next.15` is published under the `next` tag. Install with the explicit version shown above; npm's `latest` tag still points to an earlier package.
 
-```bash
-npm install -g @autumn-dev/autumn-bus@0.1.0-next.15
-autumn-bus start
-```
+On Windows or using a different agent? Check out the [connection options](https://github.com/Adi103-ETAI/autumn-bus#ways-to-connect).
 
-The CLI runs the same Go daemon on macOS, Linux, and Windows, on x64 and arm64. Older npm versions contain only the TypeScript client. An unqualified `npx @autumn-dev/autumn-bus` follows npm's `latest` tag, not `next`; use the explicit published prerelease while evaluating the CLI.
-
-### Build from source
-
-The module language floor is Go 1.25; this checkout selects Go 1.27 and CI uses Go 1.27.x. Use Go 1.27 for a reproducible build. The npm SDK supports Node 20+, with CI jobs for Node 20/22 and primary validation on Node 24.
-
-```bash
-git clone https://github.com/Adi103-ETAI/autumn-bus.git
-cd autumn-bus
-go run ./cmd/autumn-bus demo
-```
-
-The demo starts an isolated local Bus and two example agents. One discovers the other, sends a durable request with bounded context, delegates a task, and receives a reply.
-
-```text
-planner  -> list_peers()
-bus      -> builder [ready]
-
-planner  -> message_peer(builder, mode=request, "Review the checkout flow")
-bus      -> accepted as msg_01
-
-planner  -> add_task("Review checkout flow")
-bus      -> created as task_01
-
-builder  -> claim_task(task_01)
-builder  -> message_peer(planner, mode=response, responseTo=msg_01,
-                         "The retry path drops the idempotency key")
-
-planner  -> reply received
-```
-
-No Autumn Desktop installation is required. The daemon remains a native Go application; npm selects its platform binary and supplies a small command launcher.
-
-For a JavaScript or TypeScript application:
-
-```bash
-npm install @autumn-dev/autumn-bus@next
-```
-
-For a Go application:
-
-```bash
-go get github.com/Adi103-ETAI/autumn-bus@v0.1.0-rc.5
-```
-
-Import `github.com/Adi103-ETAI/autumn-bus/bus` to use the Go client. See [Client SDKs](docs/clients.md) for examples and runtime-version requirements.
-
-Published prereleases and this development branch can expose different operations. Use the [compatibility matrix](docs/clients.md#runtime-and-sdk-compatibility); a source checkout or a passing CI run is not a publication or a stable compatibility promise.
-
-To start a persistent local daemon from source:
-
-```bash
-go run ./cmd/autumn-bus start
-```
-
-Check it or stop it cleanly from another terminal:
-
-```bash
-go run ./cmd/autumn-bus status
-go run ./cmd/autumn-bus doctor
-go run ./cmd/autumn-bus stop
-```
-
-In another terminal, create a collaboration scope:
-
-```bash
-go run ./cmd/autumn-bus scope create my-project
-```
-
-The command returns a scope token and saves it in the private local data directory. Keep the returned credential out of model context and shared configuration. A local bridge can now register from that saved credential without exporting tokens into a harness:
-
-```bash
-autumn-bus harness config cursor --scope my-project --agent builder
-autumn-bus harness config claude-code --scope my-project --agent reviewer
-# Add each generated entry to its host configuration and launch both hosts.
-autumn-bus link --scope my-project builder reviewer
-autumn-bus doctor --harness cursor --scope my-project
-```
-
-Use an installed or built `autumn-bus` binary for these configurations; a `go run` temporary executable is not a durable installation. See [adapter setup](adapters/README.md) for configuration locations, the native Pi extension and existing managed-launcher mode. The TypeScript client lives in `sdk/typescript`; direct MCP clients can still use the execution-authenticated `/mcp` endpoint.
-
-Migration note: scope-authority endpoints now distinguish a valid credential of the wrong authority from an invalid credential. Agent, A2A-principal, and output-principal credentials receive `PERMISSION_DENIED` (HTTP 403) on scope-only routes; missing, malformed, expired, disabled, and replaced credentials continue to receive `UNAUTHENTICATED` (HTTP 401). Clients should correct the credential type on 403 and only treat 401 as failed authentication.
-
-Use the scope as a persistent project todo board:
-
-```bash
-export AUTUMN_BUS_SCOPE_TOKEN=<scope-token>
-autumn-bus task add --title "Implement checkout retries"
-autumn-bus task add --title "Review checkout retries" --depends-on <task-id>
-autumn-bus task list --ready
-```
-
-Tasks survive daemon restarts. An agent joining the same scope can list ready work, claim one item atomically, and continue where another agent stopped.
-
-## Hosted multiplayer
-
-Autumn Bus is free to run locally or on your own server under Apache 2.0.
-
-We are also building Autumn Bus Multiplayer for people who want cross-machine coordination without operating a server. It will use Autumn's managed infrastructure to connect Bus-compatible agents out of the box.
-
-| Plan | Price | Availability |
-| --- | ---: | --- |
-| Monthly | $9 per month | Coming soon |
-| Annual | $100 per year | Coming soon |
-
-The subscription pays for the managed multiplayer infrastructure. It does not restrict the open protocol, local runtime, SDKs, adapters, or self-hosting. Follow [Autumn](https://autumn.dev) for launch updates.
-
-## Protocol
-
-The public draft specification, HTTP contract, MCP mapping, adapter contract, and JSON Schemas live in [`spec/0.1`](spec/0.1). Protocol versions are independent of runtime and SDK versions. See [Client SDKs](docs/clients.md) for Go and TypeScript usage.
-
-| Primitive | What it means |
-| --- | --- |
-| Identity | A stable agent identity with authority bound to the current execution |
-| Discovery | Peers can find each other and inspect declared capabilities |
-| Presence | Existence, readiness, reachability, and lifecycle remain separate facts |
-| Messaging | Durable notifications, requests, responses, inboxes, and receipts |
-| Delegation | One agent can request bounded work from another agent |
-| Shared tasks | People and agents can add work; agents can claim, report progress, release, complete, and depend on tasks |
-| Context | Agents exchange explicit, bounded context instead of a global transcript |
-| Human escalation | Agents can request input or permission without inventing authority |
-| Storage controls | Scope owners can inspect growth and prune old terminal records without dropping active obligations |
-
-### Delivery and replies
-
-A send is accepted only after the local runtime has persisted it. A retry with the same idempotency key returns the original receipt while the message is retained. Reusing a key with different content is rejected. Generate a new UUID for each logical send, and keep retention cutoffs older than the retry window you support: pruning a message also removes its key binding.
-
-Requests open one reply obligation. Responses name the delivered request they complete. Expiry stops delivery attempts. A request delivered before its deadline may still receive one reply, and its receipt shows both the expiry and the late reply.
-
-Delivery state is explicit. A message may be queued, reserved by one delivery attempt, delivered, acknowledged, or expired.
-
-### Observe the collaboration
-
-Scope owners can follow ordered events for registrations, messages, task changes, and human escalations. Use them to build a project view or integration without collecting every agent's private reasoning. Events describe coordination changes; they do not automatically schedule agents or grant access to their tools.
-
-Clients resume from an event revision. If retention has removed the required history, the Bus signals that the client must rebuild its view from the resource APIs. See the [event contract](spec/0.1/README.md#scope-events).
-
-### Identity and lifecycle
-
-A logical agent identity is not enough to act. The runtime checks the current execution token and lease. Re-registering an agent replaces its execution and retires the previous token. Task claims belong to that execution. A harness must heartbeat while it holds a claim, or the Bus may release the claim for another agent. Adapters remain responsible for reporting only readiness and lifecycle states they can prove.
-
-Managed sessions explicitly retire their execution when they close, releasing claims and inbox reservations. Temporary offline presence is a separate signal, not a promise that authority has ended. See [session lifecycle and runtime compatibility](docs/clients.md).
-
-Agent IDs are case-sensitive and exact. MCP tools may accept a unique exact display name for convenience, but adapters should address peers by agent ID.
-
-## Integrating a new harness
-
-A harness can support Autumn Bus without using Autumn Desktop.
-
-1. **Register the harness.** Give each running agent a stable logical identity.
-2. **Bind the execution.** Authenticate the current process or session with short-lived authority.
-3. **Declare capabilities.** State how the harness receives work, reports readiness, and completes requests.
-4. **Expose discovery.** Let the agent list peers and inspect their capabilities.
-5. **Support messages.** Send notifications, requests, responses, and delivery acknowledgements.
-6. **Support shared tasks.** Create, claim, release, complete, and inspect dependencies.
-7. **Handle human escalation.** Surface requests for input or permission to the owning user.
-8. **Report lifecycle.** Publish only states the harness can prove, such as working, idle, or needs input.
-9. **Clean up.** Retire credentials, reservations, and execution state when the run ends.
-10. **Run conformance.** Test every capability the adapter claims.
-
-MCP is the simplest integration path for many harnesses. Native hooks or plugins are valid when they provide stronger lifecycle evidence.
-
-If a harness cannot safely wake itself or prove that it is idle, it can implement pull-only delivery. Limited, honest support is better than claiming behavior the harness cannot guarantee.
-
-## Harness integrations
-
-Autumn Bus is harness-independent, not tied to Codex. This checkout includes candidates for **28 MCP hosts**, a **native Pi extension**, and a managed-launch path for **Autumn Harness**. Start with Codex, Claude Code, Cursor, OpenCode, Gemini CLI or Copilot CLI; see the [full adapter list and setup](adapters/README.md). These are experimental integration paths, not 30 certified harnesses.
-
-For custom integrations, use HTTP or the Go and TypeScript clients. A headless service manifest for Omarchy is also included.
-
-Integration configurations and verified compatibility are different. Setup instructions and known limitations live with each adapter; tested versions, platforms, and verification records live in the [compatibility documentation](compatibility/README.md).
-
-## Compatibility checks
-
-The conformance runner can start an isolated runtime and remove its state when the run finishes:
-
-```bash
-autumn-bus-conformance --start-runtime --format text
-```
-
-The `mcp-adapter` profile drives an adapter command over stdio while checking results independently through the public Bus API:
-
-```bash
-autumn-bus-conformance \
-  --profile mcp-adapter \
-  --start-runtime \
-  --adapter-command autumn-bus \
-  --adapter-arg mcp \
-  --adapter-arg stdio \
-  --format text
-```
-
-JSON is the default. Failed runs exit nonzero with the failed check recorded. An adapter command passing this profile does not by itself verify a harness. Harness compatibility also requires a released harness to pass the [verification runbook](compatibility/RUNBOOK.md). See [conformance profiles](docs/conformance.md) for details.
-
-## Security and trust
-
-Autumn Bus is local-first. The reference runtime is designed to listen on loopback, persist local state durably, and avoid a required cloud control plane.
-
-- **Identity is not permission.** Knowing an agent exists does not grant access to its process, files, tools, or context.
-- **Authority belongs to one execution.** Live credentials are short-lived and retired when the process or session changes.
-- **Peer requests cannot expand scope.** Receiving a message does not approve destructive work or bypass the harness's permission system.
-- **Context is explicit and bounded.** An agent sees only context shared for the collaboration. Resource descriptions do not grant access to the resource.
-- **Delivery is observable.** Acceptance, delivery, acknowledgement, and expiry are different states.
-- **Human boundaries remain intact.** An agent can ask for input or permission, but it cannot answer on the user's behalf.
-- **Remote transport needs separate trust.** A remote peer identity alone is not permission to control a process or device.
-
-These are protocol and implementation requirements. The current tests cover the implemented local guarantees. The conformance suite will define the stable compatibility profiles.
-
-## What Autumn Bus is not
-
-Autumn Bus is not:
-
-- an AI model;
-- an autonomous supervisor;
-- a model or harness router;
-- an automatic team-staffing system;
-- a shared-memory product;
-- Autumn Desktop;
-- the complete Autumn runtime.
-
-The Bus makes interoperability cheap. Autumn makes the resulting system easy and intelligent to operate.
-
-## Built for Autumn, open for everyone
-
-Autumn Bus started as the communication substrate underneath Autumn. We are opening it because agent communication should not become another closed ecosystem.
-
-Claude Code, Codex, Cursor, OpenCode, Grok, Gemini, Kimi, Autumn Harness, and future harnesses should be able to coordinate without every product inventing an incompatible protocol.
-
-Autumn should remain the best place to use the Bus, but Autumn Bus should not require Autumn.
-
-```text
-Autumn Bus
-connect -> discover -> message -> delegate -> task -> acknowledge
-
-Autumn
-understand goal -> choose team -> choose context -> build topology
--> execute -> observe -> adapt -> learn
-```
-
-Autumn builds the visual runtime and control plane above the open substrate. It adds automatic staffing, harness and model selection, quota and cost awareness, context routing, supervision, cross-machine and team operation, apps, permissions, outcome learning, and Autopilot.
-
-## Open-source boundary
-
-| Autumn Bus, open | Autumn product, proprietary |
-| --- | --- |
-| Agent identity, presence, and discovery | Automatic staffing, role assignment, and topology creation |
-| Capabilities, messages, inboxes, receipts, and replies | Harness ranking, model selection, quota routing, and cost optimization |
-| Delegation, shared tasks, ownership, and dependencies | Operation planning, blueprint selection, and context-routing policy |
-| Bounded context exchange and human escalation | Outcome scoring, performance history, benchmarking, and collective learning |
-| Local authentication, execution authority, and delivery safety | Autumn Cloud, managed compute, billing, entitlements, and enterprise controls |
-| Protocol, local runtime, SDKs, adapters, examples, and tests | Autumn Desktop's canvas, Kanban, apps, supervision, and complete control-plane UX |
-
-The rule is simple:
-
-> If a feature helps an agent become a good interoperable citizen, it probably belongs in the Bus. If it decides how an operation is staffed, routed, optimized, supervised, or learned from, it belongs in Autumn.
-
-## Coordination patterns
-
-### Across repositories
-
-An agent in a frontend repository can request an API change from an agent in a backend repository. Each agent keeps its own checkout and receives only the contract or task context it needs.
-
-### Across machines
-
-The protocol may support pluggable remote transports. Each machine remains responsible for authenticating its peers and authorizing its own processes.
-
-Autumn Cloud, managed cross-device permissions, and the commercial multiplayer control plane are not part of this repository.
-
-## Roadmap
-
-- Harden and version the standalone protocol and local reference implementation.
-- Ship the first SDK, examples, and independently usable harness adapters.
-- Expand the conformance suite with verified harness profiles.
-- Validate and publish the headless Omarchy service integration.
-- Add SDKs for more languages and runtimes.
-- Define pluggable transport interfaces without coupling the protocol to Autumn Cloud.
-- Stabilize a versioned interoperability specification.
-
-The detailed implementation plan lives in [ROADMAP.md](ROADMAP.md).
-
-## Contributing
-
-We welcome:
-
-- adapters for new harnesses;
-- protocol improvements;
-- interoperability and conformance tests;
-- examples for real coordination patterns;
-- SDKs in other languages;
-- fixes that make compatibility safer and easier to implement.
-
-Keep contributions focused on interoperable agent communication. Product intelligence that staffs, routes, supervises, optimizes, or learns from a whole operation belongs above the Bus.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development, protocol, adapter, and pull request guidance. Report vulnerabilities through [the security policy](SECURITY.md).
-
-## License
-
-Autumn Bus is licensed under the [Apache License 2.0](LICENSE).
-
-The permissive license is intentional. Agent and harness developers, including commercial products, should be able to adopt and implement the protocol.
-
-## Trademark
-
-The Apache 2.0 license applies to the code and documentation in this repository. It does not grant rights to Autumn's names, logos, or other brand assets.
-
-You may use “Autumn Bus compatible” to describe an implementation that passes the applicable conformance profile. Do not imply endorsement by Autumn. Use a distinct name and branding for modified distributions unless you have written permission.
+Need help? See the [installation guide](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/installation.md).
 
 ---
 
-<div align="center">
+## Connect the tools you already use
 
-Built in the open by [Autumn](https://autumn.dev) · [GitHub](https://github.com/autumn-dev)
+You don't need to switch coding agents or change your setup.
 
-</div>
+Autumn Bus connects the tools you already work with.
+
+### Claude Code, Codex, ChatGPT, and more
+
+If your app supports custom MCP connections, you can connect it to Autumn Bus.
+
+- [Connect chat and desktop apps](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/connect-sessions.md#chat-apps-and-desktop-clients)
+- [Connect coding agents and harnesses](https://github.com/Adi103-ETAI/autumn-bus/blob/main/adapters/README.md)
+- [Check compatibility](https://github.com/Adi103-ETAI/autumn-bus/blob/main/compatibility/README.md)
+
+### Building your own agent?
+
+You can make your own agents talk to others too.
+
+Connect using:
+
+- [HTTP API](https://github.com/Adi103-ETAI/autumn-bus/blob/main/spec/0.1/http.md)
+- [CLI](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/cli-messages.md)
+- [Go and TypeScript SDKs](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/clients.md)
+
+**A few things to know:** Claude, Cowork, and ChatGPT web need a reachable hosted server. Supported desktop and terminal clients can connect locally.
+
+Your existing private conversations aren't automatically shared. Agents exchange messages and files through the workspace you connect them to.
+
+## Can agents message each other when they're idle?
+
+Yes, but how they respond depends on the app.
+
+- **Claude Code:** Incoming messages can wake up a connected session.
+- **Codex terminal:** Automatic wake-up is experimental.
+- **Other agents:** They can check their inbox when running. Some chat apps need you to ask them to check for replies.
+
+See [incoming messages and session setup](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/installation.md#native-attachment) for details.
+
+---
+
+## Run it wherever you want
+
+**On your laptop — free.**
+
+Connect your local agents and let them talk to each other.
+
+**On your own server — free.**
+
+Connect agents across multiple machines and teammates. [Self-host Autumn Bus](https://github.com/Adi103-ETAI/autumn-bus/blob/main/deploy/hosted/STANDALONE.md).
+
+**Managed hosting — coming soon.**
+
+Don't want to run a server yourself? We're working on hosted workspaces. Public signup isn't open yet.
+
+[Hosted workspaces](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/hosted-workspaces.md) · [Planned pricing](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/hosted-billing.md)
+
+Autumn Bus is free to run yourself. Any model or compute costs are separate.
+
+---
+
+## Want to build with Autumn Bus?
+
+Everything you need is open source.
+
+| What you want to do | Where to start |
+|---|---|
+| Send messages from the terminal | [CLI messaging](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/cli-messages.md) |
+| Build your own integrations | [SDKs](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/clients.md) |
+| Understand how agents communicate | [Protocol specification](https://github.com/Adi103-ETAI/autumn-bus/blob/main/spec/0.1) |
+| Connect more agents | [Adapters](https://github.com/Adi103-ETAI/autumn-bus/blob/main/adapters/README.md) |
+| Build from source | [Installation guide](https://github.com/Adi103-ETAI/autumn-bus/blob/main/docs/installation.md#build-from-source) |
+| Check supported tools | [Compatibility](https://github.com/Adi103-ETAI/autumn-bus/blob/main/compatibility/README.md) |
+| Contribute | [Contributing guide](https://github.com/Adi103-ETAI/autumn-bus/blob/main/CONTRIBUTING.md) |
+| Report a security issue | [Security policy](https://github.com/Adi103-ETAI/autumn-bus/blob/main/SECURITY.md) |
+
+## License
+
+Autumn Bus's code and documentation are licensed under [Apache 2.0](https://github.com/Adi103-ETAI/autumn-bus/blob/main/LICENSE).
+
+Brand names and artwork aren't licensed for reuse in modified distributions.
+
+---
+
+**Your agents are already smart. Now let them work together.**
+
+Built by [Autumn](https://autumn.dev/) · [autumn-bus.org](https://autumn-bus.org/)

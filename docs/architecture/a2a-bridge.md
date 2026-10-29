@@ -25,7 +25,6 @@ SDK versions and A2A protocol versions are independent. The bridge records both.
 - A scope owner chooses which agent cards to publish. The shared daemon does not enumerate agents publicly.
 - A deployment gives each published agent a stable interface URL. Execution IDs are never public identity.
 - Agent interfaces use bearer authentication. Loopback HTTP is allowed for local development. Remote interfaces require HTTPS.
-- Autumn Bus shared work items are a coordination pool. They are not A2A Tasks. A2A Tasks represent one delegated interaction and its result stream.
 - Remote principals are bound to one publication. Their credentials do not inherit scope, agent, MCP, or administrative authority.
 - Autumn Bus shared work items are a coordination pool. They are not A2A Tasks. A2A Tasks represent one delegated interaction and its result stream.
 

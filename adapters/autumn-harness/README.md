@@ -1,6 +1,6 @@
 # Autumn Harness
 
-Experimental native integration record, not a new implementation of the harness. The canonical public project is [Adi103-ETAI/autumn-harness](https://github.com/Adi103-ETAI/autumn-harness); its built-in [Bus extension](https://github.com/Adi103-ETAI/autumn-harness/tree/main/packages/coding-agent/src/extensions/autumn/bus) consumes public MCP tools and launcher execution credentials. No Autumn Desktop or private service is required for the Bus transport.
+Experimental native integration record, not a new implementation of the harness. The canonical public project is [autumn-dev/autumn-harness](https://github.com/Adi103-ETAI/autumn-harness); its built-in [Bus extension](https://github.com/Adi103-ETAI/autumn-harness/tree/main/packages/coding-agent/src/extensions/autumn/bus) consumes public MCP tools and launcher execution credentials. No Autumn Desktop or private service is required for the Bus transport.
 
 Install and authenticate a reviewed, version-pinned Autumn Harness separately. With the local daemon running and a scope created:
 

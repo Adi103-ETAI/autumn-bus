@@ -9,5 +9,11 @@ coverage/
 *.test
 /autumn-bus
 /autumn-bus.exe
+/autumn-bus-conformance
+/autumn-bus-conformance.exe
 .DS_Store
-.serena/
+
+/autumn-bus
+/autumn-bus.exe
+/autumn-bus-conformance
+/autumn-bus-conformance.exe

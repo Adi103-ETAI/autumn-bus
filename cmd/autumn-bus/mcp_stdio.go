@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -11,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -103,13 +106,18 @@ func (transport agentTokenTransport) roundTrip(request *http.Request) (*http.Res
 }
 
 func runMCPStdio(ctx context.Context, args ...string) (runErr error) {
+	var nativeReady atomic.Bool
 	flags := flag.NewFlagSet("mcp stdio", flag.ContinueOnError)
+	native := flags.String("native", "", "enable attachment for claude or codex")
 	scope := flags.String("scope", "", "local scope ID (no token in configuration)")
+	hosted := flags.String("hosted", "", "saved hosted device profile")
 	id := flags.String("agent", "", "stable agent ID; duplicate IDs replace earlier executions")
+	newSession := flags.Bool("new-session", false, "create a unique identity for this MCP process instead of replacing another session")
 	name := flags.String("name", "", "agent display name (defaults to ID)")
 	dataDir := flags.String("data-dir", "", "local daemon data directory")
 	runtimeDir := flags.String("runtime-dir", "", "local daemon discovery directory")
 	connectionFile := flags.String("connection-file", "", "host-managed private execution connection file (Unix); defaults to $"+managedConnectionFileEnv)
+	readyFile := flags.String("ready-file", "", "optional private ready.json beside a managed connection; written after the host discovers tools")
 	remote := flags.String("remote", "", "HTTPS remote Bus base URL, including /bus for a hosted gateway")
 	scopeTokenFile := flags.String("scope-token-file", "", "private remote scope credential file, kept outside model context")
 	var peers stringList
@@ -120,13 +128,38 @@ func runMCPStdio(ctx context.Context, args ...string) (runErr error) {
 	if flags.NArg() != 0 {
 		return errors.New("mcp stdio does not accept positional arguments")
 	}
+	if *native != "" && *native != "claude" && *native != "codex" {
+		return errors.New("--native must be claude or codex")
+	}
+	if *native != "" && !*newSession {
+		return errors.New("--native requires a self-registering --new-session bridge")
+	}
+	if *newSession {
+		if *id != "" {
+			return errors.New("use --new-session or --agent, not both")
+		}
+		if *hosted == "" {
+			var random [12]byte
+			if _, err := rand.Read(random[:]); err != nil {
+				return fmt.Errorf("create session identity: %w", err)
+			}
+			*id = fmt.Sprintf("session-%x", random[:])
+		}
+		if *name == "" {
+			*name = "MCP session"
+		}
+	}
 	address := strings.TrimRight(strings.TrimSpace(os.Getenv("AUTUMN_BUS_ADDRESS")), "/")
 	token := strings.TrimSpace(os.Getenv("AUTUMN_BUS_AGENT_TOKEN"))
 	remoteMode := *remote != "" || *scopeTokenFile != ""
-	selfRegister := remoteMode || *scope != "" || *id != "" || *name != "" || len(peers) != 0 || *dataDir != "" || *runtimeDir != ""
+	selfRegister := *hosted != "" || remoteMode || *scope != "" || *id != "" || *name != "" || len(peers) != 0 || *dataDir != "" || *runtimeDir != ""
 	var endpoint string
 	var connectionSource func() (managedMCPConnection, error)
 	var sessionDone <-chan struct{}
+	var readyExecution string
+	if *readyFile != "" && (resolveManagedConnectionPath(*connectionFile) == "" || !filepath.IsAbs(*readyFile) || filepath.Base(*readyFile) != "ready.json" || filepath.Dir(*readyFile) != filepath.Dir(resolveManagedConnectionPath(*connectionFile))) {
+		return errors.New("--ready-file must be ready.json beside a managed connection file")
+	}
 	// Three exclusive identities: a controller-managed execution file, an
 	// explicit self-registration (local scope or hosted --remote), or launcher
 	// environment credentials. Mixing any two refuses.
@@ -140,11 +173,18 @@ func runMCPStdio(ctx context.Context, args ...string) (runErr error) {
 		}
 		endpoint = connection.Endpoint
 		connectionSource = managedMCPConnectionSource(connectionPath, connection)
+		if *readyFile != "" {
+			readyExecution = connection.ExecutionID
+			if err := os.Remove(*readyFile); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+			defer os.Remove(*readyFile)
+		}
 	} else if selfRegister {
 		if token != "" {
 			return errors.New("use either managed agent credentials or --scope/--agent, not both")
 		}
-		if *id == "" || (!remoteMode && *scope == "") {
+		if *hosted == "" && (*id == "" || (!remoteMode && *scope == "")) {
 			return errors.New("self-registering mcp stdio requires --agent and either --scope or --remote/--scope-token-file")
 		}
 		if *name == "" {
@@ -152,7 +192,12 @@ func runMCPStdio(ctx context.Context, args ...string) (runErr error) {
 		}
 		var owner bus.Client
 		var err error
-		if remoteMode {
+		if *hosted != "" {
+			if remoteMode || *scope != "" || *dataDir != "" || *runtimeDir != "" || len(peers) > 0 || (!*newSession && *id == "") {
+				return errors.New("hosted MCP requires --new-session or --agent <owned-session-id>, without local or scope-token flags")
+			}
+			owner, err = hostedDeviceClient(*hosted)
+		} else if remoteMode {
 			if *remote == "" || *scopeTokenFile == "" || *scope != "" || *dataDir != "" || *runtimeDir != "" {
 				return errors.New("remote registration requires --remote and --scope-token-file, without local scope/directory flags")
 			}
@@ -182,11 +227,17 @@ func runMCPStdio(ctx context.Context, args ...string) (runErr error) {
 		// The harness launched this bridge and owns the process, so peers may
 		// send work: ready means attached and reachable, not that a model turn
 		// is running. Delivery still never implies execution.
-		session, err := bus.StartAgentSession(sessionCtx, bus.AgentSessionOptions{
+		options := bus.AgentSessionOptions{
 			Address: owner.Address, ScopeToken: owner.Token, HTTP: owner.HTTP, HeartbeatInterval: 5 * time.Second,
-			Registration:     bus.RegisterAgentInput{ID: *id, DisplayName: *name, ConnectTo: peers, LeaseMS: 30_000},
+			Registration:     bus.RegisterAgentInput{ID: *id, DisplayName: *name, ConnectTo: peers, ConnectWorkspace: *newSession, LeaseMS: 30_000},
 			InitialLifecycle: bus.LifecycleReady, InitialReady: true,
-		})
+		}
+		if *hosted != "" {
+			options.ScopeToken, options.DeviceToken = "", owner.Token
+			options.Registration.LeaseMS = 300000
+			options.HeartbeatInterval = time.Minute
+		}
+		session, err := bus.StartAgentSession(sessionCtx, options)
 		if err != nil {
 			return fmt.Errorf("could not start agent session: %w", err)
 		}
@@ -197,6 +248,13 @@ func runMCPStdio(ctx context.Context, args ...string) (runErr error) {
 				runErr = errors.Join(runErr, fmt.Errorf("agent session ended: %w", err))
 			}
 		}()
+		if *native != "" {
+			cleanup, err := attachBridge(sessionCtx, *native, session, nativeReady.Load)
+			if err != nil {
+				return err
+			}
+			defer cleanup()
+		}
 		bridgeCtx, cancelBridge := context.WithCancel(ctx)
 		defer cancelBridge()
 		go func() {
@@ -270,6 +328,35 @@ func runMCPStdio(ctx context.Context, args ...string) (runErr error) {
 	}
 
 	server := newMCPBridgeServer(mcpBridgeInstructions)
+	if *native != "" {
+		server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
+			return func(ctx context.Context, method string, request mcp.Request) (mcp.Result, error) {
+				result, err := next(ctx, method, request)
+				if err == nil && method == "tools/list" {
+					nativeReady.Store(true)
+				}
+				return result, err
+			}
+		})
+	}
+	if *readyFile != "" {
+		var announced sync.Once
+		server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
+			return func(ctx context.Context, method string, request mcp.Request) (mcp.Result, error) {
+				result, err := next(ctx, method, request)
+				// tools/list is shared by the older initialization handshake and
+				// newer stateless MCP. An initialized notification alone is not.
+				if err == nil && method == "tools/list" {
+					announced.Do(func() {
+						if err := writeNativeJSON(*readyFile, nativeBridgeReady{ExecutionID: readyExecution}); err != nil {
+							fmt.Fprintln(os.Stderr, "Autumn Bus: could not announce native bridge readiness; standard MCP remains connected")
+						}
+					})
+				}
+				return result, err
+			}
+		})
+	}
 	for cursor := ""; ; {
 		listCtx, listOutcome := withCallOutcome(connectContext)
 		result, err := upstream.ListTools(listCtx, &mcp.ListToolsParams{Cursor: cursor})

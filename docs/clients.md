@@ -1,6 +1,6 @@
 # Client SDKs
 
-Autumn Bus ships a Go client in this module and a TypeScript client on npm. From `0.1.0-next.15`, the npm package also installs the matching native Go daemon and exposes the `autumn-bus` command. SDK imports do not load or start the daemon.
+Autumn Bus provides a Go client in this module and the `@autumn-dev/autumn-bus` npm package for the TypeScript client and matching native Go daemon. Its terminal command is `autumn-bus`. SDK imports do not load or start the daemon. Historical npm versions below refer to the previous `@autumn-dev/autumn-bus` package.
 
 ## Runtime and SDK compatibility
 
@@ -103,10 +103,11 @@ Go `SetState` and TypeScript `setState` serialize writes and update their rememb
 
 ## TypeScript
 
-Install the current prerelease:
+Version `0.1.0-next.15` is published under `next`. Install it explicitly; the
+`latest` tag still selects the links-only `@autumn-dev/autumn-bus@0.0.1` placeholder:
 
 ```bash
-npm install @autumn-dev/autumn-bus@next
+npm install @autumn-dev/autumn-bus@0.1.0-next.15
 ```
 
 ```ts

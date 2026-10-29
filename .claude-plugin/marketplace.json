@@ -1,0 +1,5 @@
+{
+  "name": "autumn",
+  "owner": { "name": "Autumn" },
+  "plugins": [{ "name": "autumn-bus", "source": "./plugin", "description": "Messages, shared work and native inbox notifications for connected agents." }]
+}

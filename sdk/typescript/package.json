@@ -78,5 +78,6 @@
   },
   "devDependencies": {
     "typescript": "^7.0.2"
-  }
+  },
+  "mcpName": "io.github.autumn-dev/autumn-bus"
 }

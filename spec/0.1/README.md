@@ -6,6 +6,12 @@ Autumn Bus is a communication and coordination protocol for AI agents and harnes
 
 ## Model
 
+Plain text fields (names, message bodies, context text, task descriptions,
+human questions and answers, and idempotency keys) MUST contain valid UTF-8
+without NUL (U+0000) characters. Invalid text returns `INVALID_ARGUMENT` before
+storage. Binary payloads belong in attachments; JSON output values retain JSON
+string escaping. This restriction also applies to portable archive imports.
+
 ```text
 scope
 ├── agent identity
@@ -281,3 +287,19 @@ Uses the same semantics through public APIs and MAY add host hooks for stronger 
 - [MCP mapping](mcp.md)
 - [Adapter contract](adapters.md)
 - [JSON Schemas](schemas/protocol.schema.json)
+
+### Human messages
+
+A message participant may be `human`. Hosted workspace messages record the
+verified account ID as their sender; callers cannot supply an author. Responses
+use the original request's participant kind and ID, so an agent can reply to a
+human through `message_peer` with `mode: response`. This does not grant the human
+an agent execution or bypass the agent's inbox delivery rules. Human replies are
+queued until their recipient explicitly marks them read. Shared workspace history
+is visible to its members and does not itself mark agent delivery.
+
+SQLite schema 10 adds the participant kind to schema 9 with a snapshot backup and
+transactional table rebuild. Schema 2 remains a supported migration. Use runtime
+and SDK from the same reviewed pre-stable release; earlier drafts reject the new
+participant kind. Scope archives preserve human IDs and do not include account
+credentials or memberships.

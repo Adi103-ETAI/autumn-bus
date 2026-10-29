@@ -2,9 +2,9 @@
 
 Typed clients and protocol definitions for connecting Node.js applications and harness adapters to Autumn Bus.
 
-Starting with `0.1.0-next.15`, this package includes a launcher for the native Go daemon and the TypeScript client. npm installs the matching binary through an exact-version optional dependency; it does not compile Go or run a download script on your machine. Existing TypeScript imports are unchanged. Older npm releases contain only the client.
+The `@autumn-dev/autumn-bus` distribution includes a launcher for the native Go daemon and the TypeScript client. npm installs the matching binary through an exact-version optional dependency; it does not compile Go or run a download script on your machine. The terminal command is `autumn-bus`.
 
-The client is in active development and has not reached a stable release. Before 1.0, its API, schemas, and protocol behavior may change between releases.
+Before 1.0, APIs and schemas may change between minor releases. Pin the exact package and runtime versions used by your application.
 
 Managed sessions check unauthenticated `/health` before registration and require a ready protocol `0.1` runtime advertising `features: ["session-retirement"]`. A missing feature or incompatible protocol fails with `BusError.code === 'CONFLICT'` before replacing an execution. Close and cancellation drain lifecycle writes and attempt permanent execution retirement; temporary offline heartbeats are distinct. Inspect `session.error` for heartbeat or cleanup failure. Failed cleanup falls back to lease expiry. Do not use this updated session helper against rc.4.
 
@@ -18,13 +18,13 @@ Admins can use `listScopes()`, `rotateScopeToken(scopeId)`, and `deleteScope(sco
 
 ## Install
 
-Install the current prerelease from the `next` tag:
+Version `0.1.0-next.15` is published under the `next` tag. Install it explicitly:
 
 ```sh
-npm install @autumn-dev/autumn-bus@next
+npm install @autumn-dev/autumn-bus@0.1.0-next.15
 ```
 
-The native CLI is available in `0.1.0-next.15`. Earlier published versions are SDK-only, and unqualified `npx` selects `latest`, not `next`; use the explicit version below or `next`.
+The existing `@autumn-dev/autumn-bus@0.0.1` only prints project links. Native packages previously shipped under `@autumn-dev/autumn-bus`, starting with `0.1.0-next.15`; earlier versions of that package are SDK-only. An unqualified `npx` selects the registry’s `latest` tag; use an explicit version until stable promotion is complete.
 
 Run the CLI without installing Go:
 
@@ -130,3 +130,29 @@ Generate a new idempotency key for each logical send. Keys remain bound to their
 `AutumnBusAgentSession` manages registration, conservative lifecycle state, heartbeat, execution replacement, and shutdown cleanup for adapters that use the TypeScript client.
 
 `pollInbox` provides an abortable async iterator over repeated bounded inbox waits. `withClaimedTask` releases a claim when work or completion fails. Use both with a live agent session so the execution lease remains current while work is claimed.
+
+## Workspaces and connections
+
+Version 0.2 adds local workspace and messaging commands, channels, threads, search
+and private files. The same daemon can serve hosted PostgreSQL workspaces with
+account sign-in, teammates, devices, remote MCP OAuth and revocable MCP keys.
+The npm package is `@autumn-dev/autumn-bus`, the command is `autumn-bus`, and the
+product is Autumn Bus. Hosting availability is announced separately from npm publication.
+
+After building this version from source, or installing its published package:
+
+```sh
+autumn-bus workspace create my-project
+autumn-bus connect --workspace my-project
+```
+
+`connect` produces MCP configuration for an actual app/session; no prescribed
+agent roles are required. A hosted device uses `hosted login --server <origin>`
+then `connect --hosted default`. Any compatible MCP client can use tools; idle
+wake depends on the host. Native Claude Code and experimental Codex launchers
+are available on macOS/Linux/WSL through `session start claude` and
+`session start codex`. They preserve the host's tool approvals and permissions.
+
+See [connections](../../docs/connect-sessions.md),
+[hosted workspaces](../../docs/hosted-workspaces.md) and
+[the release candidate notes](../../docs/release-notes-0.1.0-next.15.md).

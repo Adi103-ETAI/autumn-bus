@@ -13,7 +13,7 @@ function platformPackage(platform = process.platform, arch = process.arch) {
   if (!targets.includes(target)) {
     throw new Error(`No Autumn Bus npm binary for ${target}. Use a native release or build the Go daemon from source: https://github.com/Adi103-ETAI/autumn-bus#quickstart`)
   }
-  return { target, name: `${manifest.name}-${target}`, binary: platform === 'win32' ? 'autumn-bus.exe' : 'autumn-bus' }
+  return { target, name: `@autumn-dev/autumn-bus-${target}`, binary: platform === 'win32' ? 'autumn-bus.exe' : 'autumn-bus' }
 }
 
 function resolveBinary(platform = process.platform, arch = process.arch, resolve = require.resolve) {
