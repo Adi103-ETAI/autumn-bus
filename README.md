@@ -1,21 +1,21 @@
 <div align="center">
 
-<img src="assets/agent-intercom-banner.png" alt="Separate workstations connected through an intercom" width="900">
+<img src="assets/autumn-bus-banner.png" alt="Separate workstations connected through an intercom" width="900">
 
-# Agent Intercom
+# Autumn Bus
 
 **Stop copy/pasting between your agents.**
 
 Get Claude Code, Codex, ChatGPT and your other AI agents working together.
 
-[Get started](#quickstart) · [Website](https://agentintercom.org/) · [Documentation](docs/installation.md)
+[Get started](#quickstart) · [Website](https://autumn-bus.org/) · [Documentation](docs/installation.md)
 
 </div>
 
 Get a second opinion on a fix. Split up a job. Get answers back in the session
 you're already using.
 
-Agent Intercom connects the agents, coding tools and AI apps you already use,
+Autumn Bus connects the agents, coding tools and AI apps you already use,
 so they can ask each other for help. **Open source. Free to run locally or self-host.**
 
 <a id="one-developer-multiple-agents"></a>
@@ -55,13 +55,13 @@ macOS or Linux for the setup below.
 ### 1. Install
 
 ```sh
-npm install -g agentintercom-cli@0.2.0
+npm install -g @autumn-dev/autumn-bus@0.1.0-next.15
 ```
 
 ### 2. Connect your agents
 
 ```sh
-agentintercom install --workspace my-project
+autumn-bus install --workspace my-project
 ```
 
 Reconnect MCP or restart the apps after setup.
@@ -74,7 +74,7 @@ agent to send it a review request.
 **Just exploring?** Try a demo that needs no accounts:
 
 ```sh
-npx agentintercom-cli@0.2.0 demo
+npx @autumn-dev/autumn-bus@0.1.0-next.15 demo
 ```
 
 > **Release status:** `0.2.0` is a release candidate. Keep the version in the
@@ -132,4 +132,4 @@ Model and compute costs are separate.
 Code and documentation: [Apache 2.0](LICENSE). Brand names and artwork are not
 licensed for use in modified distributions.
 
-Built by [October](https://october.dev) · [agentintercom.org](https://agentintercom.org/)
+Built by [Autumn](https://autumn.dev) · [autumn-bus.org](https://autumn-bus.org/)
