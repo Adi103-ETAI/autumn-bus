@@ -80,9 +80,9 @@ try {
   const demo = await execute(process.execPath, [launcher, 'demo'], options)
   assert.ok(demo.stdout.length > 0)
   await assert.rejects(execute(process.execPath, [launcher, 'not-a-command; literal'], options), error => error.code === 1)
-  await execute(process.execPath, ['--input-type=module', '-e', 'import { AgentIntercomClient, AgentIntercomAgentSession } from "autumn-bus"; if (typeof AgentIntercomClient !== "function" || typeof AgentIntercomAgentSession.start !== "function") process.exit(1)'], options)
+  await execute(process.execPath, ['--input-type=module', '-e', 'import { AutumnBusClient, AutumnBusAgentSession } from "autumn-bus"; if (typeof AutumnBusClient !== "function" || typeof AutumnBusAgentSession.start !== "function") process.exit(1)'], options)
   rmSync(join(root, 'node_modules', host.name), { recursive: true })
-  await execute(process.execPath, ['--input-type=module', '-e', 'import { AgentIntercomClient } from "autumn-bus"; if (typeof AgentIntercomClient !== "function") process.exit(1)'], options)
+  await execute(process.execPath, ['--input-type=module', '-e', 'import { AutumnBusClient } from "autumn-bus"; if (typeof AutumnBusClient !== "function") process.exit(1)'], options)
   await assert.rejects(execute(process.execPath, [launcher, 'version'], options), error => error.code === 1 && error.stderr.includes('--include=optional'))
   console.log(`Installed ${host.name} automatically; npx-style invocation, demo, SDK-only imports, and failure exit codes passed (${manifest.version}).`)
 } finally {

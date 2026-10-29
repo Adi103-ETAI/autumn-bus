@@ -148,7 +148,7 @@ func connectCommand(args []string, out io.Writer) error {
 		// command string is assembled or executed.
 		encodedCommand, _ := json.Marshal(entry.Command)
 		encodedArgs, _ := json.Marshal(entry.Args)
-		data = []byte(fmt.Sprintf("[mcp_servers.agent_intercom]\ncommand = %s\nargs = %s\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\ndefault_tools_approval_mode = \"prompt\"\n", encodedCommand, encodedArgs))
+		data = []byte(fmt.Sprintf("[mcp_servers.autumn_bus]\ncommand = %s\nargs = %s\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\ndefault_tools_approval_mode = \"prompt\"\n", encodedCommand, encodedArgs))
 		if entry.Env != nil {
 			encodedPath, _ := json.Marshal(dataDir)
 			data = append(data, []byte(fmt.Sprintf("env = { AUTUMN_BUS_DATA_DIR = %s }\n", encodedPath))...)
@@ -156,7 +156,7 @@ func connectCommand(args []string, out io.Writer) error {
 	case "entry":
 		data, err = json.MarshalIndent(entry, "", "  ")
 	case "json":
-		data, err = json.MarshalIndent(map[string]any{"mcpServers": map[string]stdioConfig{"agent_intercom": entry}}, "", "  ")
+		data, err = json.MarshalIndent(map[string]any{"mcpServers": map[string]stdioConfig{"autumn_bus": entry}}, "", "  ")
 	}
 	if err != nil {
 		return err

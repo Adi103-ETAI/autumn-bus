@@ -1,6 +1,6 @@
 {
-  "name": "autumn-bus",
-  "version": "0.2.0",
+  "name": "@autumn-dev/autumn-bus",
+  "version": "0.1.0-next.15",
   "description": "Autumn Bus native CLI and TypeScript client for agent coordination.",
   "type": "module",
   "sideEffects": false,

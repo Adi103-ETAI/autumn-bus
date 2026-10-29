@@ -94,8 +94,8 @@ func managedTOML(before, block []byte) ([]byte, error) {
 	}
 	// Quoted TOML table names must not bypass the unmanaged-entry check.
 	normalized := strings.NewReplacer("\"", "", "'", "", " ", "", "\t", "").Replace(string(before))
-	if regexp.MustCompile(`(?m)^\[mcp_servers\.agent_intercom(?:\]|\.)`).MatchString(normalized) || strings.Contains(normalized, "mcp_servers={") {
-		return nil, errors.New("an unmanaged agent_intercom MCP entry exists; remove it yourself or use install --print")
+	if regexp.MustCompile(`(?m)^\[mcp_servers\.autumn_bus(?:\]|\.)`).MatchString(normalized) || strings.Contains(normalized, "mcp_servers={") {
+		return nil, errors.New("an unmanaged autumn_bus MCP entry exists; remove it yourself or use install --print")
 	}
 	inMCP := false
 	for _, line := range strings.Split(normalized, "\n") {
@@ -105,7 +105,7 @@ func managedTOML(before, block []byte) ([]byte, error) {
 			}
 			inMCP = line == "[mcp_servers]"
 		}
-		if (inMCP && strings.HasPrefix(line, "agent_intercom=")) || strings.HasPrefix(line, "mcp_servers.agent_intercom") {
+		if (inMCP && strings.HasPrefix(line, "autumn_bus=")) || strings.HasPrefix(line, "mcp_servers.autumn_bus") {
 			return nil, errors.New("an unmanaged MCP entry exists; left unchanged")
 		}
 	}
@@ -249,7 +249,7 @@ func installTarget(target, binary string, selection []string, out io.Writer) err
 		argv, _ := json.Marshal(entry.Args)
 		envData, _ := json.Marshal(paths.DataDir)
 		envRun, _ := json.Marshal(paths.RuntimeDir)
-		block := []byte(fmt.Sprintf("[mcp_servers.agent_intercom]\ncommand = %s\nargs = %s\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\ndefault_tools_approval_mode = \"prompt\"\nenv = { AUTUMN_BUS_DATA_DIR = %s, AUTUMN_BUS_RUNTIME_DIR = %s }\n", command, argv, envData, envRun))
+		block := []byte(fmt.Sprintf("[mcp_servers.autumn_bus]\ncommand = %s\nargs = %s\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\ndefault_tools_approval_mode = \"prompt\"\nenv = { AUTUMN_BUS_DATA_DIR = %s, AUTUMN_BUS_RUNTIME_DIR = %s }\n", command, argv, envData, envRun))
 		after, err := managedTOML(before, block)
 		if err != nil {
 			return err
@@ -279,8 +279,8 @@ func installTarget(target, binary string, selection []string, out io.Writer) err
 		if raw := config["mcpServers"]; len(raw) > 0 && json.Unmarshal(raw, &servers) != nil {
 			return errors.New("Claude MCP configuration is invalid; left unchanged")
 		}
-		if _, ok := servers["agent_intercom"]; ok {
-			return errors.New("an unmanaged agent_intercom MCP entry exists; left unchanged")
+		if _, ok := servers["autumn_bus"]; ok {
+			return errors.New("an unmanaged autumn_bus MCP entry exists; left unchanged")
 		}
 		hookPath := filepath.Join(home, ".claude", "settings.json")
 		hookBefore, err := readConfigFile(hookPath)
@@ -297,7 +297,7 @@ func installTarget(target, binary string, selection []string, out io.Writer) err
 			return err
 		}
 		data, _ := json.Marshal(entry)
-		c := exec.Command("claude", "mcp", "add-json", "--scope", "user", "agent_intercom", string(data))
+		c := exec.Command("claude", "mcp", "add-json", "--scope", "user", "autumn_bus", string(data))
 		c.Stdout, c.Stderr = io.Discard, io.Discard
 		if err = c.Run(); err != nil {
 			_ = os.Remove(statePath)
@@ -471,10 +471,10 @@ func removeInstalledConfig(r installedConfig, current []byte) ([]byte, error) {
 	} else {
 		servers, _ := now["mcpServers"].(map[string]any)
 		wanted, _ := installed["mcpServers"].(map[string]any)
-		if servers == nil || wanted == nil || !equal(servers["agent_intercom"], wanted["agent_intercom"]) {
+		if servers == nil || wanted == nil || !equal(servers["autumn_bus"], wanted["autumn_bus"]) {
 			return nil, conflict
 		}
-		delete(servers, "agent_intercom")
+		delete(servers, "autumn_bus")
 		if len(servers) == 0 && original["mcpServers"] == nil {
 			delete(now, "mcpServers")
 		}

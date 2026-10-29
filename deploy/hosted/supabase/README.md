@@ -16,7 +16,7 @@ afterward. It does not grant the daemon access to Auth or another product's data
 The existing account-delete Edge Function calls `account_storage_objects` before
 any billing cancellation, device revocation or file removal. That call now:
 
-1. Refuses deletion while the account belongs to any Intercom workspace. Users
+1. Refuses deletion while the account belongs to any Autumn Bus workspace. Users
    leave shared workspaces; owners transfer ownership and leave, or delete the
    workspace in **Data & recovery**, which ends its own subscription.
 2. Once no memberships remain, records account deletion intent under an Auth row

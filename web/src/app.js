@@ -48,7 +48,7 @@ function form(children, label, submit) {
   const send = el('button', { type: 'submit', class: 'primary' }, label);
   return el('form', { onsubmit: e => { e.preventDefault(); action(send, () => submit(new FormData(e.currentTarget))); } }, children, send);
 }
-const brand = () => el('div', { class: 'brand' }, el('span', { class: 'mark', 'aria-hidden': true }, 'o'), 'agent intercom');
+const brand = () => el('div', { class: 'brand' }, el('span', { class: 'mark', 'aria-hidden': true }, 'o'), 'autumn bus');
 const date = value => value ? new Date(value).toLocaleString() : '—';
 const path = suffix => `/api/workspaces/${encodeURIComponent(state.workspace.id)}${suffix}`;
 async function api(url, options = {}) {

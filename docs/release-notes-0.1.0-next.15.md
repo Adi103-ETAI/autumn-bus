@@ -1,7 +1,7 @@
-# Autumn Bus 0.2.0 — release candidate
+# Autumn Bus 0.1.0-next.15 — npm prerelease
 
 The full CLI and TypeScript SDK are published as `@autumn-dev/autumn-bus@0.1.0-next.15` under
-the `candidate` tag. Install with `npm install -g @autumn-dev/autumn-bus@0.1.0-next.15`, or try
+the `next` tag. Install with `npm install -g @autumn-dev/autumn-bus@0.1.0-next.15`, or try
 `npx @autumn-dev/autumn-bus@0.1.0-next.15 demo`. Stable `latest` promotion, broader harness
 qualification and public hosted signup remain separate steps.
 

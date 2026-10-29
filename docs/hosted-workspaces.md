@@ -195,7 +195,7 @@ while billing cancellation is uncertain.
 File metadata becomes inaccessible immediately; the bounded file collector
 removes the remaining bytes. Operator backups expire separately. Minimal payment
 references remain for support, and deleting a workspace does not reset the account's
-trial. To delete an Autumn account, first leave every Intercom workspace: transfer
+trial. To delete an Autumn account, first leave every Autumn Bus workspace: transfer
 ownership and leave, or delete the owned workspace. The shared identity service
 must install [the Supabase lifecycle integration](../deploy/hosted/supabase/README.md)
 before self-service hosted launch.

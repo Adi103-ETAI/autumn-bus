@@ -13,7 +13,7 @@ import (
 
 func TestManagedInstallPreservesConfiguration(t *testing.T) {
 	original := []byte("# My settings\nmodel = \"custom\"\n\n[mcp_servers.other]\ncommand = \"other\"\n")
-	after, err := managedTOML(original, []byte("[mcp_servers.agent_intercom]\ncommand = \"autumn-bus\"\n"))
+	after, err := managedTOML(original, []byte("[mcp_servers.autumn_bus]\ncommand = \"autumn-bus\"\n"))
 	requireNoError(t, err)
 	r := installedConfig{Path: "config.toml", Before: original, After: after}
 	removed, err := removeInstalledConfig(r, after)
@@ -25,7 +25,7 @@ func TestManagedInstallPreservesConfiguration(t *testing.T) {
 	require(t, bytes.Equal(removed, append(append([]byte(nil), original...), []byte("\n[features]\nexample = true\n")...)), "unrelated TOML edits lost")
 	_, err = removeInstalledConfig(r, bytes.ReplaceAll(after, []byte("command = \"autumn-bus\""), []byte("command = \"my-wrapper\"")))
 	require(t, err != nil, "removed an edited owned block")
-	for _, existing := range []string{"[mcp_servers.agent_intercom]\n", "[mcp_servers.\"agent_intercom\"]\n", "[ mcp_servers . 'agent_intercom' . env ]\n", managedBegin} {
+	for _, existing := range []string{"[mcp_servers.autumn_bus]\n", "[mcp_servers.\"autumn_bus\"]\n", "[ mcp_servers . 'autumn_bus' . env ]\n", managedBegin} {
 		_, err := managedTOML([]byte(existing), []byte("new"))
 		require(t, err != nil, "overwrote unmanaged entry: %s", existing)
 	}
@@ -33,8 +33,8 @@ func TestManagedInstallPreservesConfiguration(t *testing.T) {
 
 func TestClaudeUninstallPreservesUnrelatedUpdates(t *testing.T) {
 	before := []byte(`{"theme":"dark","mcpServers":{"other":{"command":"other"}}}`)
-	after := []byte(`{"theme":"dark","mcpServers":{"other":{"command":"other"},"agent_intercom":{"command":"autumn-bus"}}}`)
-	current := []byte(`{"theme":"light","onboarding":true,"mcpServers":{"other":{"command":"changed"},"agent_intercom":{"command":"autumn-bus"}}}`)
+	after := []byte(`{"theme":"dark","mcpServers":{"other":{"command":"other"},"autumn_bus":{"command":"autumn-bus"}}}`)
+	current := []byte(`{"theme":"light","onboarding":true,"mcpServers":{"other":{"command":"changed"},"autumn_bus":{"command":"autumn-bus"}}}`)
 	got, err := removeInstalledConfig(installedConfig{".claude.json", before, after}, current)
 	requireNoError(t, err)
 	var value map[string]any

@@ -149,7 +149,7 @@ async function request<T>(
   throw new BusError('INTERNAL', `Autumn Bus request failed with HTTP ${response.status}`)
 }
 
-export class AgentIntercomAdminClient {
+export class AutumnBusAdminClient {
   constructor(
     readonly address: string,
     private readonly adminToken: string
@@ -233,7 +233,7 @@ export class AgentIntercomAdminClient {
   }
 }
 
-export class AgentIntercomScopeClient {
+export class AutumnBusScopeClient {
   constructor(
     readonly address: string,
     readonly scopeToken: string
@@ -497,7 +497,7 @@ export class AgentIntercomScopeClient {
   }
 }
 
-export class AgentIntercomClient {
+export class AutumnBusClient {
   constructor(
     readonly address: string,
     readonly agentToken: string
@@ -690,7 +690,7 @@ export class AgentIntercomClient {
   }
 }
 
-export class AgentIntercomOutputClient {
+export class AutumnBusOutputClient {
   constructor(
     readonly address: string,
     private readonly credential: string

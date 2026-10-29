@@ -4,7 +4,7 @@
 
 - Use the Autumn Bus product name and `autumn-bus` CLI/npm package.
   Keep the existing repository and Go module address. The TypeScript client
-  classes now use the `AgentIntercom` prefix.
+  classes now use the `AutumnBus` prefix.
 - Add local and hosted workspaces, PostgreSQL storage, account membership,
   remote MCP authorization, a browser workspace, channels, files and billing
   integration. Hosted launch and payment qualification are tracked separately.

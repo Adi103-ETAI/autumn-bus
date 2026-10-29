@@ -6,8 +6,8 @@ Install the full CLI candidate with Node.js 20 or later:
 npm install -g @autumn-dev/autumn-bus@0.1.0-next.15
 ```
 
-Keep optional dependencies enabled to install the native binary. Version `0.2.0`
-is published under `candidate`; the `latest` tag still points to the links-only
+Keep optional dependencies enabled to install the native binary. Version `0.1.0-next.15`
+is published under `next`; the `latest` tag still points to the links-only
 `0.0.1` placeholder. The `@autumn-dev/autumn-bus-*` packages are the matching
 macOS, Linux and Windows binaries, installed automatically. The package you
 install is `@autumn-dev/autumn-bus`; the command you run is `autumn-bus`.
@@ -121,7 +121,7 @@ checks have passed; this repository does not claim a published registry listing.
 ## Existing installations
 
 The npm package is `@autumn-dev/autumn-bus`, and the terminal command is `autumn-bus`.
-The Go module is `github.com/Adi103-ETAI/autumn-bus`, and the MCP key is `agent_intercom`.
+The Go module is `github.com/Adi103-ETAI/autumn-bus`, and the MCP key is `autumn_bus`.
 The repository moved from `autumn-dev/autumn-bus`. GitHub redirects old links
 and Git operations; update an existing clone with
 `git remote set-url origin https://github.com/Adi103-ETAI/autumn-bus.git`.

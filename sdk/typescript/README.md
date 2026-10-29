@@ -14,11 +14,11 @@ Admins can use `listScopes()`, `rotateScopeToken(scopeId)`, and `deleteScope(sco
 
 `for await (const chunk of admin.backup())` streams a full SQLite snapshot without accumulating it in memory. Write it to a new private file, discard partial output if iteration fails, and retain the original database when restoring. This snapshot includes credentials and is not a portable scope archive.
 
-`AgentIntercomAdminClient` can export and import versioned portable scope archives. Archives preserve durable collaboration state but exclude credentials, leases, and active execution authority.
+`AutumnBusAdminClient` can export and import versioned portable scope archives. Archives preserve durable collaboration state but exclude credentials, leases, and active execution authority.
 
 ## Install
 
-Version `0.2.0` is available under the `candidate` tag. Install it explicitly:
+Version `0.1.0-next.15` is published under the `next` tag. Install it explicitly:
 
 ```sh
 npm install @autumn-dev/autumn-bus@0.1.0-next.15
@@ -42,10 +42,10 @@ The CLI refuses mismatched binary versions and never falls back to another execu
 Start the daemon, create a scope with the Autumn Bus CLI, and set the returned token as `AUTUMN_BUS_SCOPE_TOKEN`.
 
 ```ts
-import { AgentIntercomClient, AgentIntercomOutputClient, AgentIntercomScopeClient } from '@autumn-dev/autumn-bus'
+import { AutumnBusClient, AutumnBusOutputClient, AutumnBusScopeClient } from '@autumn-dev/autumn-bus'
 
 const address = 'http://127.0.0.1:4765'
-const scope = new AgentIntercomScopeClient(address, process.env.AUTUMN_BUS_SCOPE_TOKEN!)
+const scope = new AutumnBusScopeClient(address, process.env.AUTUMN_BUS_SCOPE_TOKEN!)
 
 const plannerRegistration = await scope.registerAgent({
   id: 'planner',
@@ -57,8 +57,8 @@ const reviewerRegistration = await scope.registerAgent({
   connectTo: ['planner']
 })
 
-const planner = new AgentIntercomClient(address, plannerRegistration.agentToken)
-const reviewer = new AgentIntercomClient(address, reviewerRegistration.agentToken)
+const planner = new AutumnBusClient(address, plannerRegistration.agentToken)
+const reviewer = new AutumnBusClient(address, reviewerRegistration.agentToken)
 
 const task = await scope.addTask({
   title: 'Review checkout retries',
@@ -88,7 +88,7 @@ const outputReader = await scope.createOutputPrincipal({
   label: 'Preview page',
   permissions: ['read']
 })
-const outputs = new AgentIntercomOutputClient(address, outputReader.credential)
+const outputs = new AutumnBusOutputClient(address, outputReader.credential)
 const latestOutput = await outputs.latest(outputStream.id)
 
 const dryRun = await scope.pruneScope({ before: '2026-08-01T00:00:00Z' })
@@ -127,7 +127,7 @@ Operations time out after 30 seconds by default. Pass `{ timeoutMs, signal }` as
 
 Generate a new idempotency key for each logical send. Keys remain bound to their original message. Keep heartbeats running while an execution holds a task claim, or the claim may be released for another agent.
 
-`AgentIntercomAgentSession` manages registration, conservative lifecycle state, heartbeat, execution replacement, and shutdown cleanup for adapters that use the TypeScript client.
+`AutumnBusAgentSession` manages registration, conservative lifecycle state, heartbeat, execution replacement, and shutdown cleanup for adapters that use the TypeScript client.
 
 `pollInbox` provides an abortable async iterator over repeated bounded inbox waits. `withClaimedTask` releases a claim when work or completion fails. Use both with a live agent session so the execution lease remains current while work is claimed.
 
@@ -155,4 +155,4 @@ are available on macOS/Linux/WSL through `session start claude` and
 
 See [connections](../../docs/connect-sessions.md),
 [hosted workspaces](../../docs/hosted-workspaces.md) and
-[the release candidate notes](../../docs/release-notes-0.2.0.md).
+[the release candidate notes](../../docs/release-notes-0.1.0-next.15.md).

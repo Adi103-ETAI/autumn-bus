@@ -103,7 +103,7 @@ Go `SetState` and TypeScript `setState` serialize writes and update their rememb
 
 ## TypeScript
 
-Version `0.2.0` is published under `candidate`. Install it explicitly; the
+Version `0.1.0-next.15` is published under `next`. Install it explicitly; the
 `latest` tag still selects the links-only `@autumn-dev/autumn-bus@0.0.1` placeholder:
 
 ```bash
@@ -111,9 +111,9 @@ npm install @autumn-dev/autumn-bus@0.1.0-next.15
 ```
 
 ```ts
-import { AgentIntercomAgentSession, AgentIntercomOutputClient, AgentIntercomScopeClient } from '@autumn-dev/autumn-bus'
+import { AutumnBusAgentSession, AutumnBusOutputClient, AutumnBusScopeClient } from '@autumn-dev/autumn-bus'
 
-const session = await AgentIntercomAgentSession.start({
+const session = await AutumnBusAgentSession.start({
   address,
   scopeToken,
   registration: {
@@ -126,8 +126,8 @@ const session = await AgentIntercomAgentSession.start({
 await session.setState('ready', true)
 const peers = await session.client.listPeers({ timeoutMs: 10_000 })
 const messages = await session.client.pullInbox(50, { waitMs: 25_000 })
-const readyTasks = await new AgentIntercomScopeClient(address, scopeToken).listTasks({ ready: true })
-const owner = new AgentIntercomScopeClient(address, scopeToken)
+const readyTasks = await new AutumnBusScopeClient(address, scopeToken).listTasks({ ready: true })
+const owner = new AutumnBusScopeClient(address, scopeToken)
 const publication = await owner.createAgentCardPublication({ agentId: 'reviewer' })
 const issued = await owner.createA2APrincipal({
   publicationId: publication.id,
@@ -158,7 +158,7 @@ const reader = await owner.createOutputPrincipal({
   label: 'Preview page',
   permissions: ['read']
 })
-const outputs = new AgentIntercomOutputClient(address, reader.credential)
+const outputs = new AutumnBusOutputClient(address, reader.credential)
 const latest = await outputs.latest(stream.id)
 ```
 

@@ -1,6 +1,6 @@
 {
   "mcp": {
-    "agent_intercom": {
+    "autumn_bus": {
       "command": "{{command}}",
       "args": [
         "mcp",

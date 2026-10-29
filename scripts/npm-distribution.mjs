@@ -75,7 +75,7 @@ function build(target, source) {
     license: manifest.license, os: [platform.os], cpu: [platform.cpu],
     repository: manifest.repository, homepage: manifest.homepage,
     files: ['bin', 'LICENSE', 'README.md'], publishConfig: manifest.publishConfig,
-    agentIntercomBuild: { source, binaryIntegrity: integrity(binary) }
+    autumnBusBuild: { source, binaryIntegrity: integrity(binary) }
   }
   writeFileSync(join(directory, 'package.json'), `${JSON.stringify(pkg, null, 2)}\n`)
   copyFileSync(join(root, 'LICENSE'), join(directory, 'LICENSE'))
@@ -96,7 +96,7 @@ function pack(directory, name, source) {
     const platform = targets.map(packageFor).find(platform => platform.name === name)
     assert.deepEqual(pkg.os, [platform.os])
     assert.deepEqual(pkg.cpu, [platform.cpu])
-    assert.deepEqual(pkg.agentIntercomBuild, { source, binaryIntegrity: integrity(join(directory, expectedBinary)) }, 'Stale or changed native binary; rebuild before packing')
+    assert.deepEqual(pkg.autumnBusBuild, { source, binaryIntegrity: integrity(join(directory, expectedBinary)) }, 'Stale or changed native binary; rebuild before packing')
   }
   const [result] = JSON.parse(npm(['pack', '--json', '--ignore-scripts', '--pack-destination', artifacts], { cwd: directory }))
   assert.equal(result.name, name)

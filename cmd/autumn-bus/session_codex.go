@@ -26,7 +26,7 @@ func codexConnectionConfig(binary, path string) []string {
 	args, _ := json.Marshal([]string{"mcp", "stdio", "--connection-file", path, "--ready-file", filepath.Join(filepath.Dir(path), "ready.json")})
 	// Replace this invocation's complete transport table so an older remote URL
 	// or execution-token environment cannot be merged into the managed bridge.
-	return []string{"-c", "mcp_servers.agent_intercom={enabled=true,command=" + string(command) + ",args=" + string(args) + ",env={AUTUMN_BUS_AGENT_TOKEN=\"\",AUTUMN_BUS_SCOPE_TOKEN=\"\",AUTUMN_BUS_ADMIN_TOKEN=\"\",AUTUMN_BUS_CONNECTION_FILE=\"\",AUTUMN_BUS_ADDRESS=\"\",AUTUMN_BUS_MCP_URL=\"\"},startup_timeout_sec=20,tool_timeout_sec=60}"}
+	return []string{"-c", "mcp_servers.autumn_bus={enabled=true,command=" + string(command) + ",args=" + string(args) + ",env={AUTUMN_BUS_AGENT_TOKEN=\"\",AUTUMN_BUS_SCOPE_TOKEN=\"\",AUTUMN_BUS_ADMIN_TOKEN=\"\",AUTUMN_BUS_CONNECTION_FILE=\"\",AUTUMN_BUS_ADDRESS=\"\",AUTUMN_BUS_MCP_URL=\"\"},startup_timeout_sec=20,tool_timeout_sec=60}"}
 }
 func validateCodexNativeArgs(args []string) error {
 	for i, arg := range args {
@@ -49,8 +49,8 @@ func validateCodexNativeArgs(args []string) error {
 		key, _, _ := strings.Cut(value, "=")
 		key = strings.TrimSpace(key)
 		key = strings.NewReplacer("\"", "", "'", "", " ", "", "\t", "").Replace(key)
-		if key == "mcp_servers" || key == "mcp_servers.agent_intercom" || strings.HasPrefix(key, "mcp_servers.agent_intercom.") && key != "mcp_servers.agent_intercom.default_tools_approval_mode" {
-			return errors.New("the native launcher owns the agent_intercom MCP connection; other Codex settings remain available")
+		if key == "mcp_servers" || key == "mcp_servers.autumn_bus" || strings.HasPrefix(key, "mcp_servers.autumn_bus.") && key != "mcp_servers.autumn_bus.default_tools_approval_mode" {
+			return errors.New("the native launcher owns the autumn_bus MCP connection; other Codex settings remain available")
 		}
 	}
 	return nil
@@ -169,7 +169,7 @@ func bootstrapCodexThread(parent context.Context, binary string, config, env []s
 			}
 		}
 	}
-	if _, err := call(1, "initialize", map[string]any{"clientInfo": map[string]string{"name": "agent_intercom", "version": bus.Version}}); err != nil {
+	if _, err := call(1, "initialize", map[string]any{"clientInfo": map[string]string{"name": "autumn_bus", "version": bus.Version}}); err != nil {
 		return "", err
 	}
 	if err := encoder.Encode(map[string]any{"method": "initialized"}); err != nil {

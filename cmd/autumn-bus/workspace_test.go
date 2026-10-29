@@ -47,7 +47,7 @@ func TestWorkspaceConnectionConfiguration(t *testing.T) {
 		Servers map[string]stdioConfig `json:"mcpServers"`
 	}
 	requireNoError(t, json.Unmarshal(output.Bytes(), &config))
-	entry := config.Servers["agent_intercom"]
+	entry := config.Servers["autumn_bus"]
 	require(t, entry.Command == binary, "wrong executable: %#v", entry)
 	joined := strings.Join(entry.Args, " ")
 	require(t, strings.Contains(joined, "--new-session") && !strings.Contains(joined, "--agent"), "configuration binds concurrent windows to one identity: %#v", entry)
@@ -56,7 +56,7 @@ func TestWorkspaceConnectionConfiguration(t *testing.T) {
 		output.Reset()
 		requireNoError(t, connectCommand([]string{"--workspace", "project", "--format", format}, &output))
 		if format == "toml" {
-			require(t, strings.HasPrefix(output.String(), "[mcp_servers.agent_intercom]"), "missing Codex section")
+			require(t, strings.HasPrefix(output.String(), "[mcp_servers.autumn_bus]"), "missing Codex section")
 		} else {
 			requireNoError(t, json.Unmarshal(output.Bytes(), &entry))
 		}

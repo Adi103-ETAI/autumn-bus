@@ -3,7 +3,7 @@
     "id": "mcp-autumn-bus",
     "name": "@deepseek-ai/dsh-mcp-client",
     "config": {
-      "serverName": "agent_intercom",
+      "serverName": "autumn_bus",
       "transport": "stdio",
       "command": "{{command}}",
       "args": [

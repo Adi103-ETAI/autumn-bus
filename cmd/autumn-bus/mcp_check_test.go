@@ -109,11 +109,7 @@ func TestVersionJSON(t *testing.T) {
 	require(t, decoded["runtimeVersion"] != "" && decoded["protocolVersion"] != "", "version json: %s", out.String())
 	out.Reset()
 	requireNoError(t, printVersion(nil, &out))
-<<<<<<<< HEAD:cmd/autumn-bus/mcp_check_test.go
 	require(t, strings.HasPrefix(out.String(), "autumn-bus "), "human version: %s", out.String())
-========
-	require(t, strings.HasPrefix(out.String(), "autumn-bus "), "human version: %s", out.String())
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/mcp_check_test.go
 	require(t, printVersion([]string{"extra"}, &out) != nil, "positional argument accepted")
 }
 

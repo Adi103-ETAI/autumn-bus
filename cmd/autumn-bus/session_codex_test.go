@@ -237,10 +237,10 @@ func TestCodexQueueFailureIsUncertainAndDestinationCannotBeOverridden(t *testing
 	require(t, err != nil && outcome == "uncertain", "post-start error may have delivered: %s %v", outcome, err)
 	outcome, err = postCodexQueue(context.Background(), "/missing/codex", testCodexThread, os.Environ(), "static nudge")
 	require(t, err != nil && outcome == "unavailable", "start failure was not unavailable")
-	for _, args := range [][]string{{"--remote=unix://other"}, {"--last"}, {"--no-daemon"}, {"-c", `mcp_servers."agent_intercom".command="other"`}, {"--config=mcp_servers={}"}} {
+	for _, args := range [][]string{{"--remote=unix://other"}, {"--last"}, {"--no-daemon"}, {"-c", `mcp_servers."autumn_bus".command="other"`}, {"--config=mcp_servers={}"}} {
 		require(t, validateCodexNativeArgs(args) != nil, "accepted destination override %v", args)
 	}
-	requireNoError(t, validateCodexNativeArgs([]string{"-c", "model_reasoning_effort=low", "--sandbox", "read-only", "-c", "mcp_servers.agent_intercom.default_tools_approval_mode=prompt"}))
+	requireNoError(t, validateCodexNativeArgs([]string{"-c", "model_reasoning_effort=low", "--sandbox", "read-only", "-c", "mcp_servers.autumn_bus.default_tools_approval_mode=prompt"}))
 }
 
 func TestCodexBootstrapCancellationDoesNotStartTurns(t *testing.T) {

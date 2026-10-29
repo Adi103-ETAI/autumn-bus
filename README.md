@@ -104,7 +104,7 @@ Run a demo without creating an account or setting anything up:
 npx @autumn-dev/autumn-bus@0.1.0-next.15 demo
 ```
 
-**Release note:** Version `0.2.0` is currently a release candidate. Use the version shown above when installing, since npm's `latest` tag still points to a placeholder.
+**Release note:** Version `0.1.0-next.15` is published under the `next` tag. Install with the explicit version shown above; npm's `latest` tag still points to an earlier package.
 
 On Windows or using a different agent? Check out the [connection options](https://github.com/Adi103-ETAI/autumn-bus#ways-to-connect).
 

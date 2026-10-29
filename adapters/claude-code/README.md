@@ -37,11 +37,11 @@ This connects Claude Code to a local Autumn Bus daemon, with no Autumn Desktop. 
    autumn-bus harness config claude-code --scope my-project --agent claude-reviewer --name "Claude Reviewer" --output autumn-bus.mcp.json
    ```
 
-   `--output` only creates a new file. If the project has no `.mcp.json`, rename this file to `.mcp.json`. Otherwise copy only its `agent_intercom` entry into the existing `mcpServers` object. The entry holds paths and IDs, never a token.
+   `--output` only creates a new file. If the project has no `.mcp.json`, rename this file to `.mcp.json`. Otherwise copy only its `autumn_bus` entry into the existing `mcpServers` object. The entry holds paths and IDs, never a token.
 
 4. Generate the peer's entry with a different agent ID and add it to that host's configuration, for example `autumn-bus harness config codex --scope my-project --agent codex-builder`.
 
-5. Launch Claude Code in the project. Approve the `agent_intercom` project server and each tool through Claude Code's own prompts. To pre-approve tools, list the ones you trust (`mcp__agent_intercom__<tool>`) under `permissions.allow` in the project settings. Claude Code 2.1.286 ignores those entries until the workspace is trusted. In print mode (`claude -p`) you can pass the same names with `--allowedTools`. Do not bypass permissions. Launch the peer the same way.
+5. Launch Claude Code in the project. Approve the `autumn_bus` project server and each tool through Claude Code's own prompts. To pre-approve tools, list the ones you trust (`mcp__autumn_bus__<tool>`) under `permissions.allow` in the project settings. Claude Code 2.1.286 ignores those entries until the workspace is trusted. In print mode (`claude -p`) you can pass the same names with `--allowedTools`. Do not bypass permissions. Launch the peer the same way.
 
 6. Once both agents have registered, link them and check the setup:
 
@@ -71,7 +71,7 @@ This connects Claude Code to a local Autumn Bus daemon, with no Autumn Desktop. 
 
    Only the scope owner can resolve an escalation; the agent cannot answer its own.
 
-9. To disconnect, close Claude Code or remove the `agent_intercom` entry. Run `autumn-bus agent list` again and confirm `claude-reviewer` is offline and unreachable before reassigning its work.
+9. To disconnect, close Claude Code or remove the `autumn_bus` entry. Run `autumn-bus agent list` again and confirm `claude-reviewer` is offline and unreachable before reassigning its work.
 
 ## Session lifecycle
 
@@ -79,7 +79,7 @@ A host controller that already owns the execution (Autumn Desktop over SSH) does
 
 Use `check_inbox` with `waitMs=1000` between work steps. The bridge registers and heartbeats outside the model loop, and attempts retirement when the host closes MCP. A hard kill relies on lease expiry. Each simultaneously connected window/project needs a distinct `--agent` ID; identical IDs deliberately replace the previous execution.
 
-The execution can end while Claude Code is still open. This happens when another window registers the same agent ID, the scope token is rotated, the lease expires (for example after a long sleep), or the daemon stops or becomes unreachable. The server then stays connected, but every tool call fails with "Autumn Bus execution ended". It never registers again by itself, so an older window cannot take the ID back from a newer one. Resolve any duplicate agent ID first. Then reconnect `agent_intercom` from `/mcp`, or restart the window, to register a new execution.
+The execution can end while Claude Code is still open. This happens when another window registers the same agent ID, the scope token is rotated, the lease expires (for example after a long sleep), or the daemon stops or becomes unreachable. The server then stays connected, but every tool call fails with "Autumn Bus execution ended". It never registers again by itself, so an older window cannot take the ID back from a newer one. Resolve any duplicate agent ID first. Then reconnect `autumn_bus` from `/mcp`, or restart the window, to register a new execution.
 
 Remove this server entry to disconnect, and verify retirement in the Bus before reassigning work.
 

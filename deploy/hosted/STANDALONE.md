@@ -203,7 +203,7 @@ communicate the recovery point and preserve newer data for reconciliation.
 For Autumn's Supabase deployment, apply the privileged
 [account lifecycle integration](supabase/README.md) before allowing sign-ups.
 It fences account deletion before other products' cancellation or data removal,
-requires users to leave or close their Intercom workspaces, and prevents concurrent
+requires users to leave or close their Autumn Bus workspaces, and prevents concurrent
 membership creation for an account being deleted. Run its disposable database
 rehearsal and deploy the matching website explanation before opening hosting.
 Keep these shared Auth functions in the identity deployment's recovery procedure.

@@ -19,43 +19,6 @@ import (
 	"github.com/Adi103-ETAI/autumn-bus/bus"
 )
 
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
-const usage = `Autumn Bus
-
-Usage:
-  autumn-bus start [--port <port>]
-  autumn-bus stop
-  autumn-bus status
-  autumn-bus doctor [--json]
-  autumn-bus doctor --harness <host> --scope <scope-id> [--json]
-  autumn-bus harness list
-  autumn-bus harness config <host> --scope <scope-id> --agent <id> [--name <display>] [--output <new-file>]
-  autumn-bus scope create [scope-id]
-  autumn-bus scope list [--address <addr>]
-  autumn-bus scope rotate-token --id <scope-id> [--address <addr>]
-  autumn-bus scope delete --id <scope-id> --confirm <scope-id> [--address <addr>]
-  autumn-bus backup --output <new-path> [--address <addr>]
-  autumn-bus scope export --id <scope-id> --output <path> [--address <addr>]
-  autumn-bus scope import --input <path> [--address <addr>]
-  autumn-bus scope storage [--json] [--address <addr>]
-  autumn-bus scope prune --before <timestamp> [--yes] [--json] [--address <addr>]
-  autumn-bus message receipt <message-id> [--json] [--address <addr>]
-  autumn-bus agent list [--json] [--address <addr>]
-  autumn-bus link --scope <scope-id> <agent-a> <agent-b>
-  autumn-bus agent run --id <id> --name <name> [--scope <local-scope-id>] [--connect-to <peer>] -- <command> [args...]
-  autumn-bus task add --title <title> [--description <text>] [--depends-on <task-id>] [--json] [--address <addr>]
-  autumn-bus task list [--ready] [--json] [--limit <1-500>] [--after <cursor>] [--address <addr>]
-  autumn-bus mcp stdio [--scope <scope-id> --agent <id> --name <display>]
-  autumn-bus mcp stdio --connection-file </absolute/private/connection.json>
-  autumn-bus mcp stdio --remote <https-base-url> --scope-token-file <file> --agent <id> [--connect-to <peer>]
-  autumn-bus mcp check [--connection-file <path>] [--json]
-  autumn-bus hook [--connection-file <path>] <event> [<flavor>]
-  autumn-bus gateway init --public-url <https-origin> --scope <id> --config <new-file> --key-file <new-file>
-  autumn-bus gateway key --output <new-private-file>
-  autumn-bus gateway start --config <file> [--listen 127.0.0.1:8787]
-  autumn-bus demo
-  autumn-bus version [--json]
-========
 const usage = `Autumn Bus
 
 Usage:
@@ -123,7 +86,6 @@ Usage:
   autumn-bus gateway start --config <file> [--listen 127.0.0.1:8787]
   autumn-bus demo
   autumn-bus version [--json]
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 `
 
 type stringList []string
@@ -149,11 +111,7 @@ func start(args []string) error {
 	if err != nil {
 		return err
 	}
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	fmt.Printf("Autumn Bus listening on %s\n", daemon.RunFile.Address)
-========
-	fmt.Printf("Autumn Bus listening on %s\n", daemon.RunFile.Address)
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	fmt.Printf("Run file: %s\n", daemon.Paths.RunFile)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -167,11 +125,7 @@ func start(args []string) error {
 	defer cancel()
 	stopErr := daemon.Stop(shutdown)
 	if serveErr != nil {
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 		return fmt.Errorf("Autumn Bus stopped unexpectedly: %w", serveErr)
-========
-		return fmt.Errorf("Autumn Bus stopped unexpectedly: %w", serveErr)
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	}
 	return stopErr
 }
@@ -193,20 +147,12 @@ func stop() error {
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
 		if _, err := os.Stat(paths.RunFile); errors.Is(err, os.ErrNotExist) {
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 			fmt.Println("Autumn Bus stopped")
-========
-			fmt.Println("Autumn Bus stopped")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 			return nil
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	return errors.New("Autumn Bus did not stop within 10 seconds")
-========
-	return errors.New("Autumn Bus did not stop within 10 seconds")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 }
 
 type diagnosticReport struct {
@@ -286,11 +232,7 @@ func doctor(args []string) error {
 			}
 		}
 	} else if report.Problem == "" {
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 		report.Problem = "Autumn Bus is not running"
-========
-		report.Problem = "Autumn Bus is not running"
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	}
 	if *jsonOutput {
 		encoded, err := json.MarshalIndent(report, "", "  ")
@@ -303,11 +245,7 @@ func doctor(args []string) error {
 		if report.Healthy {
 			state = "ready"
 		}
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 		fmt.Printf("Autumn Bus is %s\n", state)
-========
-		fmt.Printf("Autumn Bus is %s\n", state)
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 		fmt.Printf("Runtime %s, protocol %s\n", report.RuntimeVersion, report.ProtocolVersion)
 		fmt.Printf("Data: %s\n", report.DataDirectory)
 		fmt.Printf("Runtime: %s\n", report.RuntimeDirectory)
@@ -322,11 +260,7 @@ func doctor(args []string) error {
 		}
 	}
 	if !report.Healthy {
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 		return errors.New("Autumn Bus diagnostics did not pass")
-========
-		return errors.New("Autumn Bus diagnostics did not pass")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	}
 	return nil
 }
@@ -346,11 +280,7 @@ func status() error {
 	if err != nil {
 		return err
 	}
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	fmt.Printf("Autumn Bus is %s at %s\n", health.Status, run.Address)
-========
-	fmt.Printf("Autumn Bus is %s at %s\n", health.Status, run.Address)
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	fmt.Printf("Runtime %s, protocol %s, pid %d\n", health.RuntimeVersion, health.ProtocolVersion, run.PID)
 	fmt.Printf("Storage %s (%s)\n", health.Storage.Backend, health.Storage.Status)
 	return nil
@@ -424,11 +354,7 @@ func exportScope(args []string) error {
 	flags.SetOutput(os.Stderr)
 	scopeID := flags.String("id", "", "scope id to export")
 	output := flags.String("output", "", "archive output path")
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
-========
-	address := flags.String("address", "", "Autumn Bus address")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -476,11 +402,7 @@ func importScope(args []string) error {
 	flags := flag.NewFlagSet("scope import", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	input := flags.String("input", "", "archive input path")
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
-========
-	address := flags.String("address", "", "Autumn Bus address")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -560,11 +482,7 @@ func resolveBusAddress(explicit string) (string, error) {
 	return run.Address, nil
 }
 
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 // inspectReceipt implements `autumn-bus message receipt <message-id>`.
-========
-// inspectReceipt implements `autumn-bus message receipt <message-id>`.
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 //
 // It reads the agent credential from AUTUMN_BUS_AGENT_TOKEN and fetches the
 // delivery receipt through the public client API. The receipt deliberately
@@ -574,11 +492,7 @@ func inspectReceipt(args []string) error {
 	flags := flag.NewFlagSet("message receipt", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
-========
-	address := flags.String("address", "", "Autumn Bus address")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	if err := flags.Parse(receiptFlagArgs(args)); err != nil {
 		return err
 	}
@@ -666,23 +580,14 @@ func printReceiptHuman(receipt bus.DeliveryReceipt) error {
 	return nil
 }
 
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 // listAgents implements `autumn-bus agent list [--json] [--address <addr>]`.
 // It reads the scope credential from AUTUMN_BUS_SCOPE_TOKEN and returns only
-========
-// listAgents implements `autumn-bus agent list [--json] [--address <addr>]`.
-// It reads the scope credential from AUTUMN_BUS_SCOPE_TOKEN and returns only
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 // the agent metadata visible to that scope.
 func listAgents(args []string) error {
 	flags := flag.NewFlagSet("agent list", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
-========
-	address := flags.String("address", "", "Autumn Bus address")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -767,11 +672,7 @@ func addTask(args []string) error {
 	flags.SetOutput(os.Stderr)
 	title := flags.String("title", "", "short task title")
 	description := flags.String("description", "", "task description")
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
-========
-	address := flags.String("address", "", "Autumn Bus address")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
 	var dependencies stringList
 	flags.Var(&dependencies, "depends-on", "dependency task id, repeatable")
@@ -813,11 +714,7 @@ func listTasks(args []string) error {
 	pageLimit := flags.Int("limit", 0, "return a page of 1-500 tasks as JSON")
 	after := flags.String("after", "", "task page cursor")
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
-========
-	address := flags.String("address", "", "Autumn Bus address")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -886,11 +783,7 @@ func scopeStorage(args []string) error {
 	flags := flag.NewFlagSet("scope storage", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
-========
-	address := flags.String("address", "", "Autumn Bus address")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -941,11 +834,7 @@ func scopePrune(args []string) error {
 	before := flags.String("before", "", "remove terminal records older than this RFC 3339 timestamp")
 	execute := flags.Bool("yes", false, "execute the retention operation")
 	jsonOutput := flags.Bool("json", false, "print machine-readable JSON")
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
-========
-	address := flags.String("address", "", "Autumn Bus address")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -1029,11 +918,7 @@ func runAgent(args []string) error {
 	flags.SetOutput(os.Stderr)
 	id := flags.String("id", "", "stable agent id")
 	name := flags.String("name", "", "agent display name")
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	address := flags.String("address", "", "Autumn Bus address")
-========
-	address := flags.String("address", "", "Autumn Bus address")
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	localScope := flags.String("scope", "", "local scope ID; uses protected cached credentials, not environment authority")
 	scopeTokenEnv := flags.String("scope-token-env", "AUTUMN_BUS_SCOPE_TOKEN", "environment variable containing the scope token")
 	lease := flags.Duration("lease", 5*time.Minute, "execution lease")
@@ -1108,21 +993,12 @@ func runAgent(args []string) error {
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
-	command.Env = setEnvironment(removeEnvironment(os.Environ(), *scopeTokenEnv, "AUTUMN_BUS_SCOPE_TOKEN", "AUTUMN_BUS_ADMIN_TOKEN"),
-		"AUTUMN_BUS_ADDRESS", resolvedAddress,
-		"AUTUMN_BUS_MCP_URL", resolvedAddress+"/mcp",
-		"AUTUMN_BUS_AGENT_ID", session.Registration.AgentID,
-		"AUTUMN_BUS_EXECUTION_ID", session.Registration.ExecutionID,
-		"AUTUMN_BUS_AGENT_TOKEN", session.Registration.AgentToken,
-========
 	command.Env = setEnvironment(removeEnvironment(os.Environ(), *scopeTokenEnv, "AUTUMN_BUS_SCOPE_TOKEN", "AUTUMN_BUS_ADMIN_TOKEN", "AUTUMN_BUS_DATABASE_URL", "AUTUMN_BUS_ENCRYPTION_KEY", "AUTUMN_BUS_BILLING_SECRET"),
 		"AUTUMN_BUS_ADDRESS", resolvedAddress,
 		"AUTUMN_BUS_MCP_URL", resolvedAddress+"/mcp",
 		"AUTUMN_BUS_AGENT_ID", session.Registration.AgentID,
 		"AUTUMN_BUS_EXECUTION_ID", session.Registration.ExecutionID,
 		"AUTUMN_BUS_AGENT_TOKEN", session.Registration.AgentToken,
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	)
 	if err := command.Start(); err != nil {
 		_ = closeSession()
@@ -1290,11 +1166,7 @@ func printVersion(args []string, out io.Writer) error {
 		_, err = fmt.Fprintln(out, string(encoded))
 		return err
 	}
-<<<<<<<< HEAD:cmd/autumn-bus/main.go
 	_, err := fmt.Fprintf(out, "autumn-bus %s (protocol %s)\n", bus.Version, bus.ProtocolVersion)
-========
-	_, err := fmt.Fprintf(out, "autumn-bus %s (protocol %s)\n", bus.Version, bus.ProtocolVersion)
->>>>>>>> 7575c4c (Add hosted workspaces and managed agent connections):cmd/autumn-bus/main.go
 	return err
 }
 

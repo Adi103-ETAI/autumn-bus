@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "agent_intercom": {
+    "autumn_bus": {
       "command": "${user_config.binary}",
       "args": ["mcp", "stdio", "--scope", "${user_config.workspace}", "--new-session", "--name", "Claude Code", "--native", "claude"]
     }

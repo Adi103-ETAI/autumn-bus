@@ -254,7 +254,7 @@ func startNativeSession(provider string, args []string) error {
 		if err := writeNativeJSON(filepath.Join(dir, "settings.json"), settings); err != nil {
 			return err
 		}
-		config := map[string]any{"mcpServers": map[string]any{"agent_intercom": stdioConfig{Command: executable, Args: []string{"mcp", "stdio"}}}}
+		config := map[string]any{"mcpServers": map[string]any{"autumn_bus": stdioConfig{Command: executable, Args: []string{"mcp", "stdio"}}}}
 		if err := writeNativeJSON(filepath.Join(dir, "mcp.json"), config); err != nil {
 			return err
 		}
@@ -293,7 +293,7 @@ func startNativeSession(provider string, args []string) error {
 			}
 			// The bootstrap must not announce MCP readiness for the TUI or accept
 			// queued work before that TUI applies the user's invocation settings.
-			bootstrapConfig := append(append([]string(nil), config...), "-c", "mcp_servers.agent_intercom.enabled=false")
+			bootstrapConfig := append(append([]string(nil), config...), "-c", "mcp_servers.autumn_bus.enabled=false")
 			*thread, err = bootstrapCodexThread(childCtx, *binary, bootstrapConfig, childEnv, cwd)
 			if err != nil {
 				return err
@@ -386,5 +386,5 @@ func guardNativeSession(input io.Reader, output io.Writer) error {
 	if err != nil || status.Pending == 0 {
 		return nil
 	}
-	return json.NewEncoder(output).Encode(map[string]string{"decision": "block", "reason": "Autumn Bus still has pending messages. Check the agent_intercom inbox, acknowledge work you accept, and reply to requests. Keep your normal permissions. If you cannot act, explain that to the sender; do not bypass a permission prompt."})
+	return json.NewEncoder(output).Encode(map[string]string{"decision": "block", "reason": "Autumn Bus still has pending messages. Check the autumn_bus inbox, acknowledge work you accept, and reply to requests. Keep your normal permissions. If you cannot act, explain that to the sender; do not bypass a permission prompt."})
 }
